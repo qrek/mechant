@@ -113,7 +113,8 @@ import ThreeTextureLoader from '@/webgl/vendor/loaders/three-texture-loader'
 import ThreeVideoLoader from '@/webgl/vendor/loaders/three-video-loader'
 
 import resources from '@/config/resources'
-import { getFormattedData } from '@/utils/data'
+import { supabase } from '@/utils/supabase'
+import * as siteContent from '@/content/site'
 import { gsap } from '@/vendor/gsap'
 import { randomInt } from '@/utils/random'
 
@@ -159,45 +160,31 @@ export default {
       setCompleted: 'preloader/setCompleted'
     }),
     async loadData() {
-      const homepage = await this.$prismic.api.getSingle('homepage', { lang: 'en-gb' })
-      const projects = await this.$prismic.api.query(this.$prismic.predicates.at('document.type','project'), {
-        lang: 'en-gb',
-        pageSize: 5,
-        page: 1,
-        orderings: '[document.first_publication_date desc]'
-      })
-      const footer = await this.$prismic.api.getSingle('footer', { lang: 'en-gb' })
-      const tags = await this.$prismic.api.query(this.$prismic.predicates.at('document.type','category'), { lang: 'en-gb' })
-      const about = await this.$prismic.api.getSingle('about', { lang: 'en-gb' })
-      const legals = await this.$prismic.api.getSingle('legal_notice', { lang: 'en-gb' })
-      const cookies = await this.$prismic.api.getSingle('cookies_policy', { lang: 'en-gb' })
-      const projectsPage = await this.$prismic.api.getSingle('projects_list', { lang: 'en-gb' })
+      const [
+        { data: projectsData, count },
+        { data: heroProjectsData },
+        { data: categoriesData }
+      ] = await Promise.all([
+        supabase.from('projects').select('*', { count: 'exact' }).eq('published', true).order('order_index', { ascending: false }).limit(5),
+        supabase.from('projects').select('*').eq('is_hero', true).eq('published', true).order('hero_order', { ascending: true }),
+        supabase.from('categories').select('*').order('order_index', { ascending: true })
+      ])
 
-      // HERO PROJECTS ------------------------------
-      const heroProjectsIds = []
-      const homeHeroProjects = []
-      for(let i = 0; i < homepage.data.featured_projects.length; i++) {
-        heroProjectsIds.push(homepage.data.featured_projects[i].project.id)
-      }
-
-      for(let i = 0; i < heroProjectsIds.length; i++) {
-        const result = await this.$prismic.api.query(this.$prismic.predicates.at('document.id', heroProjectsIds[i]), { lang: 'en-gb'})
-        const projectCorrespondance = homepage.data.featured_projects.find((item) => item.project.id === result.results[0].id)
-        homeHeroProjects.push({...getFormattedData(result.results[0].data), id: result.results[0].id, sliderTitle: projectCorrespondance?.project_title})
-      }
-      // --------------------------------------------
+      const categories = (categoriesData || []).reduce((acc, c) => ({ ...acc, [c.id]: c }), {})
+      const heroProjects = (heroProjectsData || []).reduce((acc, p) => ({ ...acc, [p.id]: { ...p, sliderTitle: p.hero_title } }), {})
+      const totalPages = Math.ceil((count || 0) / 5)
 
       await this.setData({
-        homepage: homepage.data,
-        heroProjects: homeHeroProjects.reduce((a, v) => ({ ...a, [v.id]: v}), {}),
-        projects: Object.values(projects.results.map(p => ({ ...getFormattedData(p.data), id: p.id }), []).reduce((a, v) => ({ ...a, [v.id]: v}), {})),
-        pagination: projects,
-        categories: tags.results.map(t => ({ ...getFormattedData(t.data), id: t.id }), []).reduce((a, v) => ({ ...a, [v.id]: v}), {}),
-        footer: footer.data,
-        aboutpage: about.data,
-        legalsPage: legals.data,
-        cookiesPage: cookies.data,
-        projectsPage: projectsPage.data
+        homepage: siteContent.homepage,
+        heroProjects,
+        projects: projectsData || [],
+        pagination: { page: 1, total_pages: totalPages },
+        categories,
+        footer: siteContent.footer,
+        aboutpage: siteContent.aboutpage,
+        legalsPage: siteContent.legalsPage,
+        cookiesPage: siteContent.cookiesPage,
+        projectsPage: siteContent.projectsPage
       })
     },
     registerLoaders () {

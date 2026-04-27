@@ -21,11 +21,11 @@
       <div class="ProjectPopin_player_info" :class="{ active: isInfosVisible }">
         <div class="Infos">
           <div class="Infos_client">{{  project?.client }}</div>
-          <div class="Infos_title">{{ project?.title[0] }}</div>
+          <div class="Infos_title">{{ project?.title }}</div>
           <ul class="Infos_tags">
             <li v-for="(tag, index) in project?.categories" :key="index">{{ categoriesData[tag].title }}</li>
           </ul>
-          <div class="Infos_text">{{ project?.text[0] }}</div>
+          <div class="Infos_text">{{ project?.description }}</div>
           <div class="Infos_tag">
             <Tag
               v-for="(tag, index) in project?.badges" :key="index"
@@ -146,7 +146,8 @@ export default {
       }
 
       this.player = new window.Vimeo.Player(this.$refs.videoIframe, {
-        id: `https://player.vimeo.com/video/${this.project.vimeo_id}?h=036b684498`,
+        id: this.project.vimeo_id,
+        controls: false,
         playsinline: false
       })
 

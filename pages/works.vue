@@ -38,7 +38,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import { gsap } from '@/vendor/gsap'
-import { getFormattedData } from '@/utils/data'
+import { supabase } from '@/utils/supabase'
 
 import ProjectList from "@/components/ProjectList"
 
@@ -141,34 +141,38 @@ export default {
       this.isLoading = true
       const { page, total_pages } = this.data.pagination
 
-      if(page < total_pages) {
+      if (page < total_pages) {
         this.checkTween('wrapper')
 
-        const projects = await this.$prismic.api.query(this.$prismic.predicates.at('document.type','project'), {
-          lang: 'en-gb',
-          pageSize: 5,
-          page: page + 1,
-          orderings: '[document.first_publication_date desc]'
-        })
-        const formatedProjects = projects.results.map(p => ({ ...getFormattedData(p.data), id: p.id }), []).reduce((a, v) => ({ ...a, [v.id]: v}), {})
+        const from = page * 5
+        const { data: newProjects } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('published', true)
+          .order('order_index', { ascending: false })
+          .range(from, from + 4)
 
-        this.setData({
-          ...this.data,
-          projects: [ ...this.data.projects, ...Object.values(formatedProjects) ],
-          pagination: projects
-        })
+        if (newProjects?.length) {
+          const newPage = page + 1
+          const asMap = newProjects.reduce((a, v) => ({ ...a, [v.id]: v }), {})
 
-        this.$refs.projectList.handleLoadMore(formatedProjects)
+          this.setData({
+            ...this.data,
+            projects: [...this.data.projects, ...newProjects],
+            pagination: { page: newPage, total_pages }
+          })
 
-        if(projects.page === projects.total_pages)
-          this.hideLoadMoreButton = true
+          this.$refs.projectList.handleLoadMore(asMap)
 
-        const { projectWrapper, projectList } = this.$refs
+          if (newPage >= total_pages)
+            this.hideLoadMoreButton = true
 
-        this.$nextTick(() => {
-          this.tween.wrapper = gsap.timeline()
-          this.tween.wrapper.to(projectWrapper, { height: projectList.$el.clientHeight })
-        })
+          const { projectWrapper, projectList } = this.$refs
+          this.$nextTick(() => {
+            this.tween.wrapper = gsap.timeline()
+            this.tween.wrapper.to(projectWrapper, { height: projectList.$el.clientHeight })
+          })
+        }
       }
 
       this.isLoading = false

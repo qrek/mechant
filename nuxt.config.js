@@ -64,19 +64,17 @@ export default {
   components: true,
 
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
-  buildModules: [
-    '@nuxtjs/prismic'
-  ],
-  prismic: {
-    endpoint: 'https://mechant.cdn.prismic.io/api/v2',
-    modern: true
-    /* see configuration for more */
-  },
+  buildModules: [],
 
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: [
     '@nuxtjs/style-resources'
   ],
+
+  publicRuntimeConfig: {
+    supabaseUrl: process.env.SUPABASE_URL,
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY
+  },
 
   serverMiddleware: [
     '~/middleware/server/auth.js'
