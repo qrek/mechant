@@ -1,0 +1,31 @@
+{
+  "name": "mechant",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "generate": "nuxt generate"
+  },
+  "dependencies": {
+    "bidello": "^1.0.1",
+    "core-js": "^3.25.3",
+    "nuxt": "^2.15.8",
+    "postprocessing": "^6.29.1",
+    "three": "^0.140.0",
+    "tweakpane": "^2.4.3",
+    "vue": "^2.7.10",
+    "vue-kinesis": "^1.3.3",
+    "vue-server-renderer": "^2.7.10",
+    "vue-template-compiler": "^2.7.10"
+  },
+  "devDependencies": {
+    "@nuxtjs/prismic": "^1.4.2",
+    "@nuxtjs/style-resources": "^1.0.0",
+    "glslify-loader": "^2.0.0",
+    "raw-loader": "^4.0.2",
+    "sass": "^1.56.1",
+    "sass-loader": "10.1.1"
+  }
+}

@@ -1,0 +1,37 @@
+@function textShadow($precision, $size, $color, $addBorder: false)
+  $value: null
+  $offset: 0
+  $length: $size * (calc(1 / $precision)) - 1
+
+  @for $i from 0 through $length
+    $offset: $offset + $precision
+    $shadow: $offset + px $offset + px $color
+    $value: append($value, $shadow, comma)
+
+  @if $addBorder
+    $border: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000
+    $value: append($value, $border, comma)
+
+  @return $value
+
+
+@mixin animateStar($duration, $delay: 0)
+  animation: animatedStar linear $duration infinite $delay
+
+  @keyframes animatedStar
+    from
+      transform: rotate(0deg)
+
+    to
+      transform: rotate(360deg)
+
+@mixin breakpoint($point)
+  @if $point == desktop
+    @media only screen and (min-width: 835px)
+      @content
+  @if $point == tablet
+    @media only screen and (min-device-width : 768px) and (max-device-width : 1024px) and (orientation : landscape)
+      @content
+  @if $point == mobile
+    @media only screen and (max-width: 834px), only screen and (min-width: 1024px) and (max-height: 1366px) and (orientation: portrait) and (-webkit-min-device-pixel-ratio: 1.5)
+      @content

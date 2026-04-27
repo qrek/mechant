@@ -1,0 +1,19 @@
+.wave
+  position: absolute
+  top: -$waveMargin
+  left: 0
+  width: 101%
+  height: auto
+
+  +breakpoint(mobile)
+    object-fit: cover
+    height: 10vh
+    top: calc($waveMargin - 8vh)
+
+  &.reverse
+    transform: rotate(-180deg)
+    top: inherit
+    bottom: -$waveMargin
+
+    +breakpoint(mobile)
+      bottom: calc($waveMargin - 8vh)

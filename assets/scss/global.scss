@@ -1,0 +1,47 @@
+:root {
+  font-size: .6945vw;
+
+  @media screen and (max-width: 450px) {
+    font-size: 2.575vw;
+  }
+}
+
+html, body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
+  // cursor: none;
+}
+
+html {
+  height: 100% !important;
+  background-color: black;
+}
+
+body, #__nuxt, #__layout{
+  height: 100% !important;
+}
+html.lock_scroll {
+  overflow: hidden;
+}
+
+/* Avoid Chrome to see Safari hack */
+@supports (-webkit-touch-callout: none) {
+  body {
+    /* The hack for Safari */
+    min-height: -webkit-fill-available;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.clearTransform {
+  transform: none !important;
+}
+
+body::-webkit-scrollbar{
+  display: none;
+}
