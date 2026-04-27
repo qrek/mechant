@@ -205,7 +205,6 @@ export default {
       const { projects, heroProjects} = this.data
 
       const sources = []
-      // merge project & heroProject
       const mixProjects = {...projects, ...heroProjects}
       const ids = []
 
@@ -220,7 +219,19 @@ export default {
           })
         }
 
-        if (project.video_home && ids.indexOf(project.id) < 0 && !this.isMobile) {
+        // Use thumbnail_url as hero texture (Vimeo thumbnail as image)
+        if (project.thumbnail_url && ids.indexOf(project.id) < 0) {
+          sources.push({
+            name: `${project.id}_hero`,
+            type: 'texture',
+            path: project.thumbnail_url
+          })
+          sources.push({
+            name: `${project.id}_hero_mobile`,
+            type: 'texture',
+            path: project.thumbnail_url
+          })
+        } else if (project.video_home && ids.indexOf(project.id) < 0 && !this.isMobile) {
           sources.push({
             name: `${project.id}_hero`,
             type: 'video',
@@ -228,7 +239,7 @@ export default {
           })
         }
 
-        if (project.video_home_mobile && ids.indexOf(project.id) < 0 && this.isMobile) {
+        if (!project.thumbnail_url && project.video_home_mobile && ids.indexOf(project.id) < 0 && this.isMobile) {
           sources.push({
             name: `${project.id}_hero_mobile`,
             type: 'video',

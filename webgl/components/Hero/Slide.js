@@ -44,18 +44,21 @@ class Slide extends component(Mesh) {
   _init() {
     const camera = DOMViewport(this._camera)
 
-    const { texture, video, path } = ResourceLoader.get((this.isMobile) ? `${this._image}_mobile` : this._image )
+    const { texture, video } = ResourceLoader.get((this.isMobile) ? `${this._image}_mobile` : this._image )
 
-    video.currentTime = 0
-
-    if (this._realIndex !== 0) {
-      video.autoplay = false
-      video.pause()
+    if (video) {
+      video.currentTime = 0
+      if (this._realIndex !== 0) {
+        video.autoplay = false
+        video.pause()
+      }
     }
 
-    this._video = video
+    this._video = video || null
 
-    this.material.uniforms.uResolution.value = new Vector2(texture.image.videoWidth, texture.image.videoHeight)
+    const w = (texture.image.videoWidth || texture.image.naturalWidth || texture.image.width || 1920)
+    const h = (texture.image.videoHeight || texture.image.naturalHeight || texture.image.height || 1080)
+    this.material.uniforms.uResolution.value = new Vector2(w, h)
     this.material.uniforms.uTexture.value = texture
     this.material.uniforms.uViewport.value = new Vector2(camera.x, camera.y)
 

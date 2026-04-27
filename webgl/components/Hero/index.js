@@ -235,7 +235,7 @@ class Hero extends component(Object3D) {
       },
       onStart: () => {
         for (let i = 0; i < this._items.length; i++) {
-          this._items[i].video.play()
+          if (this._items[i].video) this._items[i].video.play()
         }
       }
     })
@@ -279,7 +279,7 @@ class Hero extends component(Object3D) {
       onComplete: () => {
         for (let i = 0; i < this._items.length; i++) {
           if (this._realIndex !== i) {
-            this._items[i].video.pause()
+            if (this._items[i].video) this._items[i].video.pause()
           }
         }
       }
@@ -328,7 +328,7 @@ class Hero extends component(Object3D) {
       ease: Power1.easeInOut,
       onStart: () => {
         for (let i = 0; i < this._items.length; i++) {
-          if (!this._items[i].video.paused) {
+          if (this._items[i].video && !this._items[i].video.paused) {
             this._items[i].video.play()
           }
         }
@@ -379,8 +379,8 @@ class Hero extends component(Object3D) {
           onComplete: () => {
             for (let i = 0; i < this._items.length; i++) {
               if (this._realIndex !== i) {
-                this._items[i].video.pause()
-              } else if (this._items[i].video.paused) {
+                if (this._items[i].video) this._items[i].video.pause()
+              } else if (this._items[i].video && this._items[i].video.paused) {
                 this._items[i].video.play()
               }
             }
@@ -406,7 +406,7 @@ class Hero extends component(Object3D) {
       ease: Power1.easeInOut,
       onStart: () => {
         for (let i = 0; i < this._items.length; i++) {
-          if (!this._items[i].video.paused) {
+          if (this._items[i].video && !this._items[i].video.paused) {
             this._items[i].video.play()
           }
         }
@@ -456,8 +456,8 @@ class Hero extends component(Object3D) {
           onComplete: () => {
             for (let i = 0; i < this._items.length; i++) {
               if (this._realIndex !== i) {
-                this._items[i].video.pause()
-              } else if (this._items[i].video.paused) {
+                if (this._items[i].video) this._items[i].video.pause()
+              } else if (this._items[i].video && this._items[i].video.paused) {
                 this._items[i].video.play()
               }
             }

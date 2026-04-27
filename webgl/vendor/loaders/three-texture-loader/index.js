@@ -7,7 +7,9 @@ class ThreeTextureLoader {
 
   load ({ path }) {
     return new Promise((resolve, reject) => {
-      this._loader.load(path, resolve, null, reject)
+      this._loader.load(path, (texture) => {
+        resolve({ texture, video: null, path })
+      }, null, reject)
     })
   }
 }
