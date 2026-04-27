@@ -11,7 +11,7 @@
           :size="2.2"
         />
         <div class="Hero_title" v-html="item.sliderTitle"></div>
-        <div class="Hero_subtitle" v-html="item?.subtitle?.[0] || item?.description || ''"></div>
+        <div class="Hero_subtitle" v-html="item?.subtitle || item?.description || ''"></div>
         <Button
           :class="{'isActive': isActive}"
           background="pink"

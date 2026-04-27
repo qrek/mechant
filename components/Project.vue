@@ -13,7 +13,7 @@
     </div>
     <div class="Project_infos">
       <div class="Project_infos_client" ref="client">{{ data?.client }}</div>
-      <h3 class="Project_infos_title" ref="title">{{ data?.title?.[0] || data?.title }}</h3>
+      <h3 class="Project_infos_title" ref="title">{{ data?.title }}</h3>
       <ul class="Project_infos_tags" ref="tags">
         <li v-for="(tag, index) in data?.categories" :key="index" v-if="categoriesData[tag]">{{ categoriesData[tag].title }}</li>
       </ul>
