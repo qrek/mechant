@@ -3,6 +3,7 @@ import { TextureLoader } from 'three'
 class ThreeTextureLoader {
   constructor () {
     this._loader = new TextureLoader()
+    this._loader.crossOrigin = 'anonymous'
   }
 
   load ({ path }) {

@@ -68,41 +68,56 @@ class Work extends component(Object3D) {
   }
 
   async _init() {
-    if (!ResourceLoader.has(this._image)) {
-      const previewUrl = this._component.getPreviewVideo()
-      if (previewUrl) {
-        await ResourceLoader.loadResource({ name: this._image, type: 'video', path: previewUrl })
-      } else {
-        const posterUrl = this._component.data?.poster || this._component.data?.thumbnail_url
-        if (posterUrl) {
-          await ResourceLoader.loadResource({ name: this._image, type: 'texture', path: posterUrl })
-        } else {
-          this._el.dataset.loaded = true
-          return
+    try {
+      // 1. Essayer la preview video (préchargée ou à charger)
+      if (!ResourceLoader.has(this._image)) {
+        const previewUrl = this._component.getPreviewVideo()
+        if (previewUrl) {
+          await ResourceLoader.loadResource({ name: this._image, type: 'video', path: previewUrl })
         }
       }
+
+      // 2. Si toujours pas en cache, fallback sur poster/thumbnail
+      if (!ResourceLoader.has(this._image)) {
+        const posterUrl = this._component.data?.poster || this._component.data?.thumbnail_url
+        if (posterUrl) {
+          const fallbackName = `${this._image}_img`
+          this._image = fallbackName
+          if (!ResourceLoader.has(fallbackName)) {
+            await ResourceLoader.loadResource({ name: fallbackName, type: 'texture', path: posterUrl })
+          }
+        }
+      }
+
+      if (!ResourceLoader.has(this._image)) {
+        this._el.dataset.loaded = true
+        return
+      }
+
+      this._el.dataset.loaded = true
+
+      const camera = DOMViewport(this._camera)
+      const { texture, video } = ResourceLoader.get(this._image)
+
+      this._video = video || null
+      if (video) {
+        video.currentTime = 0
+        video.pause()
+      }
+
+      this._mesh.material.uniforms.uTexture.value = texture
+      const w = texture.image.videoWidth || texture.image.naturalWidth || texture.image.width || 1920
+      const h = texture.image.videoHeight || texture.image.naturalHeight || texture.image.height || 1080
+      this._mesh.material.uniforms.uResolution.value = new Vector2(w, h)
+      this._mesh.material.uniforms.uViewport.value = new Vector2(camera.x, camera.y)
+      this._background.material.uniforms.uViewport.value = new Vector2(camera.x, camera.y)
+
+      this._setScale()
+      this._setPos()
+    } catch (e) {
+      console.warn('Work._init() error:', e)
+      this._el.dataset.loaded = true
     }
-
-    this._el.dataset.loaded = true
-
-    const camera = DOMViewport(this._camera)
-    const { texture, video } = ResourceLoader.get(this._image)
-
-    this._video = video || null
-    if (video) {
-      video.currentTime = 0
-      video.pause()
-    }
-
-    this._mesh.material.uniforms.uTexture.value = texture
-    const w = texture.image.videoWidth || texture.image.naturalWidth || texture.image.width || 1920
-    const h = texture.image.videoHeight || texture.image.naturalHeight || texture.image.height || 1080
-    this._mesh.material.uniforms.uResolution.value = new Vector2(w, h)
-    this._mesh.material.uniforms.uViewport.value = new Vector2(camera.x, camera.y)
-    this._background.material.uniforms.uViewport.value = new Vector2(camera.x, camera.y)
-
-    this._setScale()
-    this._setPos()
   }
 
   _setScale() {
