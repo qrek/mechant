@@ -1,63 +1,96 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CONTENU STATIQUE DU SITE — à éditer directement ici
+// CONTENU STATIQUE DU SITE — généré depuis Prismic le 27/04/2026
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const homepage = {
-  meta_title: 'MÉCHANT',
-  meta_description: 'Creative post-production studio',
-  // Texte principal de la section intro (HTML autorisé, <strong> pour le gras)
-  about_us_text: [{ text: 'We are a creative post-production studio. We make <strong>bold</strong>, <strong>unexpected</strong> films.' }]
+  meta_title: "MÉCHANT - Creative post-production studio",
+  meta_description: "Méchant is a creative post-production studio in Paris, dedicates its creativity and technical skills with an aesthetic vision for commercials and music videos.",
+  about_us_text: [{"type":"preformatted","text":"<strong>Méchant is a creative post-production studio in Paris.</strong><br/>\n        Dedicated to\n        <Tag\n          text=\"visual effects\"\n          background=\"pink\"\n          color=\"white\"\n          :size=\"3\"\n          customClass=\"visualEffectTag\"\n        />\n        and\n        <Tag\n          text=\"editing\"\n          background=\"orange\"\n          color=\"white\"\n          :size=\"3\"\n          customClass=\"editingTag\"\n        />\nfor commercials and music videos.","spans":[]}]
 }
 
 export const footer = {
-  // Texte principal du footer (HTML autorisé)
-  text: [{ text: 'Want to work with us? <strong>Let\'s talk.</strong>' }],
-  email_address: 'contact@mechant.tv',
-  address: '10 rue de la Paix, 75002 Paris',
-  instagram_url: { url: 'https://www.instagram.com/mechant.tv' },
-  google_maps_link: { url: 'https://maps.google.com/?q=10+rue+de+la+Paix+Paris' }
+  text: [{"type":"preformatted","text":"<em>Reach us</em> for <em>post-producing</em> your film!","spans":[]}],
+  email_address: "contact@mechant.tv",
+  address: "27 rue des Cascades 75020 Paris",
+  address_footer: "27 rue des Cascades,<br/>75020 Paris",
+  address_menu: [{"type":"paragraph","text":"27 rue des Cascades","spans":[]},{"type":"paragraph","text":"75020 Paris","spans":[]}],
+  instagram_url: {"link_type":"Web","key":"11f178d7-0aab-4762-862c-29eb845109cc","url":"https://www.instagram.com/mechant.tv/"},
+  google_maps_link: {"link_type":"Web","key":"f0c4839f-9e4c-4525-bc7c-3a09b7f96915","url":"https://www.google.fr/maps/place/27+Rue+des+Cascades,+75020+Paris/@48.8701718,2.3862017,17z/data=!3m1!4b1!4m5!3m4!1s0x47e66d9354ed94a3:0x78ee7019e86e1e47!8m2!3d48.8701719!4d2.3906864"}
 }
 
 export const aboutpage = {
-  meta_title: 'About — MÉCHANT',
-  meta_description: 'Creative post-production studio based in Paris.',
-  // ID Vimeo du showreel sur la page About
-  video_id: [{ text: '000000000' }],
-  // URL de la miniature du showreel (peut être une image de /static)
-  video_poster: { url: '/textures/hero_1.png' },
-  title: [{ text: 'We are\nMéchant.' }],
-  // Texte de présentation (HTML autorisé)
-  text: [{ text: 'Born from <strong>creativity</strong> and <strong>technical</strong> excellence, Méchant is a post-production studio that pushes the boundaries of visual storytelling.' }],
-  services: 'Color grading · Motion design · VFX · Sound design',
+  meta_title: "MÉCHANT - Creative post-production studio",
+  meta_description: "Méchant is a creative post-production studio in Paris, dedicates its creativity and technical skills with an aesthetic vision for commercials and music videos.",
+  video_id: [{"type":"heading1","text":"791950192","spans":[]}],
+  video_poster: {"dimensions":{"width":1920,"height":1080},"alt":null,"copyright":null,"url":"https://images.prismic.io/mechant/217ad11b-56d4-4d02-8edf-0a071f53dc1e_COVER_SHOWREEL2.png?auto=compress,format","id":"Y862NxEAAB8Ae99y","edit":{"x":0,"y":0,"zoom":1,"background":"transparent"}},
+  title: [{"type":"heading1","text":"<span>We are</span> mechant","spans":[]}],
+  text: [{"type":"preformatted","text":"Méchant is a creative post-production studio in Paris.<br/>\n          Founded in 2019 by Théo Bacholier and Ronan Fourreau, the studio\n          dedicates its\n          <Tag\n            text=\"creativity\"\n            background=\"pink\"\n            color=\"white\"\n            customClass=\"creativityTag\"\n            :size=\"2\"\n          />\n          and\n          <Tag\n            text=\"technical skills\"\n            background=\"orange\"\n            color=\"white\"\n            customClass=\"technicalTag\"\n            :size=\"2\"\n          />\n          with an aesthetic vision\n          for commercials and music videos.\n          <br/><br/>\n          Depending on productions expectations, the team can be enhanced\n          with freelancers.","spans":[]}],
+  services: "Editing, VFX, 3D/2D Animation, Motion Design, Art Direction",
   awards: [
-    {
-      year: '2023',
-      award_title: 'Cannes Lions',
-      tag: 'Gold',
-      details: [{ text: 'Best Post-Production' }]
-    },
-    {
-      year: '2022',
-      award_title: 'D&AD Awards',
-      tag: 'Wood Pencil',
-      details: [{ text: 'Film Craft — Editing' }]
-    }
-  ]
+  {
+    "year": "2022",
+    "award_title": "GRANDS PRIX STRATÉGIE 2022 - DIGITAL FILMS",
+    "tag": "OR EX AEQUO",
+    "details": [
+      {
+        "type": "paragraph",
+        "text": "FFF - RENTRÉE DU FOOT | DIRECTED BY MARIN TROUDE",
+        "spans": []
+      }
+    ]
+  },
+  {
+    "year": "2021",
+    "award_title": "MTV VMA - BEST VISUAL EFFECT",
+    "tag": "NOMINATED",
+    "details": [
+      {
+        "type": "paragraph",
+        "text": "TANGERINE - GLASS ANIMALS | DIRECTED BY DAVID WILSON",
+        "spans": []
+      }
+    ]
+  },
+  {
+    "year": "2021",
+    "award_title": "BERLIN MUSIC VIDEO AWARDS - BEST CONCEPT",
+    "tag": "2ND PLACE",
+    "details": [
+      {
+        "type": "paragraph",
+        "text": "VIE NORMALE - ACHILE | DIRECTED BY GREGORY OHREL",
+        "spans": []
+      }
+    ]
+  },
+  {
+    "year": "2020",
+    "award_title": "BERLIN MUSIC VIDEO AWARDS - BEST DIRECTOR",
+    "tag": "WINNER",
+    "details": [
+      {
+        "type": "paragraph",
+        "text": "BELLACOSO - RESIDENTE & BAD BUNNY | DIRECTED BY GREGORY OHREL",
+        "spans": []
+      }
+    ]
+  }
+]
 }
 
 export const projectsPage = {
-  meta_title: 'Works — MÉCHANT',
-  meta_description: 'Discover our latest projects.'
+  meta_title: "MÉCHANT - Creative post-production studio",
+  meta_description: "Méchant is a creative post-production studio in Paris, dedicates its creativity and technical skills with an aesthetic vision for commercials and music videos."
 }
 
 export const cookiesPage = {
-  meta_title: 'Cookies — MÉCHANT',
-  meta_description: 'Notre politique de cookies.',
-  content: [{ text: '<h2>Politique de cookies</h2><p>Ce site utilise des cookies à des fins d\'analyse de trafic via Piwik Pro. Aucun cookie publicitaire n\'est utilisé.</p>' }]
+  meta_title: "MÉCHANT",
+  meta_description: "Creative post-production studio",
+  content: [{"type":"preformatted","text":"<h1>POLITIQUE SUR <br/>L’UTILISATION DES COOKIES</h1><br/>\n<h2>OBJET DE LA PRÉSENTE POLITIQUE</h2>\n<p>\nLa présente Politique sur l'utilisation des cookies explique comment nous utilisons les «cookies» et technologies similaires (telles que les «balises Web», les «pixels» ou les «tags») sur le site mechant.tv  (le « Site »). Elle est destinée à vous aider à prendre des décisions éclairées lorsque vous utilisez notre service. Veuillez prendre un moment pour lire et comprendre la présente Politique. Celle-ci doit être lue conjointement avec notre Politique sur la protection des données et nos Conditions générales d'utilisation du Site Web.\n<br/><br/>\n<h2>QUE SONT LES COOKIES ET TECHNOLOGIES SIMILAIRES? </h2>\n<p>\nLes cookies sont de petits fichiers texte ou des morceaux de code, qui incluent souvent un identifiant unique. Lorsque vous visitez un site Web, ce dernier demande à stocker ce fichier texte sur votre appareil afin de mémoriser des informations vous concernant, telles que votre préférence de langue ou vos informations de connexion. Les autres informations recueillies par le biais des cookies peuvent inclure la date et l'heure des visites et la façon dont vous utilisez notre Site. \n<br/><br/>\nNous utilisons des technologies similaires aux cookies telles que les «balises Web», les «pixels» ou les «tags». Ces technologies font un travail similaire aux cookies et permettent aux opérateurs de sites Web de compter les pages vues et de comprendre comment les visiteurs interagissent avec et réagissent à certains contenus sur une page Web. \n<br/><br/>\nDans les sections suivantes de la présente Politique, les cookies et technologies similaires utilisant les fonctionnalités ci-dessus seront appelés «cookies».  \n<br/>\nVous devez savoir que les applications que vous utilisez pour accéder à notre Site, telles que votre navigateur, peuvent également placer des cookies sur votre appareil lorsque vous visitez notre Site ou d'autres sites Web. Comme, par exemple, lorsque vous vous connectez à Google Chrome avec un compte Google (voir Section 7 ci-dessous). Nous n'avons aucun contrôle sur ces cookies tiers et vous devez donc les gérer dans les paramètres des applications concernées.   \n<br/>\n<br/>\n<h2>QUELLE EST LA DIFFÉRENCE ENTRE LES COOKIES PROPRIÉTAIRES ET LES COOKIES TIERS ? </h2>\n<p>\nLes cookies sont de petits fichiers texte ou des morceaux de code, qui incluent souvent un identifiant unique. Lorsque vous Nous utilisons des «cookies propriétaires» et des «cookies tiers» en relation avec notre Service. Les cookies propriétaires sont des cookies que nous plaçons pour collecter des informations vous concernant. Les cookies tiers sont des cookies placés par des opérateurs de sites Web tiers. Les informations vous concernant collectées par ces cookies tiers seront partagées avec le tiers concerné. Veuillez vous référer à la politique de confidentialité de l'opérateur du site Web tiers pour plus de détails sur les informations que celui-ci collecte et comment il les utilise.\n<br/><br/>\n<h2>QUELLE EST LA DURÉE DE VIE DES COOKIES ? </h2>\n<p>\nLes cookies ont une date d'expiration qui détermine combien de temps ils restent dans votre navigateur: \n<br/><br/>\n  -  Cookies de session : il s'agit de cookies temporaires ; ils sont placés dans votre appareil lors de votre session de navigation puis expirent (et sont automatiquement effacés) lorsque vous fermez votre navigateur. \n<br/><br/>\n  -  Cookies permanents : ils sont conçus pour une durée prédéfinie qui varie en fonction de la nature du cookie. Les cookies permanents restent dans votre navigateur jusqu'à ce qu'ils atteignent leur date d'expiration individuelle ou jusqu'à ce que vous les supprimiez manuellement. \n<br/>\n<br/>\n<h2>QUELS COOKIES UTILISONS NOUS SUR NOTRE SITE ?</h2>\n<p>\nLa plateforme de gestion des consentements que vous pouvez afficher à tout moment lors de votre navigation vous donne des informations spécifiques sur les cookies que nous utilisons et leurs finalités.  \n<br/>\nNous utilisons les types de cookies suivants : \n<br/><br/>\n  -  Cookies essentiels : Les cookies essentiels sont des cookies sans lesquels un site Web ne pourrait fonctionner. Ils incluent les cookies qui reconnaissent les caractéristiques de votre écran.\n<br/><br/>\n  -  Cookies fonctionnels : Ces cookies permettent de vous reconnaître lorsque vous revenez sur un site Web, de mémoriser vos préférences et d'offrir des fonctionnalités améliorées et plus personnalisées. Ces cookies aident également à vous fournir un contenu pertinent en fonction de votre paramètre de langue, par exemple en vous permettant de consulter le Site dans votre langue de préférence.\n<br/><br/>\n  -  Cookies de sécurité, d'intégrité du site : S’il est possible de créer un compte sur le site  : Ces cookies garantissent la sécurité de votre compte, de vos données et du Site. Ils peuvent nous aider à identifier et à imposer des mesures de sécurité supplémentaires lorsqu'une personne tente d'accéder à un compte du Site sans autorisation, par exemple en devinant rapidement différents mots de passe. Ces cookies stockent également des informations qui nous permettent de récupérer votre compte si vous avez oublié votre mot de passe ou de demander une autorisation supplémentaire si vous nous informez que votre compte a été piraté.\n<br/><br/>\n  -  Cookies d'analyse/de performance : Les cookies d'analyse, ainsi que d'autres informations, permettent aux sites Web de calculer le nombre total de personnes utilisant un site Web et de connaître les fonctionnalités les plus utilisées. Ces informations sont généralement utilisées pour améliorer le site Web et la façon dont les visiteurs le consultent. \n<br/>\n<br/>\n<h2>LE CONSENTEMENT EST-IL NÉCESSAIRE À L'UTILISATION DE COOKIES ?</h2>\n<p>\nCookies non essentiels –  Nous ne pouvons stocker et accéder aux cookies non essentiels sur votre appareil qu'avec votre autorisation. Vous n'avez pas l'obligation de donner votre consentement afin 3  que nous puissions utiliser des cookies non essentiels. Si vous donnez votre consentement et que vous changez ensuite d'avis, vous pouvez les bloquer ou les supprimer (voir Section 6 ci-dessous). \n<br/><br/>\nCookies essentiels – Veuillez noter que nous n'avons pas besoin de votre consentement pour stocker et accéder aux cookies essentiels sur votre appareil ; vous pouvez toutefois les bloquer ou les supprimer (voir Section 6 ci-dessous). \n<br/>\n<br/>\n<h2>COMMENT REFUSER, BLOQUER OU SUPPRIMER LES COOKIES ?</h2>\n<p>\nLorsque vous accédez à notre Site, nous vous demanderons de donner votre consentement pour notre utilisation des cookies non essentiels via une Plateforme de gestion des consentements. Nous pouvons répéter cette demande lors de visites ultérieures sur notre Site, par exemple si vous supprimez les cookies de votre navigateur ou si nous devons vous demander de nouveaux consentements. Lorsque nous demandons votre consentement, vous pourrez soit donner votre consentement pour tous les cookies non essentiels que nous souhaitons utiliser, soit adapter vos préférences en matière de cookies (donner votre consentement pour certains mais pas pour tous les cookies non essentiels) en utilisant notre plateforme de gestion des consentements. Vous pouvez également modifier vos préférences et/ou retirer votre consentement à tout moment en vous rendant sur notre Plateforme de gestion des cookies.  \n<br/><br/>\nVous pouvez bloquer l'utilisation des cookies de manière générale (pas seulement en ce qui concerne notre Site) en activant les paramètres correspondants dans votre navigateur. Pour plus d'informations sur la gestion des cookies et le blocage ou la suppression des cookies pour la plupart des navigateurs, veuillez consulter : All About Cookies.  \n<br/><br/>\nDe plus, si vous ne souhaitez pas le suivi de Google Analytics, vous pouvez installer le module de désactivation de Google Analytics (mais cela ne fonctionne que sur certains navigateurs). Pour plus d'informations sur Google Analytics et son utilisation des cookies, veuillez consulter la politique relative à l'utilisation des cookies de Google Analytics.\n<br/><br/>\nVeuillez noter que pour utiliser certaines parties de notre Site, vous devrez autoriser certains cookies essentiels ou fonctionnels. Si vous bloquez ou supprimez ultérieurement ces cookies, certains aspects de notre Site pourront ne pas fonctionner correctement et vous ne pourrez peut-être pas accéder à tout ou partie de notre Site. \n<br/>\n<br/>\n<h2>QU'EN EST-IL DES COOKIES DE GOOGLE CHROME ET AUTRES NAVIGATEURS ?</h2>\n<p>\nLorsque vous accédez au Site via des applications Google telles que Google Chrome, Google peut collecter des informations sur les utilisateurs dans le but de diffuser des publicités personnalisées sur vos appareils. Google est en mesure de placer ces cookies publicitaires sur les appareils utilisés par les visiteurs du Site car nous utilisons les services de Google pour faire fonctionner le Site. Toutefois, ces cookies sont placés pour les propres besoins de Google et, à ce titre, nous n'avons aucun contrôle sur la manière dont et le moment où ceux-ci sont placés. Vous pouvez refuser de recevoir ces cookies en modifiant vos paramètres Google. Pour plus d'informations sur ces cookies, veuillez consulter : https://policies.google.com/technologies/cookies?hl=fr#types-of-cookies. \n<br/>\nVeuillez noter que d'autres navigateurs peuvent utiliser des outils similaires.\n<br/>\n<br/>\n<h2>LIENS VERS DES SITES TIERS</h2>\n<p>\nVeuillez noter que notre Site est lié à des sites Web tiers qui ne sont pas exploités par nos soins. Lorsque vous suivez des liens de notre Site vers le site Web d'un tiers, ce site Web peut placer différents cookies sur votre appareil. Vous devez consulter la politique de confidentialité et/ou la politique relative à l'utilisation des cookies de ce tiers pour plus d'informations sur la manière dont celui-ci utilise les cookies.\n<br/>\n<br/>\n<h2>LA PRÉSENTE POLITIQUE EST-ELLE ACTUALISÉE ?</h2>\n<p>\nNous pouvons, de temps à autre, mettre à jour notre Politique sur les cookies. Nous vous recommandons de consulter régulièrement cette section afin de prendre connaissance de toute modification de notre Politique relative à l'utilisation des cookies.\n<br/>\n<br/>\n<h2>AVEZ-VOUS DES COMMENTAIRES ?</h2>\n<p>\nSi vous avez des questions ou des commentaires sur notre Politique contacter à contact@mechant.tv. \n<br/>\n<br/>","spans":[]}]
 }
 
 export const legalsPage = {
-  meta_title: 'Privacy Policy — MÉCHANT',
-  meta_description: 'Notre politique de confidentialité.',
-  content: [{ text: '<h2>Privacy Policy</h2><p>Méchant TV — 10 rue de la Paix, 75002 Paris. Hébergeur : Vercel Inc.</p>' }]
+  meta_title: "MÉCHANT",
+  meta_description: "Creative post-production studio",
+  content: [{"type":"preformatted","text":" <h1>mentions<br/>legales</h1>\n<p>\nMerci de lire avec attention les différentes modalités d’utilisation du présent site avant d’y parcourir ses pages. En vous connectant sur ce site, vous acceptez sans réserve les présentes modalités. Aussi, conformément à l’article n°6 de la Loi n°2004-575 du 21 Juin 2004 pour la confiance dans l’économie numérique, les responsables du présent site internet <a href=\"https://www.mechant.tv/\">www.mechant.tv</a> sont :<br/>\n<br/>\n      <h2>Éditeur du Site</h2>\n      <p>\nMéchant<br/>\nNuméro de SIRET : 90992188400013<br/>\n122 rue Amelot, 75011, Paris<br/>\ncontact@mechant.tv<br/>\n<a href=\"https://www.mechant.tv/\">www.mechant.tv</a>\n<br/>\n<h2>Hébergement</h2>\n      <p>\nVercel Inc.<br/>\n340 S Lemon Ave #4133<br/>\nWalnut, CA 91789<br/>\n<br/>\n<h2>Design et Développement</h2>\n      <p>\nUltranoir<br/>\n<a href=\"https://www.ultranoir.com/\">https://www.ultranoir.com/</a><br/>\n<br/>\n<h2>Conditions d’utilisation</h2>\n      <p>\nCe site (mechant.tv) est proposé en différents langages web (HTML, HTML5, Javascript, CSS, etc…) pour un meilleur confort d’utilisation et un graphisme plus agréable, nous vous recommandons de recourir à des navigateurs modernes comme Google Chrome, Safari, Firefox, Edge etc…<br/>\nMéchant met en œuvre tous les moyens dont elle dispose, pour assurer une information fiable et une mise à jour fiable de ses sites internet. Toutefois, des erreurs ou omissions peuvent survenir. L’internaute devra donc s’assurer de l’exactitude des informations auprès de Méchant, et signaler toutes modifications du site qu’il jugerait utile. Méchant n’est en aucun cas responsable de l’utilisation faite de ces informations, et de tout préjudice direct ou indirect pouvant en découler.<br/>\n<br/>\n<h2>Cookies</h2>\n      <p>\nLe site méchant.tv peut-être amené à vous demander l’acceptation des cookies pour des besoins de statistiques et d’affichage. Un cookies est une information déposée sur votre disque dur par le serveur du site que vous visitez. Il contient plusieurs données qui sont stockées sur votre ordinateur dans un simple fichier texte auquel un serveur accède pour lire et enregistrer des informations . Certaines parties de ce site ne peuvent être fonctionnelles sans l’acceptation de cookies.<br/>\n<br/>\n<h2>Liens hypertextes</h2>\n      <p>\nLes sites internet de peuvent offrir des liens vers d’autres sites internet ou d’autres ressources disponibles sur Internet. Méchant ne dispose d’aucun moyen pour contrôler les sites en connexion avec ses sites internet. Méchant ne répond pas de la disponibilité de tels sites et sources externes, ni ne la garantit. Elle ne peut être tenue pour responsable de tout dommage, de quelque nature que ce soit, résultant du contenu de ces sites ou sources externes, et notamment des informations, produits ou services qu’ils proposent, ou de tout usage qui peut être fait de ces éléments. Les risques liés à cette utilisation incombent pleinement à l’internaute, qui doit se conformer à leurs conditions d’utilisation.<br/>\nLes utilisateurs, les abonnés et les visiteurs des sites internet ne peuvent pas mettre en place un hyperlien en direction de ce site sans l’autorisation expresse et préalable de Méchant.<br/>\nDans l’hypothèse où un utilisateur ou visiteur souhaiterait mettre en place un hyperlien en direction d’un des sites internet de Méchant , il lui appartiendra d’adresser un email accessible sur le site afin de formuler sa demande de mise en place d’un hyperlien. Méchant se réserve le droit d’accepter ou de refuser un hyperlien sans avoir à en justifier sa décision.<br/>\n<br/>\n<h2>Limitation contractuelles sur les données</h2>\n      <p>\nLes informations contenues sur ce site sont aussi précises que possible et le site remis à jour à différentes périodes de l’année, mais peut toutefois contenir des inexactitudes ou des omissions. Si vous constatez une lacune, erreur ou ce qui parait être un dysfonctionnement, merci de bien vouloir le signaler par email, à l’adresse contact@mechant.tv en décrivant le problème de la manière la plus précise possible (page posant problème, type d’ordinateur et de navigateur utilisé, …).<br/>\nTout contenu téléchargé se fait aux risques et périls de l’utilisateur et sous sa seule responsabilité. En conséquence, Méchant ne saurait être tenu responsable d’un quelconque dommage subi par l’ordinateur de l’utilisateur ou d’une quelconque perte de données consécutives au téléchargement. De plus, l’utilisateur du site s’engage à accéder au site en utilisant un matériel récent, ne contenant pas de virus et avec un navigateur de dernière génération mis-à-jour.<br/>\nLes liens hypertextes mis en place dans le cadre du présent site internet en direction d’autres ressources présentes sur le réseau Internet ne sauraient engager la responsabilité de Méchant.<br/>\n<br/>\n<h2>Propriété intellectuelle</h2>\n      <p>\nTout le contenu du présent site mechant.tv, incluant, de façon non limitative, les graphismes, images, textes, vidéos, animations, sons, logos, gifs et icônes ainsi que leur mise en forme sont la propriété exclusive de la société à l’exception des marques, logos ou contenus appartenant à d’autres sociétés partenaires ou auteurs.<br/>\nToute reproduction, distribution, modification, adaptation, retransmission ou publication, même partielle, de ces différents éléments est strictement interdite sans l’accord exprès par écrit de Méchant. Cette représentation ou reproduction, par quelque procédé que ce soit, constitue une contrefaçon sanctionnée par les articles L.335-2 et suivants du Code de la propriété intellectuelle. Le non-respect de cette interdiction constitue une contrefaçon pouvant engager la responsabilité civile et pénale du contrefacteur. En outre, les propriétaires des Contenus copiés pourraient intenter une action en justice à votre encontre.<br/>\n<br/>\n<h2>Litiges</h2>\n      <p>\nLes présentes conditions du site <a href=\"https://www.mechant.tv/\">www.mechant.tv</a> sont régies par les lois françaises et toute contestation ou litiges qui pourraient naître de l’interprétation ou de l’exécution de celles-ci seront de la compétence exclusive des tribunaux dont dépend le siège social de la société. La langue de référence, pour le règlement de contentieux éventuels, est le français.<br/>\n<br/>\n<h2>Données personnelles</h2>\n      <p>\nDe manière générale, vous n’êtes pas tenu de nous communiquer vos données personnelles lorsque vous visitez notre site Internet <a href=\"https://www.mechant.tv/\">www.mechant.tv</a><br/>\nNous pouvons collecter de manière automatique certaines informations vous concernant lors d’une simple navigation sur notre site Internet, notamment : des informations concernant l’utilisation de notre site, comme les zones que vous visitez et les services auxquels vous accédez, votre adresse IP, le type de votre navigateur, vos temps d’accès.<br/>\nDe telles informations sont utilisées exclusivement à des fins de statistiques internes, de manière à améliorer la qualité des services qui vous sont proposés. Les bases de données sont protégées par les dispositions de la loi du 1er juillet 1998 transposant la directive 96/9 du 11 mars 1996 relative à la protection juridique des bases de données.<br/>","spans":[]}]
 }
