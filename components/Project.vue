@@ -7,7 +7,7 @@
     @mousemove="handleMouseMove"
     @mouseleave="handleMouseLeave"
   >
-    <div class="Project_background" :style="{ backgroundImage: `url('${data?.thumbnail_url || data?.poster}')` }" />
+    <div class="Project_background" :style="{ backgroundImage: `url('${data?.poster || data?.thumbnail_url}')` }" />
     <div class="Project_play" :class="{ hover: isMouseHover }" ref="icon">
       <i class="Project_play_icon icon-play"></i>
     </div>

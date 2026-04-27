@@ -219,19 +219,8 @@ export default {
           })
         }
 
-        // Use thumbnail_url as hero texture (Vimeo thumbnail as image)
-        if (project.thumbnail_url && ids.indexOf(project.id) < 0) {
-          sources.push({
-            name: `${project.id}_hero`,
-            type: 'texture',
-            path: project.thumbnail_url
-          })
-          sources.push({
-            name: `${project.id}_hero_mobile`,
-            type: 'texture',
-            path: project.thumbnail_url
-          })
-        } else if (project.video_home && ids.indexOf(project.id) < 0 && !this.isMobile) {
+        // Priorité : video_home (MP4 direct) > poster (image HD) > thumbnail_url (Vimeo)
+        if (project.video_home && ids.indexOf(project.id) < 0 && !this.isMobile) {
           sources.push({
             name: `${project.id}_hero`,
             type: 'video',
@@ -239,12 +228,21 @@ export default {
           })
         }
 
-        if (!project.thumbnail_url && project.video_home_mobile && ids.indexOf(project.id) < 0 && this.isMobile) {
-          sources.push({
-            name: `${project.id}_hero_mobile`,
-            type: 'video',
-            path: `${project.video_home_mobile}?id=${p}`
-          })
+        if (ids.indexOf(project.id) < 0) {
+          if (project.video_home_mobile && this.isMobile) {
+            sources.push({
+              name: `${project.id}_hero_mobile`,
+              type: 'video',
+              path: `${project.video_home_mobile}?id=${p}`
+            })
+          } else if (!project.video_home) {
+            // Fallback image : poster HD > thumbnail Vimeo
+            const imgUrl = project.poster || project.thumbnail_url
+            if (imgUrl) {
+              sources.push({ name: `${project.id}_hero`, type: 'texture', path: imgUrl })
+              sources.push({ name: `${project.id}_hero_mobile`, type: 'texture', path: imgUrl })
+            }
+          }
         }
 
         ids.push(project.id)
