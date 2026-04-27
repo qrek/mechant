@@ -1,11 +1,11 @@
 import { supabase } from '@/utils/supabase'
 
-export default async function ({ route, redirect }) {
+export default function ({ route, redirect }) {
   if (!process.client) return
 
   if (route.path === '/admin/login') return
 
-  const { data: { session } } = await supabase.auth.getSession()
+  const session = supabase.auth.session()
 
   if (!session) {
     return redirect('/admin/login')

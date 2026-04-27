@@ -21,9 +21,8 @@ export default {
   data() {
     return { isAuthenticated: false }
   },
-  async mounted() {
-    const { data: { session } } = await supabase.auth.getSession()
-    this.isAuthenticated = !!session
+  mounted() {
+    this.isAuthenticated = !!supabase.auth.session()
   },
   methods: {
     async logout() {

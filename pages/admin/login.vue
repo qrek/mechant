@@ -36,15 +36,14 @@ export default {
       loading: false
     }
   },
-  async mounted() {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) this.$router.push('/admin/projects')
+  mounted() {
+    if (supabase.auth.session()) this.$router.push('/admin/projects')
   },
   methods: {
     async login() {
       this.error = null
       this.loading = true
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signIn({
         email: this.email,
         password: this.password
       })
