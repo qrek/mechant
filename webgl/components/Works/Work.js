@@ -29,8 +29,9 @@ class Work extends component(Object3D) {
     this._background.material = this._background.material.clone()
 
     if (this._el?.dataset?.display) {
-      this._mesh.material.uniforms.uMask.value = ResourceLoader.get(this._el?.dataset?.display)
-      this._background.material.uniforms.uMask.value = ResourceLoader.get(this._el?.dataset?.display)
+      const { texture: displayMask } = ResourceLoader.get(this._el?.dataset?.display)
+      this._mesh.material.uniforms.uMask.value = displayMask
+      this._background.material.uniforms.uMask.value = displayMask
     }
 
     this._bounds = this.getBounds()

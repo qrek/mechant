@@ -33,8 +33,9 @@ class Materials {
     let texture = null
 
     switch (type) {
-      case 'MeshBasicMaterial':
-        texture = ResourceLoader.get(name)
+      case 'MeshBasicMaterial': {
+        const { texture: t1 } = ResourceLoader.get(name)
+        texture = t1
         texture.flipY = false
         texture.encoding = sRGBEncoding
         texture.generateMipmaps = false
@@ -44,6 +45,7 @@ class Materials {
           map: texture,
           ...options
         })
+      }
       case 'ColorBasicMaterial':
         return new MeshBasicMaterial({
           ...options
@@ -52,14 +54,16 @@ class Materials {
         return new MeshPhysicalMaterial({
           ...options
         })
-      default:
-        texture = ResourceLoader.get(name)
+      default: {
+        const { texture: t2 } = ResourceLoader.get(name)
+        texture = t2
         texture.flipY = false
 
         return new MeshBasicMaterial({
           map: texture,
           transparent: true
         })
+      }
     }
   }
 

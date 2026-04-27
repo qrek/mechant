@@ -54,7 +54,8 @@ class Works extends component(Object3D) {
 
     this._items = []
 
-    this._mask = ResourceLoader.get('work_alpha_mask')
+    const { texture: maskTexture } = ResourceLoader.get('work_alpha_mask')
+    this._mask = maskTexture
     this._mask.encoding = sRGBEncoding
     this._mask.magFilter = NearestFilter
     this._mask.minFilter = LinearMipMapLinearFilter
