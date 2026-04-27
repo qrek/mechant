@@ -205,47 +205,58 @@ export default {
       const { projects, heroProjects} = this.data
 
       const sources = []
-      const mixProjects = {...projects, ...heroProjects}
+      // Normaliser : projects est un tableau, heroProjects un objet keyed by id
+      const projectsArray = Array.isArray(projects) ? projects : Object.values(projects)
+      const heroArray = Object.values(heroProjects || {})
+      const allProjects = [...projectsArray]
+      heroArray.forEach(h => {
+        if (!allProjects.find(p => p.id === h.id)) allProjects.push(h)
+      })
+
       const ids = []
 
-      Object.keys(mixProjects).forEach(p => {
-        const project = mixProjects[p]
+      allProjects.forEach(project => {
+        if (ids.indexOf(project.id) >= 0) return
+        ids.push(project.id)
 
-        if (project.preview_video && ids.indexOf(project.id) < 0 && !this.isMobile) {
+        // Preview video pour la grille des works (desktop seulement)
+        if (project.preview_video && !this.isMobile) {
           sources.push({
             name: `${project.id}_preview_video`,
             type: 'video',
-            path: `${project.preview_video}?id=${p}`
+            path: project.preview_video
           })
         }
 
-        // Priorité : video_home (MP4 direct) > poster (image HD) > thumbnail_url (Vimeo)
-        if (project.video_home && ids.indexOf(project.id) < 0 && !this.isMobile) {
+        // Toujours précharger la thumbnail comme fallback pour la grille
+        const thumbUrl = project.poster || project.thumbnail_url
+        if (thumbUrl) {
+          sources.push({
+            name: `${project.id}_preview_video_img`,
+            type: 'texture',
+            path: thumbUrl
+          })
+        }
+
+        // Héro : video_home > poster > thumbnail
+        if (project.video_home && !this.isMobile) {
           sources.push({
             name: `${project.id}_hero`,
             type: 'video',
-            path: `${project.video_home}?id=${p}`
+            path: project.video_home
           })
         }
 
-        if (ids.indexOf(project.id) < 0) {
-          if (project.video_home_mobile && this.isMobile) {
-            sources.push({
-              name: `${project.id}_hero_mobile`,
-              type: 'video',
-              path: `${project.video_home_mobile}?id=${p}`
-            })
-          } else if (!project.video_home) {
-            // Fallback image : poster HD > thumbnail Vimeo
-            const imgUrl = project.poster || project.thumbnail_url
-            if (imgUrl) {
-              sources.push({ name: `${project.id}_hero`, type: 'texture', path: imgUrl })
-              sources.push({ name: `${project.id}_hero_mobile`, type: 'texture', path: imgUrl })
-            }
-          }
+        if (project.video_home_mobile && this.isMobile) {
+          sources.push({
+            name: `${project.id}_hero_mobile`,
+            type: 'video',
+            path: project.video_home_mobile
+          })
+        } else if (!project.video_home && thumbUrl) {
+          sources.push({ name: `${project.id}_hero`, type: 'texture', path: thumbUrl })
+          sources.push({ name: `${project.id}_hero_mobile`, type: 'texture', path: thumbUrl })
         }
-
-        ids.push(project.id)
       })
 
       return sources

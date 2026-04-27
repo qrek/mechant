@@ -69,22 +69,30 @@ class Work extends component(Object3D) {
 
   async _init() {
     try {
-      // 1. Essayer la preview video (préchargée ou à charger)
+      // 1. Preview video (préchargée ou chargée à la demande)
       if (!ResourceLoader.has(this._image)) {
         const previewUrl = this._component.getPreviewVideo()
         if (previewUrl) {
-          await ResourceLoader.loadResource({ name: this._image, type: 'video', path: previewUrl })
+          try {
+            await ResourceLoader.loadResource({ name: this._image, type: 'video', path: previewUrl })
+          } catch (e) {
+            console.warn('Work: preview video failed, trying thumbnail fallback:', e?.message)
+          }
         }
       }
 
-      // 2. Si toujours pas en cache, fallback sur poster/thumbnail
+      // 2. Fallback poster/thumbnail — toujours atteint même si l'étape 1 échoue
       if (!ResourceLoader.has(this._image)) {
         const posterUrl = this._component.data?.poster || this._component.data?.thumbnail_url
         if (posterUrl) {
           const fallbackName = `${this._image}_img`
           this._image = fallbackName
           if (!ResourceLoader.has(fallbackName)) {
-            await ResourceLoader.loadResource({ name: fallbackName, type: 'texture', path: posterUrl })
+            try {
+              await ResourceLoader.loadResource({ name: fallbackName, type: 'texture', path: posterUrl })
+            } catch (e) {
+              console.warn('Work: thumbnail fallback failed:', e?.message)
+            }
           }
         }
       }
