@@ -95,10 +95,13 @@ function extractVimeoId(value) {
 // Récupère la miniature Vimeo via oEmbed (public, sans auth)
 async function fetchVimeoThumbnail(vimeoId) {
   try {
-    const res = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoId}`)
+    const res = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoId}&width=1920`)
     if (!res.ok) return null
     const data = await res.json()
-    return data.thumbnail_url || null
+    // thumbnail_url_with_play_button has lower quality, use thumbnail_url
+    // Replace _640 suffix with _1280 for better quality if present
+    const url = data.thumbnail_url || null
+    return url ? url.replace(/_\d+(\.\w+)$/, '_1280$1') : null
   } catch {
     return null
   }
