@@ -68,7 +68,6 @@
 
 <script>
 import Hero from "@/components/Hero"
-import Tag from "@/components/Tag"
 import Button from "@/components/Button"
 import ProjectHome from "@/components/ProjectHome"
 import DynamicText from "@/components/DynamicText";
@@ -76,9 +75,7 @@ import DynamicText from "@/components/DynamicText";
 import { gsap } from '@/vendor/gsap'
 
 import { ScrollTrigger } from "@/vendor/gsap/ScrollTrigger";
-import { SplitText } from '@/vendor/gsap/SplitText'
 
-gsap.registerPlugin(SplitText)
 gsap.registerPlugin(ScrollTrigger)
 
 import customPageTransitions from '@/mixins/customPageTransitions'
@@ -91,7 +88,6 @@ export default {
   name: 'IndexPage',
   components: {
     Hero,
-    Tag,
     Button,
     ProjectHome,
     DynamicText,
@@ -175,8 +171,6 @@ export default {
       if (!this.$refs?.introText?.$el)
         return
 
-      // intro
-      const words = new SplitText(this.$refs.introText.$el, { type: "words" })
       this.tween.textScrollEvent = gsap.to(this.$refs.introText.$el.querySelectorAll('div:not(.Tag)'), {
         scrollTrigger: {
           trigger: this.$refs.introText.$el,

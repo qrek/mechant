@@ -27,14 +27,15 @@ export default {
   },
 
   mounted() {
-    window.addEventListener('resize', this.__resize.bind(this))
+    this.__resizeBound = this.__resize.bind(this)
+    window.addEventListener('resize', this.__resizeBound)
 
     if (this.isCompleted)
       this.__init()
   },
 
   beforeDestroy() {
-    window.removeEventListener('resize', this.__resize.bind(this))
+    window.removeEventListener('resize', this.__resizeBound)
   },
 
   methods: {

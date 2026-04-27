@@ -165,17 +165,13 @@ export default {
 
         const { projectWrapper, projectList } = this.$refs
 
-
         this.$nextTick(() => {
-          console.log(projectList.$el.clientHeight)
-
           this.tween.wrapper = gsap.timeline()
           this.tween.wrapper.to(projectWrapper, { height: projectList.$el.clientHeight })
         })
-
-
-        this.isLoading = false
       }
+
+      this.isLoading = false
     }
   }
 }

@@ -140,7 +140,12 @@ export default {
         projectPopinBg1,
       } = this.$refs
 
-      this.player = new Vimeo.Player(this.$refs.videoIframe, {
+      if (typeof window.Vimeo === 'undefined') {
+        console.error('Vimeo Player SDK not loaded')
+        return
+      }
+
+      this.player = new window.Vimeo.Player(this.$refs.videoIframe, {
         id: `https://player.vimeo.com/video/${this.project.vimeo_id}?h=036b684498`,
         playsinline: false
       })
@@ -165,7 +170,7 @@ export default {
       } = this.$refs
 
       this.tween.active = gsap.timeline()
-      this.player.pause()
+      if (this.player) this.player.pause()
       _el.classList.remove('displayPlayer')
 
       this.tween.active.add('leave')

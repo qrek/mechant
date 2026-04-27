@@ -24,7 +24,6 @@ import ProjectPopin from "@/components/ProjectPopin"
 import WebGLApplication from "@/components/WebGLApplication"
 import Preloader from "@/components/Preloader"
 import TransitionPage from "@/components/TransitionPage"
-import CustomCursor from "@/components/CustomCursor"
 
 import { mapActions, mapGetters } from 'vuex'
 import TransitionManager from "~/utils/TransitionManager";
@@ -36,8 +35,7 @@ export default {
     WebGLApplication,
     ProjectPopin,
     Preloader,
-    TransitionPage,
-    CustomCursor
+    TransitionPage
   },
   watch: {
     $route (to, from) {
