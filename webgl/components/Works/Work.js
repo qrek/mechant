@@ -68,27 +68,37 @@ class Work extends component(Object3D) {
   }
 
   async _init() {
-    if (!ResourceLoader.has(this._image))
-      await ResourceLoader.loadResource({
-        name: this._image,
-        type: 'video',
-        path: this._component.getPreviewVideo()
-      })
+    if (!ResourceLoader.has(this._image)) {
+      const previewUrl = this._component.getPreviewVideo()
+      if (previewUrl) {
+        await ResourceLoader.loadResource({ name: this._image, type: 'video', path: previewUrl })
+      } else {
+        const posterUrl = this._component.data?.poster || this._component.data?.thumbnail_url
+        if (posterUrl) {
+          await ResourceLoader.loadResource({ name: this._image, type: 'texture', path: posterUrl })
+        } else {
+          this._el.dataset.loaded = true
+          return
+        }
+      }
+    }
 
     this._el.dataset.loaded = true
 
     const camera = DOMViewport(this._camera)
     const { texture, video } = ResourceLoader.get(this._image)
 
-    this._video = video
-    video.currentTime = 0
-    this._video.pause()
+    this._video = video || null
+    if (video) {
+      video.currentTime = 0
+      video.pause()
+    }
 
     this._mesh.material.uniforms.uTexture.value = texture
-    this._mesh.material.uniforms.uResolution.value = new Vector2(texture.image.videoWidth, texture.image.videoHeight)
-
+    const w = texture.image.videoWidth || texture.image.naturalWidth || texture.image.width || 1920
+    const h = texture.image.videoHeight || texture.image.naturalHeight || texture.image.height || 1080
+    this._mesh.material.uniforms.uResolution.value = new Vector2(w, h)
     this._mesh.material.uniforms.uViewport.value = new Vector2(camera.x, camera.y)
-
     this._background.material.uniforms.uViewport.value = new Vector2(camera.x, camera.y)
 
     this._setScale()
