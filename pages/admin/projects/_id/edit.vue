@@ -57,6 +57,30 @@
         </div>
       </div>
 
+      <!-- Preview video -->
+      <div class="form-section">
+        <h2>Preview Vidéo (WebGL)</h2>
+        <p class="field-hint" style="margin-bottom: 0.25rem">Courte vidéo MP4 affichée au survol de la carte dans la grille des projets.</p>
+
+        <div v-if="form.preview_video" class="preview-video-row">
+          <video :src="form.preview_video" muted loop playsinline style="height:72px;border-radius:6px;border:1px solid #2a2a2a;" />
+          <div>
+            <p class="field-hint" style="word-break:break-all">{{ form.preview_video }}</p>
+            <button type="button" class="btn-sm btn-danger" style="margin-top:0.5rem" @click="removePreviewVideo">Supprimer</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>{{ form.preview_video ? 'Remplacer le fichier' : 'Choisir un fichier MP4' }}</label>
+          <input type="file" accept="video/mp4,video/*" @change="onPreviewVideoChange" :disabled="uploadingVideo" />
+        </div>
+        <div v-if="uploadingVideo" class="upload-progress">
+          <div class="upload-bar" :style="{ width: uploadProgress + '%' }"></div>
+          <span>{{ uploadProgress }}%</span>
+        </div>
+        <p v-if="uploadError" class="error">{{ uploadError }}</p>
+      </div>
+
       <div class="form-section">
         <h2>Section Héro</h2>
         <label class="toggle-label">
@@ -113,6 +137,9 @@ export default {
       vimeoError: null,
       saving: false,
       saveError: null,
+      uploadingVideo: false,
+      uploadProgress: 0,
+      uploadError: null,
       categories: [],
       form: {
         title: '',
@@ -122,6 +149,7 @@ export default {
         description: '',
         categories: [],
         badges: [],
+        preview_video: '',
         is_hero: false,
         hero_title: '',
         hero_order: 0,
@@ -147,6 +175,7 @@ export default {
         description: project.description || '',
         categories: project.categories || [],
         badges: project.badges || [],
+        preview_video: project.preview_video || '',
         is_hero: project.is_hero || false,
         hero_title: project.hero_title || '',
         hero_order: project.hero_order || 0,
@@ -182,6 +211,34 @@ export default {
         this.vimeoError = 'Impossible de récupérer les infos Vimeo.'
       }
       this.fetchingVimeo = false
+    },
+    async onPreviewVideoChange(e) {
+      const file = e.target.files[0]
+      if (!file) return
+      this.uploadError = null
+      this.uploadingVideo = true
+      this.uploadProgress = 0
+
+      const ext = file.name.split('.').pop()
+      const filename = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+
+      const { error } = await supabase.storage
+        .from('preview-videos')
+        .upload(filename, file, { contentType: file.type, upsert: false })
+
+      if (error) {
+        this.uploadError = 'Erreur upload : ' + error.message
+        this.uploadingVideo = false
+        return
+      }
+
+      const { publicURL } = supabase.storage.from('preview-videos').getPublicUrl(filename)
+      this.form.preview_video = publicURL
+      this.uploadProgress = 100
+      this.uploadingVideo = false
+    },
+    removePreviewVideo() {
+      this.form.preview_video = ''
     },
     async save() {
       const id = this.extractVimeoId(this.vimeoInput)
@@ -365,4 +422,44 @@ export default {
   transition: all 0.2s;
 }
 .btn-sm:hover { border-color: #555; color: #fff; }
+
+.preview-video-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.upload-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.upload-bar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: #333;
+  transition: width 0.2s;
+}
+
+.upload-progress span { position: relative; font-size: 0.8rem; color: #888; }
+
+.field input[type="file"] {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  color: #ccc;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.btn-danger { border-color: #450a0a; color: #f87171; }
+.btn-danger:hover { background: #450a0a; }
 </style>
