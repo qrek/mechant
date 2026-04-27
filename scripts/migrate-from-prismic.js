@@ -101,7 +101,8 @@ async function fetchVimeoThumbnail(vimeoId) {
     // thumbnail_url_with_play_button has lower quality, use thumbnail_url
     // Replace _640 suffix with _1280 for better quality if present
     const url = data.thumbnail_url || null
-    return url ? url.replace(/_\d+(\.\w+)$/, '_1280$1') : null
+    // Remplace les dimensions dans l'URL Vimeo CDN par 1920x1080 (max disponible)
+    return url ? url.replace(/_\d+x\d+(\.\w+)/, '_1920x1080$1').replace(/_\d+(\.\w+)$/, '_1920x1080$1') : null
   } catch {
     return null
   }

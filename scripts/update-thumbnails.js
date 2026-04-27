@@ -32,7 +32,7 @@ async function fetchHighResThumbnail(vimeoId) {
   if (!res.ok) return null
   const data = await res.json()
   const url = data.thumbnail_url || null
-  return url ? url.replace(/_\d+(\.\w+)$/, '_1280$1') : null
+  return url ? url.replace(/_\d+x\d+(\.\w+)/, '_1920x1080$1').replace(/_\d+(\.\w+)$/, '_1920x1080$1') : null
 }
 
 async function main() {

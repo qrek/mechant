@@ -152,12 +152,15 @@ export default {
       this.vimeoError = null
       this.fetchingVimeo = true
       try {
-        const res = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${id}`)
+        const res = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${id}&width=1920`)
         if (!res.ok) throw new Error()
         const data = await res.json()
         this.form.vimeo_id = id
         if (!this.form.title) this.form.title = data.title || ''
-        if (!this.form.thumbnail_url) this.form.thumbnail_url = data.thumbnail_url || ''
+        if (!this.form.thumbnail_url) {
+          const raw = data.thumbnail_url || ''
+          this.form.thumbnail_url = raw.replace(/_\d+x\d+(\.\w+)/, '_1920x1080$1').replace(/_\d+(\.\w+)$/, '_1920x1080$1')
+        }
       } catch {
         this.vimeoError = 'Impossible de récupérer les infos Vimeo. Vérifiez que la vidéo est publique ou non listée.'
       }
