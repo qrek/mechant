@@ -22,13 +22,11 @@ class ThreeVideoLoader {
 
       video.play()
 
-      video.onloadedmetadata = () => {
-        resolve({
-          texture,
-          path,
-          video
-        })
-      }
+      video.onloadedmetadata = () => resolve({ texture, path, video })
+      video.onerror = () => reject(new Error(`Video failed to load: ${path}`))
+
+      // Timeout de sécurité : si la vidéo ne charge pas en 15s, on rejette
+      setTimeout(() => reject(new Error(`Video load timeout: ${path}`)), 15000)
     })
   }
 }

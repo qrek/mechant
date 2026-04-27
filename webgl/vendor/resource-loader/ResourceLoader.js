@@ -176,8 +176,11 @@ export default class ResourceLoader extends EventManager {
 
     for (let i = 0, len = resources.length; i < len; i++) {
       const promise = ResourceLoader.loadResource(resources[i])
-      promises.push(promise)
-      promise.then(this._preloadProgressHandler)
+      // On rattrape les erreurs individuelles pour ne pas bloquer le chargement global
+      const safe = promise.then(this._preloadProgressHandler).catch((err) => {
+        console.warn('ResourceLoader: ressource ignorée —', resources[i].name, err?.message)
+      })
+      promises.push(safe)
     }
 
     return Promise.all(promises)
