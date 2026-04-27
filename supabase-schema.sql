@@ -29,7 +29,8 @@ create table if not exists projects (
   hero_order integer default 0,
   order_index integer default 0,
   published boolean default true,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  constraint projects_vimeo_id_key unique (vimeo_id)
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
