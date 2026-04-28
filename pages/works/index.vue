@@ -34,6 +34,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import { gsap } from '@/vendor/gsap'
+import { supabase } from '@/utils/supabase'
 
 export default {
   name: 'Works',
@@ -64,7 +65,8 @@ export default {
     }
   },
 
-  mounted() {
+  async mounted() {
+    await this._refreshProjects()
     this._preloadVideos()
     this._animateIn()
   },
@@ -78,8 +80,19 @@ export default {
   methods: {
     ...mapActions({
       setActive: 'project/setActive',
-      setId: 'project/setId'
+      setId: 'project/setId',
+      setData: 'data/setData'
     }),
+
+    async _refreshProjects() {
+      const { data: fresh } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('published', true)
+        .order('order_index', { ascending: false })
+        .limit(20)
+      if (fresh) await this.setData({ ...this.data, projects: fresh })
+    },
 
     getCategoryLabel(project) {
       const cats = project.categories
