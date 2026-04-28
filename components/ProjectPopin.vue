@@ -148,10 +148,7 @@ export default {
   mounted() {},
   beforeDestroy() {
     clearTimeout(this._hideControlsTimer)
-    if (this.player) {
-      this.player.destroy()
-      this.player = null
-    }
+    this._destroyPlayer()
   },
   methods: {
     ...mapActions({
@@ -186,7 +183,9 @@ export default {
     // Crée le player Vimeo en silence avant que l'utilisateur clique
     _preWarm() {
       if (typeof window.Vimeo === 'undefined' || !this.project?.vimeo_id) return
-      // Détruit le player précédent si c'est un projet différent
+      // Ne pas pré-chauffer si le player est déjà ouvert
+      if (this.isActive) return
+      // Détruire le player précédent si c'est un projet différent
       if (this.player) {
         this.player.destroy()
         this.player = null
@@ -200,15 +199,44 @@ export default {
         autopause: false,
         dnt: true
       })
-      // Muet + lecture pour commencer à bufferiser
       this.player.setMuted(true)
       this.player.play().catch(() => {})
-      this._isPreWarming = true
       this.player.on('loaded', () => { this.isVideoReady = true })
       this.player.on('timeupdate', ({ percent }) => {
         this.progress = percent * 100
         if (!this.isVideoReady) this.isVideoReady = true
       })
+    },
+
+    _createPlayer() {
+      if (typeof window.Vimeo === 'undefined' || !this.project?.vimeo_id) return false
+      this.isVideoReady = false
+      this.progress = 0
+      this.player = new window.Vimeo.Player(this.$refs.videoIframe, {
+        id: this.project.vimeo_id,
+        controls: false,
+        playsinline: true,
+        autopause: false,
+        dnt: true
+      })
+      this.player.on('loaded', () => { this.isVideoReady = true })
+      this.player.on('timeupdate', ({ percent }) => {
+        this.progress = percent * 100
+        if (!this.isVideoReady) this.isVideoReady = true
+      })
+      return true
+    },
+
+    _destroyPlayer() {
+      if (!this.player) return
+      this.player.off('pause')
+      this.player.off('play')
+      this.player.off('ended')
+      this.player.off('error')
+      this.player.off('loaded')
+      this.player.off('timeupdate')
+      this.player.destroy()
+      this.player = null
     },
 
     handleVideoClick() {
@@ -255,56 +283,42 @@ export default {
 
     handleEnter() {
       const _el = this.$el
-
       this.isPaused = false
       this.isMuted = false
       this.controlsVisible = false
 
+      // Créer le player s'il n'existe pas encore (démarrage froid)
       if (!this.player) {
-        // Démarrage froid (hover trop rapide ou SDK pas encore prêt)
-        if (typeof window.Vimeo === 'undefined') {
-          console.error('Vimeo Player SDK not loaded')
+        if (!this._createPlayer()) {
+          console.error('Vimeo SDK non chargé')
           return
         }
-        this.isVideoReady = false
-        this.progress = 0
-        this.player = new window.Vimeo.Player(this.$refs.videoIframe, {
-          id: this.project.vimeo_id,
-          controls: false,
-          playsinline: true,
-          autopause: false,
-          dnt: true
-        })
-        this.player.on('loaded', () => { this.isVideoReady = true })
-        this.player.on('timeupdate', ({ percent }) => {
-          this.progress = percent * 100
-          if (!this.isVideoReady) this.isVideoReady = true
-        })
       }
 
-      // Branchement des événements UI (toujours, qu'on soit pré-chauffé ou non)
+      // Nettoyer les listeners UI avant de les rebrancher (évite les doublons)
+      this.player.off('pause')
+      this.player.off('play')
+      this.player.off('ended')
+      this.player.off('error')
+
       this.player.on('pause', () => { this.isPaused = true; this.controlsVisible = true })
-      this.player.on('play', () => { this.isPaused = false })
+      this.player.on('play',  () => { this.isPaused = false })
       this.player.on('ended', () => { this.isPaused = true; this.progress = 0; this.controlsVisible = true })
       this.player.on('error', ({ message }) => {
-        console.warn('ProjectPopin: erreur Vimeo —', message)
+        console.warn('Vimeo error:', message)
         this.isVideoReady = true
         this.isPaused = true
       })
 
-      // Démute — si pré-chauffé (déjà en lecture), pas besoin de rappeler play()
+      // Démute + lecture (safe si déjà en train de jouer depuis le pre-warm)
       this.player.setMuted(false)
-      if (this._isPreWarming) {
-        this._isPreWarming = false
-      } else {
-        this.player.play().catch(err => {
-          console.warn('ProjectPopin: lecture bloquée:', err?.message)
-          this.isPaused = true
-          this.isVideoReady = true
-        })
-      }
+      this.player.play().catch(err => {
+        console.warn('Lecture bloquée:', err?.message)
+        this.isPaused = true
+        this.isVideoReady = true
+      })
 
-      // Affiche l'iframe immédiatement + fond noir en parallèle
+      // Affiche l'iframe immédiatement + fondu du fond noir en parallèle
       _el.classList.add('displayPlayer')
       gsap.fromTo(_el,
         { opacity: 0 },
@@ -330,10 +344,7 @@ export default {
         duration: 0.4,
         ease: 'power2.inOut',
         onComplete: () => {
-          if (this.player) {
-            this.player.destroy()
-            this.player = null
-          }
+          this._destroyPlayer()
           this.isPaused = false
           this.progress = 0
           this.isVideoReady = false
