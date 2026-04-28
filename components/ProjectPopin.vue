@@ -196,11 +196,14 @@ export default {
       this.player = new window.Vimeo.Player(this.$refs.videoIframe, {
         id: this.project.vimeo_id,
         controls: false,
-        playsinline: false
+        playsinline: true,
+        autopause: false,
+        dnt: true
       })
       // Muet + lecture pour commencer à bufferiser
       this.player.setMuted(true)
       this.player.play().catch(() => {})
+      this._isPreWarming = true
       this.player.on('loaded', () => { this.isVideoReady = true })
       this.player.on('timeupdate', ({ percent }) => {
         this.progress = percent * 100
@@ -268,7 +271,9 @@ export default {
         this.player = new window.Vimeo.Player(this.$refs.videoIframe, {
           id: this.project.vimeo_id,
           controls: false,
-          playsinline: false
+          playsinline: true,
+          autopause: false,
+          dnt: true
         })
         this.player.on('loaded', () => { this.isVideoReady = true })
         this.player.on('timeupdate', ({ percent }) => {
@@ -287,25 +292,27 @@ export default {
         this.isPaused = true
       })
 
-      // Démute et joue (le player pré-chauffé était muet)
+      // Démute — si pré-chauffé (déjà en lecture), pas besoin de rappeler play()
       this.player.setMuted(false)
-      this.player.play().catch(err => {
-        console.warn('ProjectPopin: lecture bloquée:', err?.message)
-        this.isPaused = true
-        this.isVideoReady = true
-      })
+      if (this._isPreWarming) {
+        this._isPreWarming = false
+      } else {
+        this.player.play().catch(err => {
+          console.warn('ProjectPopin: lecture bloquée:', err?.message)
+          this.isPaused = true
+          this.isVideoReady = true
+        })
+      }
 
-      // Fondu au noir simple
+      // Affiche l'iframe immédiatement + fond noir en parallèle
+      _el.classList.add('displayPlayer')
       gsap.fromTo(_el,
         { opacity: 0 },
         {
           opacity: 1,
-          duration: 0.5,
-          ease: 'power2.inOut',
-          onComplete: () => {
-            _el.classList.add('displayPlayer')
-            this.showControls()
-          }
+          duration: 0.35,
+          ease: 'power2.out',
+          onComplete: () => this.showControls()
         }
       )
     },
@@ -377,7 +384,7 @@ export default {
         height: 100%
         object-fit: cover
         opacity: 0
-        transition: opacity 0.8s ease
+        transition: opacity 0.4s ease
 
     &_loader
       position: absolute

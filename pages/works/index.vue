@@ -98,19 +98,19 @@ export default {
 
       tl.from(this.$refs.bg, {
         scale: 0.82,
-        duration: 1,
+        duration: 1.5,
         clearProps: 'transform'
       })
 
       const items = this.$el.querySelectorAll('.WorksPage_item')
       tl.from(items, {
         opacity: 0,
-        y: 18,
-        duration: 0.5,
-        stagger: 0.07,
+        y: 20,
+        duration: 0.65,
+        stagger: 0.09,
         ease: 'power2.out',
         clearProps: 'all'
-      }, '-=0.5')
+      }, '-=0.7')
     },
 
     _preloadVideos() {
