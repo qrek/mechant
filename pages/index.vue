@@ -167,21 +167,41 @@ export default {
 </script>
 
 <style lang="sass" scoped>
+$homeBg: #68dbf7
+
 .HomePage
   position: fixed
   inset: 0
   width: 100%
   height: 100%
   overflow: hidden
+  background: $homeBg
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  gap: 3rem
 
-  // ---------- Fond vidéo ----------
+  +breakpoint(mobile)
+    gap: 2rem
+    justify-content: center
+
+  // ---------- Rectangle vidéo centré ----------
   &_bg
-    position: absolute
-    inset: 0
+    position: relative
+    width: 65vw
+    aspect-ratio: 16 / 9
+    flex-shrink: 0
+    cursor: pointer
+
+    +breakpoint(mobile)
+      width: 90vw
 
     &_media
       position: absolute
       inset: 0
+      border-radius: 4px
+      overflow: hidden
 
     &_video,
     &_img
@@ -192,10 +212,7 @@ export default {
       object-fit: cover
 
     &_gradient
-      position: absolute
-      inset: 0
-      background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 40%, transparent 70%)
-      pointer-events: none
+      display: none
 
   &_clickZone
     position: absolute
@@ -205,23 +222,18 @@ export default {
 
   // ---------- Contenu ----------
   &_content
-    position: absolute
-    bottom: 0
-    left: 0
-    right: 0
-    padding: 5rem 6rem 5rem
+    width: 65vw
     display: flex
     align-items: flex-end
     justify-content: space-between
     gap: 2rem
-    z-index: 2
     pointer-events: none
 
     +breakpoint(mobile)
-      padding: 3rem 2.5rem 4rem
+      width: 90vw
       flex-direction: column
       align-items: flex-start
-      gap: 2.5rem
+      gap: 1.5rem
 
     &_inner
       flex: 1
@@ -230,101 +242,93 @@ export default {
     &_text
       display: flex
       flex-direction: column
-      gap: 1rem
+      gap: 0.5rem
 
     &_client
       font-family: $apfel
       font-weight: 400
-      font-size: 1.1rem
+      font-size: 1rem
       letter-spacing: 0.1em
       text-transform: uppercase
-      color: rgba(255,255,255,0.65)
+      color: rgba(0,0,0,0.5)
 
     &_title
       font-family: $apfel
       font-weight: 700
-      font-size: clamp(3.5rem, 6vw, 8rem)
+      font-size: clamp(2rem, 3.5vw, 5rem)
       line-height: 1
-      color: $white
+      color: $black
       text-transform: uppercase
-      max-width: 70vw
 
       +breakpoint(mobile)
-        font-size: clamp(3rem, 9vw, 5rem)
-        max-width: 100%
+        font-size: clamp(2rem, 7vw, 3.5rem)
 
   // ---------- Navigation ----------
   &_nav
     display: flex
-    flex-direction: column
-    align-items: flex-end
+    flex-direction: row
+    align-items: center
     gap: 1.5rem
     flex-shrink: 0
     pointer-events: all
 
-    +breakpoint(mobile)
-      flex-direction: row
-      align-items: center
-      justify-content: space-between
-      width: 100%
-
     &_counter
       font-family: $apfel
       font-weight: 400
-      font-size: 1.2rem
-      color: rgba(255,255,255,0.5)
+      font-size: 1.1rem
+      color: rgba(0,0,0,0.4)
       letter-spacing: 0.1em
 
       em
         font-style: normal
-        color: $white
+        color: $black
         font-weight: 500
-        font-size: 1.6rem
+        font-size: 1.4rem
 
     &_arrows
       display: flex
-      gap: 0.8rem
+      gap: 0.6rem
 
     &_arrow
       display: flex
       align-items: center
       justify-content: center
-      width: 4.4rem
-      height: 4.4rem
-      border: 1px solid rgba(255,255,255,0.3)
+      width: 3.8rem
+      height: 3.8rem
+      border: 1px solid rgba(0,0,0,0.25)
       border-radius: 50%
       background: transparent
-      color: $white
-      font-size: 1.2rem
+      color: $black
+      font-size: 1.1rem
       cursor: pointer
       transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease
 
       &:hover
-        background: $white
-        border-color: $white
-        color: $black
+        background: $black
+        border-color: $black
+        color: $homeBg
         transform: scale(1.1)
 
 // ---------- Transitions ----------
 .bg-fade-enter-active,
 .bg-fade-leave-active
-  transition: opacity 1s ease
+  transition: opacity 0.8s ease
 
 .bg-fade-enter,
 .bg-fade-leave-to
   opacity: 0
 
 .text-fade-enter-active
-  transition: opacity 0.4s ease 0.2s, transform 0.4s ease 0.2s
+  transition: opacity 0.4s ease 0.15s, transform 0.4s ease 0.15s
 
 .text-fade-leave-active
-  transition: opacity 0.25s ease, transform 0.25s ease
+  transition: opacity 0.2s ease, transform 0.2s ease
 
 .text-fade-enter
   opacity: 0
-  transform: translateY(1rem)
+  transform: translateY(0.8rem)
 
 .text-fade-leave-to
   opacity: 0
-  transform: translateY(-0.5rem)
+  transform: translateY(-0.4rem)
 </style>
