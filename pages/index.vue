@@ -193,7 +193,7 @@ export default {
     bottom: -14vw
     left: 48%
     transform: translateX(-50%)
-    width: 104vw
+    width: 99vw
     pointer-events: none
     z-index: 3
     user-select: none
