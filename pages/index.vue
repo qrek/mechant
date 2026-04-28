@@ -3,7 +3,8 @@
 
     <!-- Fond vidéo / image full-screen -->
     <div class="HomePage_bg">
-      <div class="HomePage_bg_media" :key="currentProject && currentProject.id">
+      <transition name="bg-fade">
+        <div class="HomePage_bg_media" :key="currentProject && currentProject.id">
           <video
             v-if="currentVideoUrl"
             :src="currentVideoUrl"
@@ -21,6 +22,7 @@
             class="HomePage_bg_img"
           />
         </div>
+      </transition>
 
       <div class="HomePage_bg_gradient" />
 
@@ -166,6 +168,15 @@ export default {
     inset: 0
     z-index: 1
     cursor: pointer
+
+// ---------- Transitions fond ----------
+.bg-fade-enter-active,
+.bg-fade-leave-active
+  transition: opacity 1s ease
+
+.bg-fade-enter,
+.bg-fade-leave-to
+  opacity: 0
 
   // ---------- Tagline ----------
   &_tagline
