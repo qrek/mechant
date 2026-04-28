@@ -234,14 +234,6 @@ export default {
 
     &_client
       font-family: $apfel
-      font-weight: 400
-      font-size: 1.1rem
-      letter-spacing: 0.1em
-      text-transform: uppercase
-      color: rgba(255,255,255,0.65)
-
-    &_title
-      font-family: $apfel
       font-weight: 700
       font-size: clamp(3.5rem, 6vw, 8rem)
       line-height: 1
@@ -252,6 +244,14 @@ export default {
       +breakpoint(mobile)
         font-size: clamp(3rem, 9vw, 5rem)
         max-width: 100%
+
+    &_title
+      font-family: $apfel
+      font-weight: 400
+      font-size: 1.1rem
+      letter-spacing: 0.1em
+      text-transform: uppercase
+      color: rgba(255,255,255,0.65)
 
   // ---------- Navigation ----------
   &_nav

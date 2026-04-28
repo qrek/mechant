@@ -211,8 +211,8 @@ export default {
   &_title
     font-family: $apfel
     font-weight: 900
-    font-size: clamp(4.5rem, 8vw, 12rem)
-    line-height: 0.88
+    font-size: clamp(2rem, 3.2vw, 4.5rem)
+    line-height: 0.9
     text-transform: uppercase
     color: #000
     transition: color 0.25s ease
@@ -221,12 +221,12 @@ export default {
   &_label
     font-family: $apfel
     font-weight: 400
-    font-size: clamp(0.65rem, 0.85vw, 0.95rem)
+    font-size: clamp(0.55rem, 0.65vw, 0.75rem)
     letter-spacing: 0.1em
     text-transform: uppercase
     color: rgba(0,0,0,0.5)
     transition: color 0.25s ease
     display: block
-    margin-top: 0.7em
+    margin-top: 0.45em
     line-height: 1.3
 </style>
