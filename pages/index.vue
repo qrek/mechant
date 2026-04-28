@@ -28,6 +28,9 @@
       <div class="HomePage_clickZone" @mouseenter="preloadProject" @click="openProject" />
     </div>
 
+    <!-- Tagline -->
+    <p class="HomePage_tagline">Paris-based post-production studio specializing in visual effects and editing for commercials, feature films and music videos.</p>
+
     <!-- Logo coupé en bas -->
     <div class="HomePage_logo" aria-hidden="true">
       <img src="~assets/images/MECHANT_TRANSPARENT.png" alt="" />
@@ -163,6 +166,24 @@ export default {
     inset: 0
     z-index: 1
     cursor: pointer
+
+  // ---------- Tagline ----------
+  &_tagline
+    position: absolute
+    right: 6rem
+    top: 50%
+    transform: translateY(-50%)
+    max-width: 22rem
+    font-family: $apfel
+    font-weight: 400
+    font-size: 0.85rem
+    line-height: 1.6
+    color: $white
+    z-index: 2
+    pointer-events: none
+
+    +breakpoint(mobile)
+      display: none
 
   // ---------- Logo coupé ----------
   &_logo
