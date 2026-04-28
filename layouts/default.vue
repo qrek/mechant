@@ -4,7 +4,7 @@
 
     <Header v-if="isLoadingCompleted" />
     <Nuxt v-if="isLoadingCompleted" />
-    <Footer v-if="isLoadingCompleted && !isErrorPage" />
+    <Footer v-if="isLoadingCompleted && !isErrorPage && !isHomePage" />
 
     <ProjectPopin />
 
@@ -76,6 +76,9 @@ export default {
     },
     pageViewNumber() {
       return this.pageView
+    },
+    isHomePage() {
+      return this.$route.name === 'index' || this.$route.path === '/'
     }
   },
   methods: {
