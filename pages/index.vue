@@ -169,15 +169,6 @@ export default {
     z-index: 1
     cursor: pointer
 
-// ---------- Transitions fond ----------
-.bg-fade-enter-active,
-.bg-fade-leave-active
-  transition: opacity 1s ease
-
-.bg-fade-enter,
-.bg-fade-leave-to
-  opacity: 0
-
   // ---------- Tagline ----------
   &_tagline
     position: absolute
@@ -212,4 +203,13 @@ export default {
       display: block
       width: 100%
       height: auto
+
+// ---------- Transitions fond ----------
+.bg-fade-enter-active,
+.bg-fade-leave-active
+  transition: opacity 1s ease
+
+.bg-fade-enter,
+.bg-fade-leave-to
+  opacity: 0
 </style>
