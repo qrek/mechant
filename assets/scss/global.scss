@@ -45,3 +45,14 @@ html.lock_scroll {
 body::-webkit-scrollbar{
   display: none;
 }
+
+/* Page transitions */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.page-enter,
+.page-leave-to {
+  opacity: 0;
+}

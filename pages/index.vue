@@ -46,6 +46,18 @@
         <span class="HomePage_nav_counter">
           <em>{{ pad(currentIndex + 1) }}</em> / {{ pad(projects.length) }}
         </span>
+        <div class="HomePage_nav_dots">
+          <button
+            v-for="(p, i) in projects"
+            :key="i"
+            class="HomePage_nav_dot"
+            :class="{ active: i === currentIndex }"
+            @click.stop="goTo(i)"
+            :aria-label="`Projet ${i + 1}`"
+          >
+            <span v-if="i === currentIndex" :key="currentIndex" class="HomePage_nav_dot_fill" />
+          </button>
+        </div>
         <div class="HomePage_nav_arrows">
           <button class="HomePage_nav_arrow" @click.stop="prev" aria-label="Précédent">
             <span class="icon-arrow-left"></span>
@@ -135,6 +147,12 @@ export default {
     prev() {
       this._stopAutoPlay()
       this.currentIndex = (this.currentIndex - 1 + this.projects.length) % this.projects.length
+      this._startAutoPlay()
+    },
+
+    goTo(i) {
+      this._stopAutoPlay()
+      this.currentIndex = i
       this._startAutoPlay()
     },
 
@@ -281,6 +299,35 @@ export default {
         font-weight: 500
         font-size: 1.6rem
 
+    &_dots
+      display: flex
+      gap: 0.5rem
+      align-items: center
+
+    &_dot
+      width: 3rem
+      height: 2px
+      background: rgba(255,255,255,0.2)
+      border: none
+      cursor: pointer
+      position: relative
+      overflow: hidden
+      border-radius: 2px
+      padding: 0
+      transition: width 0.3s ease, background 0.2s ease
+      flex-shrink: 0
+
+      &.active
+        width: 4.5rem
+        background: rgba(255,255,255,0.25)
+
+      &_fill
+        position: absolute
+        inset: 0
+        background: $white
+        transform-origin: left center
+        animation: dotProgress 8s linear forwards
+
     &_arrows
       display: flex
       gap: 0.8rem
@@ -304,6 +351,13 @@ export default {
         border-color: $white
         color: $black
         transform: scale(1.1)
+
+// ---------- Dot progress animation ----------
+@keyframes dotProgress
+  from
+    transform: scaleX(0)
+  to
+    transform: scaleX(1)
 
 // ---------- Transitions ----------
 .bg-fade-enter-active,

@@ -15,6 +15,7 @@
         <span>Titre / Client</span>
         <span>Vimeo ID</span>
         <span>Héro</span>
+        <span>Sélection</span>
         <span>Statut</span>
         <span>Actions</span>
       </div>
@@ -45,6 +46,15 @@
           <span :class="['badge', p.is_hero ? 'badge-orange' : 'badge-dim']">
             {{ p.is_hero ? 'Héro' : '—' }}
           </span>
+        </div>
+        <div class="col-featured">
+          <button
+            class="badge"
+            :class="p.is_featured ? 'badge-blue' : 'badge-dim'"
+            @click="toggleFeatured(p)"
+          >
+            {{ p.is_featured ? '★ Works' : '—' }}
+          </button>
         </div>
         <div class="col-status">
           <button
@@ -144,6 +154,14 @@ export default {
       this.saving = false
     },
 
+    async toggleFeatured(project) {
+      await supabase
+        .from('projects')
+        .update({ is_featured: !project.is_featured })
+        .eq('id', project.id)
+      project.is_featured = !project.is_featured
+    },
+
     async togglePublished(project) {
       await supabase
         .from('projects')
@@ -203,7 +221,7 @@ export default {
 
 .table-row {
   display: grid;
-  grid-template-columns: 28px 80px 1fr 120px 80px 90px 160px;
+  grid-template-columns: 28px 80px 1fr 120px 80px 80px 90px 160px;
   align-items: center;
   gap: 1rem;
   padding: 0.85rem 1rem;
@@ -287,6 +305,7 @@ export default {
 .badge-green { background: #14532d; color: #4ade80; }
 .badge-red   { background: #450a0a; color: #f87171; }
 .badge-orange { background: #431407; color: #fb923c; }
+.badge-blue   { background: #1e3a5f; color: #60a5fa; }
 .badge-dim   { background: #1a1a1a; color: #555; cursor: default; }
 
 .col-actions {

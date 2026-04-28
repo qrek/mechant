@@ -1,15 +1,15 @@
 <template>
-  <section class="WorksPage">
+  <section class="WorksPage" @mousemove="onMouseMove">
 
-    <!-- Vidéo de fond -->
-    <div class="WorksPage_videoBg" ref="videoBg">
-      <video ref="videoEl" autoplay muted loop playsinline class="WorksPage_videoBg_video" />
+    <!-- Cadre vidéo flottant (cursor-follower) -->
+    <div class="WorksPage_float" ref="float">
+      <video ref="floatVideo" muted loop playsinline class="WorksPage_float_video" />
     </div>
 
     <!-- Cloud typographique -->
     <div class="WorksPage_cloud" ref="list">
       <button
-        v-for="project in projectsData"
+        v-for="project in featuredProjects"
         :key="project.id"
         class="WorksPage_item"
         @mouseenter="onHover(project)"
@@ -19,6 +19,10 @@
         <span class="WorksPage_item_title">{{ project.client || getCategoryLabel(project) }}</span>
         <span class="WorksPage_item_label">{{ project.title }}</span>
       </button>
+
+      <NuxtLink to="/works/all" class="WorksPage_item WorksPage_item--allwork" @mouseleave.native="onLeave">
+        <span class="WorksPage_item_title">All Work</span>
+      </NuxtLink>
     </div>
 
   </section>
@@ -26,7 +30,6 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import { supabase } from '@/utils/supabase'
 
 export default {
   name: 'Works',
@@ -40,7 +43,6 @@ export default {
 
   data() {
     return {
-      isLoading: false,
       _hideTimer: null,
       _currentSrc: null,
       _preloadCache: {}
@@ -51,16 +53,18 @@ export default {
     ...mapGetters({ data: 'data/getData' }),
     projectsData() {
       return this.data?.projects || []
+    },
+    featuredProjects() {
+      const featured = this.projectsData.filter(p => p.is_featured)
+      return featured.length ? featured : this.projectsData
     }
   },
 
   mounted() {
-    window.addEventListener('scroll', this._onScroll)
     this._preloadVideos()
   },
 
   beforeDestroy() {
-    window.removeEventListener('scroll', this._onScroll)
     clearTimeout(this._hideTimer)
     Object.values(this._preloadCache).forEach(v => { v.src = ''; v.load() })
     this._preloadCache = {}
@@ -68,7 +72,6 @@ export default {
 
   methods: {
     ...mapActions({
-      setData: 'data/setData',
       setActive: 'project/setActive',
       setId: 'project/setId'
     }),
@@ -80,25 +83,39 @@ export default {
     },
 
     _preloadVideos() {
-      this.projectsData.forEach(project => {
+      this.featuredProjects.forEach(project => {
         const url = project.preview_video || project.video_home
         if (!url || this._preloadCache[project.id]) return
         const v = document.createElement('video')
         v.src = url
         v.muted = true
-        v.preload = 'auto'
+        v.preload = 'metadata'
         v.load()
         this._preloadCache[project.id] = v
       })
+    },
+
+    onMouseMove(e) {
+      const el = this.$refs.float
+      if (!el) return
+      const w = el.offsetWidth
+      const h = el.offsetHeight
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      let x = e.clientX + 32
+      let y = e.clientY - h / 2
+      if (x + w > vw - 16) x = e.clientX - w - 32
+      y = Math.max(16, Math.min(y, vh - h - 16))
+      el.style.transform = `translate(${x}px, ${y}px)`
     },
 
     onHover(project) {
       this.setId(project.id)
       const url = project.preview_video || project.video_home
       if (!url) return
-      const video = this.$refs.videoEl
-      const bg = this.$refs.videoBg
-      if (!video || !bg) return
+      const video = this.$refs.floatVideo
+      const float = this.$refs.float
+      if (!video || !float) return
       clearTimeout(this._hideTimer)
       if (this._currentSrc !== url) {
         this._currentSrc = url
@@ -106,48 +123,21 @@ export default {
       }
       video.currentTime = 0
       video.play().catch(() => {})
-      bg.classList.add('is-visible')
+      float.classList.add('is-visible')
     },
 
     onLeave() {
-      const bg = this.$refs.videoBg
-      if (!bg) return
-      bg.classList.remove('is-visible')
+      const float = this.$refs.float
+      if (!float) return
+      float.classList.remove('is-visible')
       this._hideTimer = setTimeout(() => {
-        if (this.$refs.videoEl) this.$refs.videoEl.pause()
-      }, 400)
+        if (this.$refs.floatVideo) this.$refs.floatVideo.pause()
+      }, 300)
     },
 
     openProject(project) {
       this.setId(project.id)
       this.setActive(true)
-    },
-
-    async _onScroll() {
-      const { list } = this.$refs
-      if (!list) return
-      const { bottom } = list.getBoundingClientRect()
-      if (bottom < window.innerHeight * 1.3 && !this.isLoading) {
-        await this._loadMore()
-      }
-    },
-
-    async _loadMore() {
-      const { page, total_pages } = this.data.pagination || {}
-      if (!page || page >= total_pages) return
-      this.isLoading = true
-      const from = page * 20
-      const { data: newProjects } = await supabase
-        .from('projects').select('*').eq('published', true)
-        .order('order_index', { ascending: false }).range(from, from + 19)
-      if (newProjects?.length) {
-        await this.setData({
-          ...this.data,
-          projects: [...this.data.projects, ...newProjects],
-          pagination: { page: page + 1, total_pages }
-        })
-      }
-      this.isLoading = false
     }
   }
 }
@@ -158,26 +148,38 @@ export default {
   position: relative
   min-height: 100vh
   background: #f2492c
-  padding: 13rem 5vw 8rem
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 12rem 5vw 8rem
 
   +breakpoint(mobile)
     padding: 11rem 5vw 6rem
+    align-items: flex-start
 
-  // ---------- Vidéo de fond ----------
-  &_videoBg
+  // ---------- Cadre vidéo flottant ----------
+  &_float
     position: fixed
-    inset: 0
-    z-index: 0
-    opacity: 0
-    transition: opacity 0.35s ease
+    top: 0
+    left: 0
+    width: 30rem
+    aspect-ratio: 16 / 9
+    border-radius: 10px
+    overflow: hidden
     pointer-events: none
+    z-index: 3
+    opacity: 0
+    transition: opacity 0.25s ease
+    will-change: transform
+    box-shadow: 0 12px 50px rgba(0,0,0,0.45)
+
+    +breakpoint(mobile)
+      display: none
 
     &.is-visible
       opacity: 1
 
     &_video
-      position: absolute
-      inset: 0
       width: 100%
       height: 100%
       object-fit: cover
@@ -191,7 +193,7 @@ export default {
     align-items: flex-start
     justify-content: center
 
-// Chaque projet : titre géant + petit label
+// Chaque projet
 .WorksPage_item
   display: inline-flex
   align-items: flex-start
@@ -202,12 +204,20 @@ export default {
   padding: 0
   padding-right: 0.3em
   line-height: 1
+  text-decoration: none
 
   &:hover
     .WorksPage_item_title
       color: $white
     .WorksPage_item_label
       color: rgba(255,255,255,0.7)
+
+  &--allwork
+    .WorksPage_item_title
+      color: rgba(0,0,0,0.3)
+      font-style: italic
+    &:hover .WorksPage_item_title
+      color: $white
 
   &_title
     font-family: $apfel

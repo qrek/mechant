@@ -115,6 +115,11 @@ export default {
 
     transpile: ['three']
   },
+  pageTransition: {
+    name: 'page',
+    mode: 'out-in'
+  },
+
   generate: {
     fallback: true
   }
