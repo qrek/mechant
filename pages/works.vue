@@ -16,8 +16,8 @@
         @mouseleave="onLeave"
         @click="openProject(project)"
       >
-        <span class="WorksPage_item_title">{{ project.title }}</span>
-        <span class="WorksPage_item_label">{{ project.client || getCategoryLabel(project) }}</span>
+        <span class="WorksPage_item_title">{{ project.client || getCategoryLabel(project) }}</span>
+        <span class="WorksPage_item_label">{{ project.title }}</span>
       </button>
     </div>
 
@@ -136,10 +136,10 @@ export default {
       const { page, total_pages } = this.data.pagination || {}
       if (!page || page >= total_pages) return
       this.isLoading = true
-      const from = page * 5
+      const from = page * 20
       const { data: newProjects } = await supabase
         .from('projects').select('*').eq('published', true)
-        .order('order_index', { ascending: false }).range(from, from + 4)
+        .order('order_index', { ascending: false }).range(from, from + 19)
       if (newProjects?.length) {
         await this.setData({
           ...this.data,
@@ -189,6 +189,7 @@ export default {
     display: flex
     flex-wrap: wrap
     align-items: flex-start
+    justify-content: center
 
 // Chaque projet : titre géant + petit label
 .WorksPage_item

@@ -481,13 +481,13 @@ export default {
           color: $black
 
         &_client
-          font-family: $kobeBold
+          font-family: $briceBlackCondensed
           margin-bottom: .8rem
-          font-size: 1.8rem
+          font-size: 3.5rem
 
         &_title
-          font-family: $briceBlackCondensed
-          font-size: 3.5rem
+          font-family: $kobeBold
+          font-size: 1.8rem
 
         &_tag
           ::v-deep .Tag_wrapper:not(:last-child)

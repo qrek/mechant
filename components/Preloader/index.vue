@@ -55,14 +55,14 @@ export default {
         { data: heroProjectsData },
         { data: categoriesData }
       ] = await Promise.all([
-        supabase.from('projects').select('*', { count: 'exact' }).eq('published', true).order('order_index', { ascending: false }).limit(5),
+        supabase.from('projects').select('*', { count: 'exact' }).eq('published', true).order('order_index', { ascending: false }).limit(20),
         supabase.from('projects').select('*').eq('is_hero', true).eq('published', true).order('hero_order', { ascending: true }),
         supabase.from('categories').select('*').order('order_index', { ascending: true })
       ])
 
       const categories = (categoriesData || []).reduce((acc, c) => ({ ...acc, [c.id]: c }), {})
       const heroProjects = (heroProjectsData || []).reduce((acc, p) => ({ ...acc, [p.id]: { ...p, sliderTitle: p.hero_title || p.title } }), {})
-      const totalPages = Math.ceil((count || 0) / 5)
+      const totalPages = Math.ceil((count || 0) / 20)
 
       await this.setData({
         homepage: siteContent.homepage,

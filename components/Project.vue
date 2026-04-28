@@ -215,20 +215,6 @@ export default {
     color: $white
 
     &_client
-      font-family: $kobeBold
-      font-size: 1.3rem
-      text-transform: uppercase
-      ::v-deep .line
-        overflow: hidden
-
-      ::v-deep
-        .word
-          transition: transform ease-in-out .3s
-          transform: translateY(calc(100% + 1rem))
-          +breakpoint(mobile)
-            transform: translateY(0)
-
-    &_title
       font-family: $briceBlackCondensed
       font-size: 2.8rem
       text-transform: uppercase
@@ -236,10 +222,24 @@ export default {
       display: block
       ::v-deep .line
         overflow: hidden
+
       ::v-deep
         .word
           transition: transform ease-in-out .3s
           transform: translateY(calc(100% + 2rem))
+          +breakpoint(mobile)
+            transform: translateY(0)
+
+    &_title
+      font-family: $kobeBold
+      font-size: 1.3rem
+      text-transform: uppercase
+      ::v-deep .line
+        overflow: hidden
+      ::v-deep
+        .word
+          transition: transform ease-in-out .3s
+          transform: translateY(calc(100% + 1rem))
           +breakpoint(mobile)
             transform: translateY(0)
 
