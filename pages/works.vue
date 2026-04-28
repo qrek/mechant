@@ -1,178 +1,160 @@
 <template>
-  <section class="worksPage">
-    <nav class="worksPage_filters">
-      <ul>
-        <li class="worksPage_filters_item" :class="{active: isActive('all')}" @click="setActiveFilter('all')">All</li>
-        <li v-for="(filter, index) in categoriesData" :key="index" class="worksPage_filters_item" :class="{active: isActive(filter.id)}" @click="setActiveFilter(filter.id)">{{ filter.title }}</li>
-      </ul>
-    </nav>
+  <section class="WorksPage">
 
-    <div class="worksPage_star star1" ref="star1">
-      <span class="icon-star2"></span>
-    </div>
-    <div class="worksPage_star star2" ref="star2">
-      <span class="icon-star"></span>
-    </div>
-    <div class="worksPage_star star3" ref="star3">
-      <span class="icon-star2"></span>
-    </div>
-    <div  class="worksPage_star star4" ref="star4">
-      <span class="icon-star3"></span>
+    <!-- Vidéo de fond (partagée, change au hover) -->
+    <div class="WorksPage_videoBg" ref="videoBg">
+      <video
+        ref="videoEl"
+        autoplay
+        muted
+        loop
+        playsinline
+        class="WorksPage_videoBg_video"
+      />
+      <div class="WorksPage_videoBg_overlay" />
     </div>
 
-    <div class="worksPage_projects" ref="projectWrapper">
-      <ProjectList ref="projectList" :projects="projectsData" />
+    <!-- Liste typographique -->
+    <div class="WorksPage_list" ref="list">
+      <div
+        v-for="(project, i) in projectsData"
+        :key="project.id"
+        class="WorksPage_item"
+        @mouseenter="onHover(project)"
+        @mouseleave="onLeave"
+        @click="openProject(project)"
+      >
+        <span class="WorksPage_item_index">{{ pad(i + 1) }}</span>
+        <h2 class="WorksPage_item_title">{{ project.title }}</h2>
+        <span class="WorksPage_item_label">{{ project.client || getCategoryLabel(project) }}</span>
+      </div>
     </div>
 
-    <!--<Button-->
-    <!--  text="Load more"-->
-    <!--  background="pink"-->
-    <!--  color="white"-->
-    <!--  :customClass="`laadMoreButton ${isLoading ? 'disabled' : ''}`"-->
-    <!--  :onClick="loadMore"-->
-    <!--  v-if="!hideLoadMoreButton"-->
-    <!--/>-->
   </section>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import { gsap } from '@/vendor/gsap'
 import { supabase } from '@/utils/supabase'
-
-import ProjectList from "@/components/ProjectList"
-
-import customPageTransitions from '@/mixins/customPageTransitions'
-
-import TransitionManager from '@/utils/TransitionManager'
-import {TRANSITION_LEAVE_END} from '@/store/router'
-import webgl from "@/mixins/webgl";
 
 export default {
   name: 'Works',
-  components: {
-    ProjectList
-  },
-  mixins: [customPageTransitions, webgl],
+
   head() {
     return {
-      title: this.projectsPageData.meta_title,
+      title: this.data?.projectsPage?.meta_title || 'Works — Méchant',
       meta: [
         {
           hid: 'description',
           name: 'description',
-          content: this.projectsPageData.meta_description
+          content: this.data?.projectsPage?.meta_description || ''
         }
       ]
     }
   },
+
   data() {
     return {
-      hideLoadMoreButton: false,
       isLoading: false,
-      tween: {}
+      _hideTimer: null
     }
   },
+
   computed: {
     ...mapGetters({
-      data: 'data/getData',
-      filter: 'data/getFilter'
+      data: 'data/getData'
     }),
     projectsData() {
-      return this.data.projects
-    },
-    categoriesData() {
-      return Object.values(this.data.categories)
-    },
-    projectsPageData() {
-      return this.data.projectsPage
+      return this.data?.projects || []
     }
   },
+
   mounted() {
-    const transitionManager = new TransitionManager()
-
-    transitionManager.addEventListener(TRANSITION_LEAVE_END, () => {
-      this.setFilter('all')
-    })
-
-    gsap.to([this.$refs.star1, this.$refs.star3, this.$refs.star2, this.$refs.star4], {
-      duration: 2,
-      stagger: 0.1,
-      scale: 1,
-      delay: 0.8,
-      ease: "elastic.out"
-    })
+    window.addEventListener('scroll', this._onScroll)
   },
+
+  beforeDestroy() {
+    window.removeEventListener('scroll', this._onScroll)
+    clearTimeout(this._hideTimer)
+  },
+
   methods: {
     ...mapActions({
-      setFilter: 'data/setFilter',
-      setData: 'data/setData'
+      setData: 'data/setData',
+      setActive: 'project/setActive',
+      setId: 'project/setId'
     }),
-    checkTween(key) {
-      if (this.tween[key]) {
-        this.tween[key].kill()
-        this.tween[key] = null
-      }
+
+    pad(n) {
+      return String(n).padStart(2, '0')
     },
-    isActive(filter) {
-      return filter === this.filter
+
+    getCategoryLabel(project) {
+      const cats = project.categories
+      if (!cats || !cats.length) return ''
+      const first = this.data?.categories?.[cats[0]]
+      return first?.title || ''
     },
-    setActiveFilter(filter) {
-      this.setFilter(filter)
+
+    onHover(project) {
+      const url = project.preview_video || project.video_home
+      if (!url) return
+      const video = this.$refs.videoEl
+      const bg = this.$refs.videoBg
+      if (!video || !bg) return
+      clearTimeout(this._hideTimer)
+      video.src = url
+      video.load()
+      video.play().catch(() => {})
+      bg.classList.add('is-visible')
     },
-    onSoftInit() {
-      const { projectWrapper, projectList } = this.$refs
-      gsap.set(projectWrapper, { height: projectList.$el.clientHeight })
-      window.addEventListener('scroll', this.handleScroll)
-      this.handleScroll()
-    },
-    onSoftDestroy() {
-      window.removeEventListener('scroll', this.handleScroll)
-    },
-    handleScroll() {
-      const { projectList } = this.$refs
-      const { bottom } = projectList.$el.getBoundingClientRect()
-      const limit = window.innerHeight * (4 / 3)
-      if (bottom < limit && !this.hideLoadMoreButton && !this.isLoading) {
-        this.loadMore()
-      }
-    },
-    async loadMore() {
-      this.isLoading = true
-      const { page, total_pages } = this.data.pagination
 
-      if (page < total_pages) {
-        this.checkTween('wrapper')
-
-        const from = page * 5
-        const { data: newProjects } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('published', true)
-          .order('order_index', { ascending: false })
-          .range(from, from + 4)
-
-        if (newProjects?.length) {
-          const newPage = page + 1
-          const asMap = newProjects.reduce((a, v) => ({ ...a, [v.id]: v }), {})
-
-          this.setData({
-            ...this.data,
-            projects: [...this.data.projects, ...newProjects],
-            pagination: { page: newPage, total_pages }
-          })
-
-          this.$refs.projectList.handleLoadMore(asMap)
-
-          if (newPage >= total_pages)
-            this.hideLoadMoreButton = true
-
-          const { projectWrapper, projectList } = this.$refs
-          this.$nextTick(() => {
-            this.tween.wrapper = gsap.timeline()
-            this.tween.wrapper.to(projectWrapper, { height: projectList.$el.clientHeight })
-          })
+    onLeave() {
+      const bg = this.$refs.videoBg
+      if (!bg) return
+      bg.classList.remove('is-visible')
+      this._hideTimer = setTimeout(() => {
+        const video = this.$refs.videoEl
+        if (video) {
+          video.pause()
+          video.src = ''
         }
+      }, 400)
+    },
+
+    openProject(project) {
+      this.setId(project.id)
+      this.setActive(true)
+    },
+
+    async _onScroll() {
+      const { list } = this.$refs
+      if (!list) return
+      const { bottom } = list.getBoundingClientRect()
+      if (bottom < window.innerHeight * 1.3 && !this.isLoading) {
+        await this._loadMore()
+      }
+    },
+
+    async _loadMore() {
+      const { page, total_pages } = this.data.pagination || {}
+      if (!page || page >= total_pages) return
+      this.isLoading = true
+
+      const from = page * 5
+      const { data: newProjects } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('published', true)
+        .order('order_index', { ascending: false })
+        .range(from, from + 4)
+
+      if (newProjects?.length) {
+        await this.setData({
+          ...this.data,
+          projects: [...this.data.projects, ...newProjects],
+          pagination: { page: page + 1, total_pages }
+        })
       }
 
       this.isLoading = false
@@ -182,97 +164,101 @@ export default {
 </script>
 
 <style lang="sass" scoped>
-.worksPage
-  width: 100%
-  display: flex
-  align-items: center
-  justify-content: flex-start
-  flex-direction: column
-  padding-top: 15rem
-  overflow: hidden
+.WorksPage
+  position: relative
+  min-height: 100vh
+  background: #f2492c
+  padding: 14rem 6rem 8rem
 
-  &_projects
-    width: 100%
-    display: flex
-    align-items: flex-start
-    justify-content: center
+  +breakpoint(mobile)
+    padding: 12rem 2.5rem 6rem
 
-  &_filters
-    position: relative
-    z-index: 2
-
-    ul
-      display: flex
-      justify-content: center
-      align-items: center
-
-    &_item
-      text-transform: uppercase
-      font-family: $kobeBold
-      color: $white
-      margin: 0 1.5rem
-      font-size: 1.4rem
-      cursor: pointer
-      transition: color 0.3s ease
-
-      &.active, &:hover
-        color: $orange
-
-  &_star
+  // ---------- Vidéo de fond ----------
+  &_videoBg
     position: fixed
-    transform: scale(0)
+    inset: 0
+    z-index: 0
+    opacity: 0
+    transition: opacity 0.4s ease
+    pointer-events: none
+
+    &.is-visible
+      opacity: 1
+
+    &_video
+      position: absolute
+      inset: 0
+      width: 100%
+      height: 100%
+      object-fit: cover
+
+    &_overlay
+      position: absolute
+      inset: 0
+      background: rgba(242, 73, 44, 0.55)
+
+  // ---------- Liste ----------
+  &_list
+    position: relative
+    z-index: 1
+
+  &_item
+    display: flex
+    align-items: baseline
+    gap: 2.4rem
+    padding: 1.8rem 0
+    border-top: 1px solid rgba(0,0,0,0.18)
+    cursor: pointer
+    transition: opacity 0.2s ease
+
+    &:last-child
+      border-bottom: 1px solid rgba(0,0,0,0.18)
+
+    &:hover
+      opacity: 0.75
 
     +breakpoint(mobile)
-      display: none
+      gap: 1.2rem
+      padding: 1.4rem 0
+      flex-wrap: wrap
 
-    span
-      display: block
+    &_index
+      font-family: $apfel
+      font-weight: 400
+      font-size: 1.1rem
+      color: rgba(0,0,0,0.45)
+      letter-spacing: 0.05em
+      flex-shrink: 0
+      width: 2.4rem
 
-    &.star1
-      font-size: 7rem
-      color: $pink
-      top: 60%
-      left: 3%
+    &_title
+      font-family: $apfel
+      font-weight: 700
+      font-size: clamp(3.2rem, 5.5vw, 7.5rem)
+      line-height: 0.95
+      text-transform: uppercase
+      color: #000
+      flex: 1
+      min-width: 0
 
-      span
-        @include animateStar(5s, 0.5s)
+      +breakpoint(mobile)
+        font-size: clamp(2.8rem, 9vw, 5rem)
+        width: 100%
+        flex: none
 
-    &.star2
-      position: absolute
-      font-size: 7.5rem
-      color: $white
-      top: 9%
-      left: 20%
+    &_label
+      font-family: $apfel
+      font-weight: 400
+      font-size: 1rem
+      letter-spacing: 0.2em
+      text-transform: uppercase
+      color: rgba(0,0,0,0.5)
+      flex-shrink: 0
+      text-align: right
 
-      span
-        @include animateStar(7s, 0.4s)
-
-    &.star3
-      font-size: 4rem
-      color: $white
-      top: 50%
-      right: 4%
-
-      span
-        @include animateStar(3s, 0s)
-
-    &.star4
-      position: absolute
-      font-size: 4rem
-      color: $orange
-      top: 9%
-      right: 20%
-
-      span
-        @include animateStar(4s, 0.2s)
-
-  .laadMoreButton
-    margin: -15rem 0 15rem
-
-    &.disabled
-      opacity: 0.5
-      pointer-events: none
-
-    +breakpoint(mobile)
-      margin: -8rem 0 10rem
+      +breakpoint(mobile)
+        font-size: 0.9rem
+        width: 100%
+        text-align: left
+        padding-left: 3.6rem
 </style>

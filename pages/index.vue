@@ -24,24 +24,22 @@
         </div>
       </transition>
 
-      <!-- Gradient overlay pour lisibilité du texte -->
       <div class="HomePage_bg_gradient" />
+
+      <!-- Zone cliquable sur toute la vidéo -->
+      <div class="HomePage_clickZone" @click="openProject" />
     </div>
 
     <!-- Contenu bas de page -->
     <div class="HomePage_content">
-      <transition name="content-fade">
-        <div class="HomePage_content_inner" :key="currentIndex">
-          <p class="HomePage_content_client">{{ currentProject && currentProject.client }}</p>
-          <h1 class="HomePage_content_title">{{ currentProject && (currentProject.sliderTitle || currentProject.title) }}</h1>
-          <button class="HomePage_content_cta" @click="openProject">
-            <span>Voir le film</span>
-            <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" aria-hidden="true">
-              <polygon points="5,3 19,12 5,21"/>
-            </svg>
-          </button>
-        </div>
-      </transition>
+      <div class="HomePage_content_inner">
+        <transition name="text-fade" mode="out-in">
+          <div :key="currentIndex" class="HomePage_content_text">
+            <p class="HomePage_content_client">{{ currentProject && currentProject.client }}</p>
+            <h1 class="HomePage_content_title">{{ currentProject && (currentProject.sliderTitle || currentProject.title) }}</h1>
+          </div>
+        </transition>
+      </div>
 
       <!-- Navigation -->
       <div class="HomePage_nav">
@@ -49,10 +47,10 @@
           <em>{{ pad(currentIndex + 1) }}</em> / {{ pad(projects.length) }}
         </span>
         <div class="HomePage_nav_arrows">
-          <button class="HomePage_nav_arrow" @click="prev" aria-label="Précédent">
+          <button class="HomePage_nav_arrow" @click.stop="prev" aria-label="Précédent">
             <span class="icon-arrow-left"></span>
           </button>
-          <button class="HomePage_nav_arrow" @click="next" aria-label="Suivant">
+          <button class="HomePage_nav_arrow" @click.stop="next" aria-label="Suivant">
             <span class="icon-arrow-right"></span>
           </button>
         </div>
@@ -189,12 +187,17 @@ export default {
       height: 100%
       object-fit: cover
 
-    // Gradient du bas pour lisibilité
     &_gradient
       position: absolute
       inset: 0
       background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 40%, transparent 70%)
       pointer-events: none
+
+  &_clickZone
+    position: absolute
+    inset: 0
+    z-index: 1
+    cursor: pointer
 
   // ---------- Contenu ----------
   &_content
@@ -207,6 +210,8 @@ export default {
     align-items: flex-end
     justify-content: space-between
     gap: 2rem
+    z-index: 2
+    pointer-events: none
 
     +breakpoint(mobile)
       padding: 3rem 2.5rem 4rem
@@ -215,6 +220,10 @@ export default {
       gap: 2.5rem
 
     &_inner
+      flex: 1
+      min-width: 0
+
+    &_text
       display: flex
       flex-direction: column
       gap: 1rem
@@ -240,33 +249,6 @@ export default {
         font-size: clamp(3rem, 9vw, 5rem)
         max-width: 100%
 
-    &_cta
-      display: inline-flex
-      align-items: center
-      gap: 0.8rem
-      margin-top: 1.5rem
-      padding: 1.2rem 2.4rem
-      background: $white
-      color: $black
-      font-family: $apfel
-      font-weight: 500
-      font-size: 1.2rem
-      letter-spacing: 0.1em
-      text-transform: uppercase
-      border: none
-      border-radius: 100px
-      cursor: pointer
-      transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease
-
-      &:hover
-        background: $orange
-        color: $white
-        transform: scale(1.04) rotate(-1deg)
-
-      +breakpoint(mobile)
-        padding: 1rem 2rem
-        font-size: 1.1rem
-
   // ---------- Navigation ----------
   &_nav
     display: flex
@@ -274,6 +256,7 @@ export default {
     align-items: flex-end
     gap: 1.5rem
     flex-shrink: 0
+    pointer-events: all
 
     +breakpoint(mobile)
       flex-direction: row
@@ -327,17 +310,17 @@ export default {
 .bg-fade-leave-to
   opacity: 0
 
-.content-fade-enter-active
-  transition: opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s
+.text-fade-enter-active
+  transition: opacity 0.4s ease 0.2s, transform 0.4s ease 0.2s
 
-.content-fade-leave-active
-  transition: opacity 0.3s ease, transform 0.3s ease
+.text-fade-leave-active
+  transition: opacity 0.25s ease, transform 0.25s ease
 
-.content-fade-enter
+.text-fade-enter
   opacity: 0
-  transform: translateY(1.5rem)
+  transform: translateY(1rem)
 
-.content-fade-leave-to
+.text-fade-leave-to
   opacity: 0
-  transform: translateY(-1rem)
+  transform: translateY(-0.5rem)
 </style>
