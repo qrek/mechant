@@ -17,7 +17,7 @@
         @click="openProject(project)"
       >
         <span class="WorksPage_item_title">{{ project.client || getCategoryLabel(project) }}</span>
-        <span class="WorksPage_item_label">{{ project.title }}</span>
+        <span class="WorksPage_item_label">{{ getWorkTypes(project) }}</span>
       </button>
 
       <NuxtLink to="/works/all" class="WorksPage_item WorksPage_item--allwork" @mouseleave.native="onLeave">
@@ -80,6 +80,15 @@ export default {
       const cats = project.categories
       if (!cats || !cats.length) return ''
       return this.data?.categories?.[cats[0]]?.title || ''
+    },
+
+    getWorkTypes(project) {
+      const cats = project.categories
+      if (!cats || !cats.length) return ''
+      return cats
+        .map(id => this.data?.categories?.[id]?.title || '')
+        .filter(Boolean)
+        .join(' · ')
     },
 
     _preloadVideos() {
@@ -216,7 +225,7 @@ export default {
   &_title
     font-family: $apfel
     font-weight: 900
-    font-size: clamp(2rem, 3.2vw, 4.5rem)
+    font-size: clamp(3rem, 5vw, 7rem)
     line-height: 0.9
     text-transform: uppercase
     color: #000
