@@ -1,372 +1,343 @@
 <template>
-  <section class="homePage">
-    <Hero :data="heroProjects" />
-    <div class="homePage_intro">
-      <img src="~assets/images/wave_orange.svg" alt="wave" class="wave">
-      <img src="~assets/images/wave_orange.svg" alt="wave" class="wave reverse">
+  <section class="HomePage">
 
-      <KinesisContainer>
-        <DynamicText ref="introText" :html="homePageData?.about_us_text[0]?.text" />
+    <!-- Fond vidéo / image full-screen -->
+    <div class="HomePage_bg">
+      <transition name="bg-fade">
+        <div class="HomePage_bg_media" :key="currentProject && currentProject.id">
+          <video
+            v-if="currentVideoUrl"
+            :src="currentVideoUrl"
+            :poster="currentImageUrl"
+            autoplay
+            muted
+            loop
+            playsinline
+            class="HomePage_bg_video"
+          />
+          <img
+            v-else-if="currentImageUrl"
+            :src="currentImageUrl"
+            alt=""
+            class="HomePage_bg_img"
+          />
+        </div>
+      </transition>
 
-        <kinesis-element :strength="!isMobile ? 10 : 0">
-          <div class="aboutUsButtonWrapper" ref="aboutButtonWrapper">
-            <Button
-              text="About us"
-              background="pink"
-              color="white"
-              customClass="aboutUsButton"
-              icon="icon-arrow-right"
-              to="/about"
-            />
-          </div>
-        </kinesis-element>
-
-        <div class="homePage_intro_star star1" ref="star1">
-          <kinesis-element :strength="!isMobile ? 15 : 0">
-            <span class="icon-star2"></span>
-          </kinesis-element>
-        </div>
-        <div class="homePage_intro_star star2" ref="star2">
-          <kinesis-element :strength="!isMobile ? -12 : 0">
-            <span class="icon-star"></span>
-          </kinesis-element>
-        </div>
-        <div class="homePage_intro_star star3" ref="star3">
-          <kinesis-element :strength="!isMobile ? 14 : 0">
-            <span class="icon-star2"></span>
-          </kinesis-element>
-        </div>
-        <div  class="homePage_intro_star star4" ref="star4">
-          <kinesis-element :strength="!isMobile ? -10 : 0">
-            <span class="icon-star3"></span>
-          </kinesis-element>
-        </div>
-
-        <div class="homePage_intro_sticker" ref="introSticker">
-          <kinesis-element :strength="!isMobile ? -17 : 0">
-            <img src="~assets/images/sticker_chauve.png" alt="mechant" />
-          </kinesis-element>
-        </div>
-      </KinesisContainer>
+      <!-- Gradient overlay pour lisibilité du texte -->
+      <div class="HomePage_bg_gradient" />
     </div>
 
-    <div class="homePage_gallery">
-      <!-- webgl gallery -->
-      <ProjectHome :projects="lastProjects" />
+    <!-- Contenu bas de page -->
+    <div class="HomePage_content">
+      <transition name="content-fade">
+        <div class="HomePage_content_inner" :key="currentIndex">
+          <p class="HomePage_content_client">{{ currentProject && currentProject.client }}</p>
+          <h1 class="HomePage_content_title">{{ currentProject && (currentProject.sliderTitle || currentProject.title) }}</h1>
+          <button class="HomePage_content_cta" @click="openProject">
+            <span>Voir le film</span>
+            <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" aria-hidden="true">
+              <polygon points="5,3 19,12 5,21"/>
+            </svg>
+          </button>
+        </div>
+      </transition>
 
-      <Button
-        text="More films"
-        background="orange"
-        color="white"
-        customClass="loadMoreBtn"
-        icon="icon-arrow-right"
-        to="/works"
-      />
+      <!-- Navigation -->
+      <div class="HomePage_nav">
+        <span class="HomePage_nav_counter">
+          <em>{{ pad(currentIndex + 1) }}</em> / {{ pad(projects.length) }}
+        </span>
+        <div class="HomePage_nav_arrows">
+          <button class="HomePage_nav_arrow" @click="prev" aria-label="Précédent">
+            <span class="icon-arrow-left"></span>
+          </button>
+          <button class="HomePage_nav_arrow" @click="next" aria-label="Suivant">
+            <span class="icon-arrow-right"></span>
+          </button>
+        </div>
+      </div>
     </div>
+
   </section>
 </template>
 
 <script>
-import Hero from "@/components/Hero"
-import Button from "@/components/Button"
-import ProjectHome from "@/components/ProjectHome"
-import DynamicText from "@/components/DynamicText";
-
-import { gsap } from '@/vendor/gsap'
-
-import { ScrollTrigger } from "@/vendor/gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger)
-
-import customPageTransitions from '@/mixins/customPageTransitions'
-import { mapGetters } from 'vuex'
-import { KinesisContainer, KinesisElement} from 'vue-kinesis'
-import TransitionManager from "~/utils/TransitionManager";
-import {TRANSITION_ENTER_END, TRANSITION_LEAVE_END} from "~/store/router";
+import { mapGetters, mapActions } from 'vuex'
 
 export default {
-  name: 'IndexPage',
-  components: {
-    Hero,
-    Button,
-    ProjectHome,
-    DynamicText,
-    KinesisContainer,
-    KinesisElement
-  },
-  mixins: [customPageTransitions],
+  name: 'HomePage',
+
   head() {
     return {
-      title: this.homePageData.meta_title,
+      title: this.data?.homepage?.meta_title || 'Méchant',
       meta: [
         {
           hid: 'description',
           name: 'description',
-          content: this.homePageData.meta_description
+          content: this.data?.homepage?.meta_description || ''
         }
       ]
     }
   },
-  data () {
+
+  data() {
     return {
-      tween: {
-        textScrollEvent: null,
-        introScrollEvent2: null,
-      },
+      currentIndex: 0,
+      _autoPlayTimer: null
     }
   },
-  mounted() {
-    this.$nextTick(() => {
-      setTimeout(() => {
-        this.setAnimations()
-      }, 500)
-    })
 
-    this.transitionManager = new TransitionManager()
-
-    this.transitionManager.addEventListener(TRANSITION_LEAVE_END, () => {
-      this.$nextTick(() => {
-        setTimeout(() => {
-          this.setAnimations()
-        }, 500)
-      })
-    })
-  },
-  beforeDestroy() {
-    if (this.tween.textScrollEvent)
-      this.tween.textScrollEvent.kill()
-
-    if (this.tween.introScrollEvent2)
-      this.tween.introScrollEvent2.kill()
-  },
   computed: {
     ...mapGetters({
       data: 'data/getData',
-      mobile: 'layout/isMobile'
+      isMobile: 'layout/isMobile'
     }),
-    isMobile() {
-      return this.mobile
+    projects() {
+      return Object.values(this.data?.heroProjects || {})
     },
-    homePageData() {
-      return this.data.homepage
+    currentProject() {
+      return this.projects[this.currentIndex] || null
     },
-    projectsData() {
-      return this.data.projects
+    currentVideoUrl() {
+      if (!this.currentProject) return null
+      if (this.isMobile) return this.currentProject.video_home_mobile || null
+      return this.currentProject.video_home || null
     },
-    heroProjects() {
-      return Object.values(this.data.heroProjects)
-    },
-    lastProjects() {
-      return Object.values(this.projectsData).slice(-5)
+    currentImageUrl() {
+      if (!this.currentProject) return null
+      return this.currentProject.poster || this.currentProject.thumbnail_url || null
     }
   },
+
+  mounted() {
+    this._startAutoPlay()
+  },
+
+  beforeDestroy() {
+    this._stopAutoPlay()
+  },
+
   methods: {
-    setAnimations () {
-      if (this?.tween?.textScrollEvent)
-        this?.tween?.textScrollEvent.kill()
+    ...mapActions({
+      setActive: 'project/setActive',
+      setId: 'project/setId'
+    }),
 
-      if (this?.tween?.introScrollEvent2)
-        this?.tween?.introScrollEvent2.kill()
+    pad(n) {
+      return String(n).padStart(2, '0')
+    },
 
-      if (!this.$refs?.introText?.$el)
-        return
+    next() {
+      this._stopAutoPlay()
+      this.currentIndex = (this.currentIndex + 1) % this.projects.length
+      this._startAutoPlay()
+    },
 
-      this.tween.textScrollEvent = gsap.to(this.$refs.introText.$el.querySelectorAll('div:not(.Tag)'), {
-        scrollTrigger: {
-          trigger: this.$refs.introText.$el,
-          start: 'top 70%'
-        },
-        duration: 1,
-        stagger: 0.09,
-        y: 0,
-        scale: 1,
-        opacity: 1,
-        ease: "power4.out",
-        onComplete: _ => {
-          if (this.tween.textScrollEvent)
-            this.tween.textScrollEvent.kill()
-        }
-      })
+    prev() {
+      this._stopAutoPlay()
+      this.currentIndex = (this.currentIndex - 1 + this.projects.length) % this.projects.length
+      this._startAutoPlay()
+    },
 
-      this.tween.introScrollEvent2 = gsap.to([this.$refs.star1, this.$refs.star3, this.$refs.introSticker, this.$refs.star2, this.$refs.star4, this.$refs.aboutButtonWrapper], {
-        scrollTrigger: {
-          trigger: this.$refs.introText.$el,
-          start: 'top 70%'
-        },
-        duration: 2,
-        stagger: 0.1,
-        scale: 1,
-        ease: "elastic.out",
-        onComplete: _ => {
-          if (this.$refs.introSticker)
-            this.$refs.introSticker.classList.add('animated')
+    openProject() {
+      if (!this.currentProject) return
+      this.setId(this.currentProject.id)
+      this.setActive(true)
+    },
 
-          if (this.tween.introScrollEvent2)
-            this.tween.introScrollEvent2.kill()
-        }
-      })
+    _startAutoPlay() {
+      if (this.projects.length <= 1) return
+      this._autoPlayTimer = setTimeout(() => {
+        this.currentIndex = (this.currentIndex + 1) % this.projects.length
+        this._startAutoPlay()
+      }, 8000)
+    },
+
+    _stopAutoPlay() {
+      if (this._autoPlayTimer) {
+        clearTimeout(this._autoPlayTimer)
+        this._autoPlayTimer = null
+      }
     }
   }
 }
 </script>
 
 <style lang="sass" scoped>
-.homePage
-  overflow-x: hidden
+.HomePage
+  position: fixed
+  inset: 0
+  width: 100%
+  height: 100%
+  overflow: hidden
 
-  &_intro
-    position: relative
-    background: $orange
-    font-size: 2.8rem
-    color: $white
-    font-family: $kobe
-    text-align: center
-    margin: 0 0 $waveMargin
-    line-height: 1.2
+  // ---------- Fond vidéo ----------
+  &_bg
+    position: absolute
+    inset: 0
 
-    > div
+    &_media
+      position: absolute
+      inset: 0
+
+    &_video,
+    &_img
+      position: absolute
+      inset: 0
       width: 100%
       height: 100%
-      padding: 10rem
+      object-fit: cover
+
+    // Gradient du bas pour lisibilité
+    &_gradient
+      position: absolute
+      inset: 0
+      background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 40%, transparent 70%)
+      pointer-events: none
+
+  // ---------- Contenu ----------
+  &_content
+    position: absolute
+    bottom: 0
+    left: 0
+    right: 0
+    padding: 5rem 6rem 5rem
+    display: flex
+    align-items: flex-end
+    justify-content: space-between
+    gap: 2rem
+
+    +breakpoint(mobile)
+      padding: 3rem 2.5rem 4rem
+      flex-direction: column
+      align-items: flex-start
+      gap: 2.5rem
+
+    &_inner
+      display: flex
+      flex-direction: column
+      gap: 1rem
+
+    &_client
+      font-family: $apfel
+      font-weight: 400
+      font-size: 1.1rem
+      letter-spacing: 0.25em
+      text-transform: uppercase
+      color: rgba(255,255,255,0.65)
+
+    &_title
+      font-family: $apfel
+      font-weight: 700
+      font-size: clamp(3.5rem, 6vw, 8rem)
+      line-height: 1
+      color: $white
+      text-transform: uppercase
+      max-width: 70vw
+
+      +breakpoint(mobile)
+        font-size: clamp(3rem, 9vw, 5rem)
+        max-width: 100%
+
+    &_cta
+      display: inline-flex
+      align-items: center
+      gap: 0.8rem
+      margin-top: 1.5rem
+      padding: 1.2rem 2.4rem
+      background: $white
+      color: $black
+      font-family: $apfel
+      font-weight: 500
+      font-size: 1.2rem
+      letter-spacing: 0.1em
+      text-transform: uppercase
+      border: none
+      border-radius: 100px
+      cursor: pointer
+      transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease
+
+      &:hover
+        background: $orange
+        color: $white
+        transform: scale(1.04) rotate(-1deg)
+
+      +breakpoint(mobile)
+        padding: 1rem 2rem
+        font-size: 1.1rem
+
+  // ---------- Navigation ----------
+  &_nav
+    display: flex
+    flex-direction: column
+    align-items: flex-end
+    gap: 1.5rem
+    flex-shrink: 0
+
+    +breakpoint(mobile)
+      flex-direction: row
+      align-items: center
+      justify-content: space-between
+      width: 100%
+
+    &_counter
+      font-family: $apfel
+      font-weight: 400
+      font-size: 1.2rem
+      color: rgba(255,255,255,0.5)
+      letter-spacing: 0.1em
+
+      em
+        font-style: normal
+        color: $white
+        font-weight: 500
+        font-size: 1.6rem
+
+    &_arrows
+      display: flex
+      gap: 0.8rem
+
+    &_arrow
       display: flex
       align-items: center
       justify-content: center
-      flex-direction: column
+      width: 4.4rem
+      height: 4.4rem
+      border: 1px solid rgba(255,255,255,0.3)
+      border-radius: 50%
+      background: transparent
+      color: $white
+      font-size: 1.2rem
+      cursor: pointer
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease
 
-      +breakpoint(mobile)
-        padding: 10rem 3rem
-
-      > ::v-deep p
-        width: 50%
-
-        +breakpoint(mobile)
-          width: 100%
-
-
-    +breakpoint(mobile)
-      font-size: 2.4rem
-      line-height: 1.2
-
-    ::v-deep strong
-      font-family: $kobeBlack
-
-      +breakpoint(mobile)
-        display: block
-
-    ::v-deep .visualEffectTag
-      transform: rotate(-2deg)
-
-    ::v-deep .editingTag
-      transform: rotate(1.8deg)
-      margin-right: .5rem
-
-    .aboutUsButtonWrapper
-      transform: scale(0)
-      margin-top: 3rem
-
-      .aboutUsButton:active:before
-        transform: translate(-48%, -40%) scale(101%, 1.07)
-
-    .aboutUsButton
-      transform: rotate(-4deg)
-
-    &_star
-      position: absolute
-      transform: scale(0)
-
-      span
-        display: block
-
-      &.star1
-        font-size: 7rem
+      &:hover
+        background: $white
+        border-color: $white
         color: $black
-        top: 12%
-        left: 15%
-        transform: scale(0) rotate(30deg)
+        transform: scale(1.1)
 
-        +breakpoint(mobile)
-          font-size: 2.5rem
-          top: 8%
-          left: 10%
+// ---------- Transitions ----------
+.bg-fade-enter-active,
+.bg-fade-leave-active
+  transition: opacity 1s ease
 
-        span
-          @include animateStar(5s, 0.8s)
+.bg-fade-enter,
+.bg-fade-leave-to
+  opacity: 0
 
-      &.star2
-        font-size: 7rem
-        color: $white
-        bottom: 10%
-        left: 25%
+.content-fade-enter-active
+  transition: opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s
 
-        +breakpoint(mobile)
-          font-size: 4rem
-          bottom: 20%
-          left: 10%
+.content-fade-leave-active
+  transition: opacity 0.3s ease, transform 0.3s ease
 
-        span
-          @include animateStar(4s, 0.5s)
+.content-fade-enter
+  opacity: 0
+  transform: translateY(1.5rem)
 
-      &.star3
-        font-size: 4rem
-        color: $white
-        top: 16%
-        right: 15%
-
-        +breakpoint(mobile)
-          font-size: 2rem
-          top: 25%
-          right: 5%
-
-        span
-          @include animateStar(6s, 0.2s)
-
-      &.star4
-        font-size: 3.6rem
-        color: $black
-        bottom: 25%
-        right: 25%
-
-        +breakpoint(mobile)
-          font-size: 2rem
-          bottom: 10%
-          right: 20%
-
-        span
-          @include animateStar(4.5s, 0.6s)
-
-    &_sticker
-      position: absolute
-      top: 15%
-      right: 20%
-      transform: scale(0.01)
-
-      +breakpoint(mobile)
-        right: 5%
-        top: 4%
-
-      img
-        width: 11rem
-        height: auto
-
-        +breakpoint(mobile)
-          width: 7rem
-
-    p
-      > ::v-deep div, >  ::v-deep strong > div
-        opacity: 0
-        transform: translateY(1rem)
-
-  &_gallery
-    display: flex
-    // align-items: center
-    // justify-content: center
-    flex-direction: column
-    padding: 8rem 10% calc(10rem + $waveMargin)
-
-  .loadMoreBtn
-    display: inline-block
-    margin: 10rem auto 2rem
-    transform: rotate(-5deg)
-    +breakpoint(mobile)
-      margin: 3rem auto 1rem
+.content-fade-leave-to
+  opacity: 0
+  transform: translateY(-1rem)
 </style>
