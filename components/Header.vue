@@ -2,7 +2,7 @@
   <header class="Header" :class="{navIsOpen: isMenuOpen}">
 
     <!-- Navigation étalée sur toute la largeur (toutes les pages) -->
-    <nav class="Header_homeNav is-spread">
+    <nav class="Header_homeNav is-spread" ref="nav">
       <NuxtLink to="/about">About</NuxtLink>
       <NuxtLink to="/works">Work</NuxtLink>
       <a :href="`mailto:${footerData?.email_address}`">Contact</a>
@@ -154,6 +154,14 @@ export default {
   },
   mounted() {
     this.tweens = {}
+    if (this.isHomePage) this._animateNav()
+  },
+  watch: {
+    $route(to) {
+      if (to.name === 'index' || to.path === '/') {
+        this.$nextTick(() => this._animateNav())
+      }
+    }
   },
   updated() {
     if(this.isMenuOpen) {
@@ -282,6 +290,20 @@ export default {
     closeMainNav() {
       if(this.isMenuOpen)
         this.setSvgAnimation(true)
+    },
+
+    _animateNav() {
+      const links = this.$refs.nav && this.$refs.nav.querySelectorAll('a')
+      if (!links || !links.length) return
+      gsap.from(links, {
+        opacity: 0,
+        y: -12,
+        duration: 0.5,
+        stagger: 0.12,
+        ease: 'power3.out',
+        delay: 0.2,
+        clearProps: 'all'
+      })
     }
   },
   beforeDestroy() {

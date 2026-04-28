@@ -30,8 +30,10 @@
       <div class="HomePage_clickZone" @mouseenter="preloadProject" @click="openProject" />
     </div>
 
-    <!-- Tagline -->
-    <p class="HomePage_tagline">Paris-based post-production studio specializing in visual effects and editing for commercials, feature films and music videos.</p>
+    <!-- Tagline mot par mot -->
+    <p class="HomePage_tagline" ref="tagline">
+      <span v-for="(word, i) in taglineWords" :key="i" class="HomePage_tagline_word">{{ word }}</span>
+    </p>
 
     <!-- Logo coupé en bas -->
     <div class="HomePage_logo" aria-hidden="true">
@@ -44,6 +46,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
+import { gsap } from '@/vendor/gsap'
 
 export default {
   name: 'HomePage',
@@ -73,6 +76,9 @@ export default {
       data: 'data/getData',
       isMobile: 'layout/isMobile'
     }),
+    taglineWords() {
+      return 'Paris-based post-production studio specializing in visual effects and editing for commercials, feature films and music videos.'.split(' ')
+    },
     projects() {
       return Object.values(this.data?.heroProjects || {})
     },
@@ -92,6 +98,7 @@ export default {
 
   mounted() {
     this._startAutoPlay()
+    this._animateIn()
   },
 
   beforeDestroy() {
@@ -103,6 +110,20 @@ export default {
       setActive: 'project/setActive',
       setId: 'project/setId'
     }),
+
+    _animateIn() {
+      const words = this.$refs.tagline && this.$refs.tagline.querySelectorAll('.HomePage_tagline_word')
+      if (!words || !words.length) return
+      gsap.from(words, {
+        opacity: 0,
+        y: 18,
+        duration: 0.55,
+        stagger: 0.045,
+        ease: 'power3.out',
+        delay: 0.4,
+        clearProps: 'all'
+      })
+    },
 
     preloadProject() {
       if (this.currentProject) this.setId(this.currentProject.id)
@@ -186,6 +207,10 @@ export default {
 
     +breakpoint(mobile)
       display: none
+
+    &_word
+      display: inline-block
+      margin-right: 0.3em
 
   // ---------- Logo coupé ----------
   &_logo
