@@ -10,6 +10,7 @@
 
     <div v-else class="projects-table">
       <div class="table-row table-header">
+        <span></span>
         <span>Miniature</span>
         <span>Titre / Client</span>
         <span>Vimeo ID</span>
@@ -17,7 +18,20 @@
         <span>Statut</span>
         <span>Actions</span>
       </div>
-      <div v-for="p in projects" :key="p.id" class="table-row">
+      <div
+        v-for="(p, index) in projects"
+        :key="p.id"
+        class="table-row"
+        :class="{ 'is-dragging': dragIndex === index, 'is-over': dropIndex === index && dragIndex !== index }"
+        draggable="true"
+        @dragstart="onDragStart(index, $event)"
+        @dragover.prevent="onDragOver(index)"
+        @dragend="onDragEnd"
+        @drop.prevent="onDrop(index)"
+      >
+        <div class="col-drag" title="Réordonner">
+          <span class="drag-handle">⠿</span>
+        </div>
         <div class="col-thumb">
           <img v-if="p.thumbnail_url" :src="p.thumbnail_url" :alt="p.title" />
           <div v-else class="thumb-placeholder">—</div>
@@ -47,6 +61,8 @@
         </div>
       </div>
     </div>
+
+    <div v-if="saving" class="save-indicator">Sauvegarde…</div>
   </div>
 </template>
 
@@ -60,7 +76,10 @@ export default {
   data() {
     return {
       projects: [],
-      loading: true
+      loading: true,
+      saving: false,
+      dragIndex: null,
+      dropIndex: null
     }
   },
   async mounted() {
@@ -76,6 +95,55 @@ export default {
       this.projects = data || []
       this.loading = false
     },
+
+    onDragStart(index, event) {
+      this.dragIndex = index
+      event.dataTransfer.effectAllowed = 'move'
+    },
+
+    onDragOver(index) {
+      this.dropIndex = index
+    },
+
+    onDragEnd() {
+      this.dragIndex = null
+      this.dropIndex = null
+    },
+
+    async onDrop(toIndex) {
+      const fromIndex = this.dragIndex
+      if (fromIndex === null || fromIndex === toIndex) {
+        this.dragIndex = null
+        this.dropIndex = null
+        return
+      }
+
+      const reordered = [...this.projects]
+      const [moved] = reordered.splice(fromIndex, 1)
+      reordered.splice(toIndex, 0, moved)
+      this.projects = reordered
+      this.dragIndex = null
+      this.dropIndex = null
+
+      await this.saveOrder()
+    },
+
+    async saveOrder() {
+      this.saving = true
+      const total = this.projects.length
+      const updates = this.projects.map((p, i) => ({
+        id: p.id,
+        order_index: total - i
+      }))
+
+      await Promise.all(
+        updates.map(({ id, order_index }) =>
+          supabase.from('projects').update({ order_index }).eq('id', id)
+        )
+      )
+      this.saving = false
+    },
+
     async togglePublished(project) {
       await supabase
         .from('projects')
@@ -83,6 +151,7 @@ export default {
         .eq('id', project.id)
       project.published = !project.published
     },
+
     async deleteProject(project) {
       if (!confirm(`Supprimer "${project.title}" ?`)) return
       await supabase.from('projects').delete().eq('id', project.id)
@@ -134,13 +203,23 @@ export default {
 
 .table-row {
   display: grid;
-  grid-template-columns: 80px 1fr 120px 80px 90px 160px;
+  grid-template-columns: 28px 80px 1fr 120px 80px 90px 160px;
   align-items: center;
   gap: 1rem;
   padding: 0.85rem 1rem;
   background: #111;
   border: 1px solid #1e1e1e;
   border-radius: 10px;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.table-row.is-dragging {
+  opacity: 0.4;
+}
+
+.table-row.is-over {
+  border-color: #f2492c;
+  background: #1a1008;
 }
 
 .table-header {
@@ -152,6 +231,24 @@ export default {
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
+
+.col-drag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+}
+
+.col-drag:active { cursor: grabbing; }
+
+.drag-handle {
+  font-size: 1.1rem;
+  color: #444;
+  user-select: none;
+  line-height: 1;
+}
+
+.table-row:hover .drag-handle { color: #777; }
 
 .col-thumb img, .thumb-placeholder {
   width: 72px;
@@ -214,4 +311,16 @@ export default {
 
 .btn-danger { border-color: #450a0a; color: #f87171; }
 .btn-danger:hover { background: #450a0a; }
+
+.save-indicator {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: #111;
+  border: 1px solid #333;
+  color: #aaa;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
 </style>

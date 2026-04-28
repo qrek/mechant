@@ -1,33 +1,24 @@
 <template>
   <section class="WorksPage">
 
-    <!-- Vidéo de fond (partagée, change au hover) -->
+    <!-- Vidéo de fond -->
     <div class="WorksPage_videoBg" ref="videoBg">
-      <video
-        ref="videoEl"
-        autoplay
-        muted
-        loop
-        playsinline
-        class="WorksPage_videoBg_video"
-      />
-      <div class="WorksPage_videoBg_overlay" />
+      <video ref="videoEl" autoplay muted loop playsinline class="WorksPage_videoBg_video" />
     </div>
 
-    <!-- Liste typographique -->
-    <div class="WorksPage_list" ref="list">
-      <div
-        v-for="(project, i) in projectsData"
+    <!-- Cloud typographique -->
+    <div class="WorksPage_cloud" ref="list">
+      <button
+        v-for="project in projectsData"
         :key="project.id"
         class="WorksPage_item"
         @mouseenter="onHover(project)"
         @mouseleave="onLeave"
         @click="openProject(project)"
       >
-        <span class="WorksPage_item_index">{{ pad(i + 1) }}</span>
-        <h2 class="WorksPage_item_title">{{ project.title }}</h2>
+        <span class="WorksPage_item_title">{{ project.title }}</span>
         <span class="WorksPage_item_label">{{ project.client || getCategoryLabel(project) }}</span>
-      </div>
+      </button>
     </div>
 
   </section>
@@ -43,13 +34,7 @@ export default {
   head() {
     return {
       title: this.data?.projectsPage?.meta_title || 'Works — Méchant',
-      meta: [
-        {
-          hid: 'description',
-          name: 'description',
-          content: this.data?.projectsPage?.meta_description || ''
-        }
-      ]
+      meta: [{ hid: 'description', name: 'description', content: this.data?.projectsPage?.meta_description || '' }]
     }
   },
 
@@ -63,9 +48,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters({
-      data: 'data/getData'
-    }),
+    ...mapGetters({ data: 'data/getData' }),
     projectsData() {
       return this.data?.projects || []
     }
@@ -79,11 +62,7 @@ export default {
   beforeDestroy() {
     window.removeEventListener('scroll', this._onScroll)
     clearTimeout(this._hideTimer)
-    // libérer les éléments vidéo préchargés
-    Object.values(this._preloadCache).forEach(v => {
-      v.src = ''
-      v.load()
-    })
+    Object.values(this._preloadCache).forEach(v => { v.src = ''; v.load() })
     this._preloadCache = {}
   },
 
@@ -94,18 +73,12 @@ export default {
       setId: 'project/setId'
     }),
 
-    pad(n) {
-      return String(n).padStart(2, '0')
-    },
-
     getCategoryLabel(project) {
       const cats = project.categories
       if (!cats || !cats.length) return ''
-      const first = this.data?.categories?.[cats[0]]
-      return first?.title || ''
+      return this.data?.categories?.[cats[0]]?.title || ''
     },
 
-    // Précharge silencieusement les vidéos preview de chaque projet
     _preloadVideos() {
       this.projectsData.forEach(project => {
         const url = project.preview_video || project.video_home
@@ -120,9 +93,7 @@ export default {
     },
 
     onHover(project) {
-      // Pré-chauffe le player Vimeo pendant que l'utilisateur survole
       this.setId(project.id)
-
       const url = project.preview_video || project.video_home
       if (!url) return
       const video = this.$refs.videoEl
@@ -143,10 +114,7 @@ export default {
       if (!bg) return
       bg.classList.remove('is-visible')
       this._hideTimer = setTimeout(() => {
-        const video = this.$refs.videoEl
-        if (video) {
-          video.pause()
-        }
+        if (this.$refs.videoEl) this.$refs.videoEl.pause()
       }, 400)
     },
 
@@ -168,15 +136,10 @@ export default {
       const { page, total_pages } = this.data.pagination || {}
       if (!page || page >= total_pages) return
       this.isLoading = true
-
       const from = page * 5
       const { data: newProjects } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('published', true)
-        .order('order_index', { ascending: false })
-        .range(from, from + 4)
-
+        .from('projects').select('*').eq('published', true)
+        .order('order_index', { ascending: false }).range(from, from + 4)
       if (newProjects?.length) {
         await this.setData({
           ...this.data,
@@ -184,7 +147,6 @@ export default {
           pagination: { page: page + 1, total_pages }
         })
       }
-
       this.isLoading = false
     }
   }
@@ -196,10 +158,10 @@ export default {
   position: relative
   min-height: 100vh
   background: #f2492c
-  padding: 14rem 6rem 8rem
+  padding: 13rem 5vw 8rem
 
   +breakpoint(mobile)
-    padding: 12rem 2.5rem 6rem
+    padding: 11rem 5vw 6rem
 
   // ---------- Vidéo de fond ----------
   &_videoBg
@@ -207,7 +169,7 @@ export default {
     inset: 0
     z-index: 0
     opacity: 0
-    transition: opacity 0.4s ease
+    transition: opacity 0.35s ease
     pointer-events: none
 
     &.is-visible
@@ -220,77 +182,51 @@ export default {
       height: 100%
       object-fit: cover
 
-    &_overlay
-      display: none
-
-  // ---------- Liste ----------
-  &_list
+  // ---------- Cloud typographique ----------
+  &_cloud
     position: relative
     z-index: 1
-
-  &_item
     display: flex
-    align-items: baseline
-    gap: 2.4rem
-    padding: 1.8rem 0
-    border-top: 1px solid rgba(0,0,0,0.18)
-    cursor: pointer
-    transition: color 0.3s ease
+    flex-wrap: wrap
+    align-items: flex-start
 
-    &:last-child
-      border-bottom: 1px solid rgba(0,0,0,0.18)
+// Chaque projet : titre géant + petit label
+.WorksPage_item
+  display: inline-flex
+  align-items: flex-start
+  gap: 0.5em
+  cursor: pointer
+  background: none
+  border: none
+  padding: 0
+  padding-right: 0.3em
+  line-height: 1
 
-    &:hover
-      .WorksPage_item_title,
-      .WorksPage_item_index,
-      .WorksPage_item_label
-        color: $white
+  &:hover
+    .WorksPage_item_title
+      color: $white
+    .WorksPage_item_label
+      color: rgba(255,255,255,0.7)
 
-    +breakpoint(mobile)
-      gap: 1.2rem
-      padding: 1.4rem 0
-      flex-wrap: wrap
+  &_title
+    font-family: $apfel
+    font-weight: 900
+    font-size: clamp(4.5rem, 8vw, 12rem)
+    line-height: 0.88
+    text-transform: uppercase
+    color: #000
+    transition: color 0.25s ease
+    display: block
 
-    &_index
-      font-family: $apfel
-      font-weight: 400
-      font-size: 1.1rem
-      color: rgba(0,0,0,0.45)
-      letter-spacing: 0.05em
-      flex-shrink: 0
-      width: 2.4rem
-      transition: color 0.3s ease
-
-    &_title
-      font-family: $apfel
-      font-weight: 700
-      font-size: clamp(3.2rem, 5.5vw, 7.5rem)
-      line-height: 0.95
-      text-transform: uppercase
-      color: #000
-      flex: 1
-      min-width: 0
-      transition: color 0.3s ease
-
-      +breakpoint(mobile)
-        font-size: clamp(2.8rem, 9vw, 5rem)
-        width: 100%
-        flex: none
-
-    &_label
-      font-family: $apfel
-      font-weight: 400
-      font-size: 1rem
-      letter-spacing: 0.2em
-      text-transform: uppercase
-      color: rgba(0,0,0,0.5)
-      flex-shrink: 0
-      text-align: right
-      transition: color 0.3s ease
-
-      +breakpoint(mobile)
-        font-size: 0.9rem
-        width: 100%
-        text-align: left
-        padding-left: 3.6rem
+  &_label
+    font-family: $apfel
+    font-weight: 400
+    font-size: clamp(0.65rem, 0.85vw, 0.95rem)
+    letter-spacing: 0.1em
+    text-transform: uppercase
+    color: rgba(0,0,0,0.5)
+    transition: color 0.25s ease
+    display: block
+    margin-top: 0.7em
+    line-height: 1.3
 </style>
