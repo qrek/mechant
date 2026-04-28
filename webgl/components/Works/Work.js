@@ -84,15 +84,23 @@ class Work extends component(Object3D) {
 
       // 2. Fallback poster/thumbnail — toujours atteint même si l'étape 1 échoue
       if (!ResourceLoader.has(this._image)) {
-        const posterUrl = this._component.data?.poster || this._component.data?.thumbnail_url
-        if (posterUrl) {
-          const fallbackName = `${this._image}_img`
-          this._image = fallbackName
-          if (!ResourceLoader.has(fallbackName)) {
-            try {
-              await ResourceLoader.loadResource({ name: fallbackName, type: 'texture', path: posterUrl })
-            } catch (e) {
-              console.warn('Work: thumbnail fallback failed:', e?.message)
+        // Priorité : réutiliser la texture hero déjà en cache (même vignette, évite double chargement)
+        const heroName = `${this._component.getId()}_hero`
+        const heroData = ResourceLoader.has(heroName) ? ResourceLoader.get(heroName) : null
+        if (heroData && !heroData.video) {
+          // Texture statique déjà chargée par le Preloader, on la réutilise directement
+          this._image = heroName
+        } else {
+          const posterUrl = this._component.data?.poster || this._component.data?.thumbnail_url
+          if (posterUrl) {
+            const fallbackName = `${this._image}_img`
+            this._image = fallbackName
+            if (!ResourceLoader.has(fallbackName)) {
+              try {
+                await ResourceLoader.loadResource({ name: fallbackName, type: 'texture', path: posterUrl })
+              } catch (e) {
+                console.warn('Work: thumbnail fallback failed:', e?.message)
+              }
             }
           }
         }

@@ -10,20 +10,32 @@
 	    </defs>
     </svg>
 
-    <div ref="player" class="ProjectPopin_player" :class="{ path: path && path.length }" :style="{ '--path': `'${path}'` }">
-      <!-- <img class="ProjectPopin_player_placeholder" src="/textures/hero_1.png" alt="placeholder"> -->
-
+    <div
+      ref="player"
+      class="ProjectPopin_player"
+      :class="{ path: path && path.length }"
+      :style="{ '--path': `'${path}'` }"
+      @mousemove="showControls"
+      @click="handleVideoClick"
+    >
       <div class="ProjectPopin_player_iframe" ref="videoIframe"></div>
 
-      <div class="ProjectPopin_player_close" @click="handleClose">
+      <!-- Loader pendant le buffering -->
+      <div class="ProjectPopin_player_loader" v-if="!isVideoReady">
+        <div class="loader-ring"></div>
+      </div>
+
+      <div class="ProjectPopin_player_close" @click.stop="handleClose">
         <i class="ProjectPopin_player_close_icon icon-close"></i>
       </div>
-      <div class="ProjectPopin_player_info" :class="{ active: isInfosVisible }">
+
+      <!-- Panneau d'infos (expandable) -->
+      <div class="ProjectPopin_player_info" :class="{ active: isInfosVisible }" @click.stop>
         <div class="Infos">
-          <div class="Infos_client">{{  project?.client }}</div>
+          <div class="Infos_client">{{ project?.client }}</div>
           <div class="Infos_title">{{ project?.title }}</div>
           <ul class="Infos_tags">
-            <li v-for="(tag, index) in project?.categories" :key="index">{{ categoriesData[tag].title }}</li>
+            <li v-for="(tag, index) in project?.categories" :key="index" v-if="categoriesData && categoriesData[tag]">{{ categoriesData[tag].title }}</li>
           </ul>
           <div class="Infos_text">{{ project?.description }}</div>
           <div class="Infos_tag">
@@ -33,9 +45,35 @@
             />
           </div>
         </div>
-        <div class="ProjectPopin_player_info_icon" id="projectInfoButton" @click="handleClickInfo">
+        <div class="ProjectPopin_player_info_icon" id="projectInfoButton" @click.stop="handleClickInfo">
           <i class="icon-info"></i>
         </div>
+      </div>
+
+      <!-- Barre de contrôles vidéo -->
+      <div
+        class="ProjectPopin_controls"
+        :class="{ visible: controlsVisible }"
+        @click.stop
+        @mousemove.stop
+      >
+        <button class="ctrl-btn" @click="togglePlay" :title="isPaused ? 'Play' : 'Pause'">
+          <span :class="isPaused ? 'icon-play' : 'icon-pause'"></span>
+        </button>
+
+        <div class="ctrl-progress" @click.stop="seek">
+          <div class="ctrl-progress_bar">
+            <div class="ctrl-progress_fill" :style="{ width: `${progress}%` }"></div>
+          </div>
+        </div>
+
+        <button class="ctrl-btn" @click="toggleMute" :title="isMuted ? 'Activer le son' : 'Couper le son'">
+          <span :class="isMuted ? 'icon-mute' : 'icon-volume'"></span>
+        </button>
+
+        <button class="ctrl-btn" @click="requestFullscreen" title="Plein écran">
+          <span class="icon-fullscreen"></span>
+        </button>
       </div>
     </div>
   </div>
@@ -48,7 +86,7 @@ import Tag from '@/components/Tag'
 import ProjectPopinBg from '@/components/ProjectPopinBg'
 
 export default {
-  name: 'Project',
+  name: 'ProjectPopin',
   components: {
     Tag,
     ProjectPopinBg
@@ -86,7 +124,14 @@ export default {
       scale: { x: 0, y: 0 },
       tween: {
         active: null
-      }
+      },
+      // États du player vidéo
+      isPaused: false,
+      isMuted: false,
+      progress: 0,
+      controlsVisible: false,
+      isVideoReady: false,
+      _hideControlsTimer: null
     }
   },
   mounted() {
@@ -94,6 +139,11 @@ export default {
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.handleResize)
+    clearTimeout(this._hideControlsTimer)
+    if (this.player) {
+      this.player.destroy()
+      this.player = null
+    }
   },
   methods: {
     ...mapActions({
@@ -101,7 +151,6 @@ export default {
     }),
     handleResize() {
       const { player } = this.$refs
-
       this.scale.x = player.offsetWidth / this.viewbox.x
       this.scale.y = player.offsetHeight / this.viewbox.y
     },
@@ -122,6 +171,11 @@ export default {
     },
     handleClickInfo() {
       this.isInfosVisible = !this.isInfosVisible
+      // Garder les contrôles visibles quand le panneau d'infos est ouvert
+      if (this.isInfosVisible) {
+        this.controlsVisible = true
+        clearTimeout(this._hideControlsTimer)
+      }
     },
     handleClose() {
       this.setActive(false)
@@ -134,21 +188,108 @@ export default {
       else
         this.handleLeave()
     },
+
+    // Clic sur la zone vidéo → toggle play/pause
+    handleVideoClick() {
+      if (!this.$el.classList.contains('displayPlayer')) return
+      // Ferme le panneau infos si ouvert
+      if (this.isInfosVisible) {
+        this.isInfosVisible = false
+        return
+      }
+      this.togglePlay()
+      this.showControls()
+    },
+
+    // Contrôles
+    togglePlay() {
+      if (this.isPaused) {
+        this.player?.play()
+      } else {
+        this.player?.pause()
+      }
+    },
+    toggleMute() {
+      this.isMuted = !this.isMuted
+      this.player?.setMuted(this.isMuted)
+    },
+    async seek(e) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      const ratio = (e.clientX - rect.left) / rect.width
+      if (this.player) {
+        const duration = await this.player.getDuration()
+        if (duration) this.player.setCurrentTime(duration * ratio)
+      }
+    },
+    requestFullscreen() {
+      this.player?.requestFullscreen()
+    },
+    showControls() {
+      if (!this.$el.classList.contains('displayPlayer')) return
+      this.controlsVisible = true
+      clearTimeout(this._hideControlsTimer)
+      this._hideControlsTimer = setTimeout(() => {
+        if (!this.isPaused && !this.isInfosVisible) {
+          this.controlsVisible = false
+        }
+      }, 3000)
+    },
+
     handleEnter() {
       const _el = this.$el
-      const {
-        projectPopinBg1,
-      } = this.$refs
+      const { projectPopinBg1 } = this.$refs
 
       if (typeof window.Vimeo === 'undefined') {
         console.error('Vimeo Player SDK not loaded')
         return
       }
 
+      // Reset state
+      this.isPaused = false
+      this.isMuted = false
+      this.progress = 0
+      this.controlsVisible = false
+      this.isVideoReady = false
+
       this.player = new window.Vimeo.Player(this.$refs.videoIframe, {
         id: this.project.vimeo_id,
         controls: false,
         playsinline: false
+      })
+
+      // Événements du player
+      this.player.on('timeupdate', ({ percent }) => {
+        this.progress = percent * 100
+        if (!this.isVideoReady) {
+          this.isVideoReady = true
+        }
+      })
+      this.player.on('pause', () => {
+        this.isPaused = true
+        this.controlsVisible = true
+      })
+      this.player.on('play', () => {
+        this.isPaused = false
+      })
+      this.player.on('ended', () => {
+        this.isPaused = true
+        this.progress = 0
+        this.controlsVisible = true
+      })
+      this.player.on('loaded', () => {
+        this.isVideoReady = true
+      })
+      this.player.on('error', ({ message }) => {
+        console.warn('ProjectPopin: erreur Vimeo —', message)
+        this.isVideoReady = true
+        this.isPaused = true
+      })
+
+      // Lancer la lecture immédiatement (la vidéo charge pendant l'animation)
+      this.player.play().catch(err => {
+        console.warn('ProjectPopin: lecture bloquée ou échouée:', err?.message)
+        this.isPaused = true
+        this.isVideoReady = true
       })
 
       this.tween.active = gsap.timeline()
@@ -159,16 +300,19 @@ export default {
         top: 0,
         duration: 0.4,
         onComplete: _ => {
-          this.player.play()
           _el.classList.add('displayPlayer')
+          this.showControls()
         }
       }, 'enter')
     },
+
     handleLeave() {
       const _el = this.$el
-      const {
-        projectPopinBg1,
-      } = this.$refs
+      const { projectPopinBg1 } = this.$refs
+
+      clearTimeout(this._hideControlsTimer)
+      this.controlsVisible = false
+      this.isInfosVisible = false
 
       this.tween.active = gsap.timeline()
       if (this.player) this.player.pause()
@@ -182,7 +326,13 @@ export default {
         delay: .6,
         duration: 0.4,
         onComplete: _ => {
-          this.player.destroy()
+          if (this.player) {
+            this.player.destroy()
+            this.player = null
+          }
+          this.isPaused = false
+          this.progress = 0
+          this.isVideoReady = false
         }
       }, 'leave')
     }
@@ -222,12 +372,11 @@ export default {
       height: 100%
 
   &_player
-    //opacity: 0
     width: 100%
     height: 100%
-    //border-radius: 10px
     overflow: hidden
     position: relative
+    cursor: none
 
     &.path
       clip-path: url(#mask)
@@ -242,6 +391,7 @@ export default {
       height: 100%
       background: $pink
       transition: background 1s ease
+      pointer-events: none
 
       ::v-deep iframe
         width: 100%
@@ -250,9 +400,26 @@ export default {
         opacity: 0
         transition: opacity 1s ease
 
+    // Loading spinner
+    &_loader
+      position: absolute
+      top: 50%
+      left: 50%
+      transform: translate(-50%, -50%)
+      z-index: 2
+      pointer-events: none
+
+      .loader-ring
+        width: 4rem
+        height: 4rem
+        border: 3px solid rgba(255, 255, 255, 0.25)
+        border-top-color: $white
+        border-radius: 50%
+        animation: popinSpin 0.8s linear infinite
+
     &_info
       position: absolute
-      bottom: 2.5rem
+      bottom: 6.5rem
       right: 2.5rem
       width: auto
       height: auto
@@ -260,7 +427,7 @@ export default {
       align-items: center
       justify-content: center
       cursor: pointer
-      z-index: 1
+      z-index: 5
 
       &.active
         &:before
@@ -388,7 +555,7 @@ export default {
       align-items: center
       justify-content: center
       cursor: pointer
-      z-index: 1
+      z-index: 6
       transition: transform 0.3s ease
 
       &:hover
@@ -420,6 +587,61 @@ export default {
         z-index: 1
         font-size: 1.2rem
 
+  // Barre de contrôles vidéo
+  &_controls
+    position: absolute
+    bottom: 0
+    left: 0
+    right: 0
+    z-index: 4
+    padding: 2rem 2.5rem 1.8rem
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, transparent 100%)
+    display: flex
+    align-items: center
+    gap: 1rem
+    opacity: 0
+    transition: opacity 0.3s ease
+    pointer-events: none
+
+    &.visible
+      opacity: 1
+      pointer-events: auto
+
+  .ctrl-btn
+    background: none
+    border: none
+    color: $white
+    font-size: 1.6rem
+    cursor: pointer
+    padding: 0.3rem
+    opacity: 0.85
+    transition: opacity 0.2s ease, transform 0.2s ease
+    flex-shrink: 0
+    display: flex
+    align-items: center
+    justify-content: center
+
+    &:hover
+      opacity: 1
+      transform: scale(1.2)
+
+  .ctrl-progress
+    flex: 1
+    cursor: pointer
+    padding: 0.8rem 0
+
+    &_bar
+      height: 3px
+      background: rgba(255, 255, 255, 0.25)
+      border-radius: 3px
+      overflow: hidden
+
+    &_fill
+      height: 100%
+      background: $white
+      border-radius: 3px
+      transition: width 0.15s linear
+
   &.displayPlayer .ProjectPopin_player_iframe
     background: $black
 
@@ -433,5 +655,9 @@ export default {
     transform: rotate(3deg)
   100%
     transform: rotate(-3deg)
+
+@keyframes popinSpin
+  to
+    transform: rotate(360deg)
 
 </style>
