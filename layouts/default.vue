@@ -4,7 +4,6 @@
 
     <Header v-if="isLoadingCompleted" />
     <Nuxt v-if="isLoadingCompleted" />
-    <Footer v-if="isLoadingCompleted && !isErrorPage && !isHomePage" />
 
     <ProjectPopin />
 
@@ -19,7 +18,6 @@
 <script>
 
 import Header from "@/components/Header"
-import Footer from "@/components/Footer"
 import ProjectPopin from "@/components/ProjectPopin"
 import WebGLApplication from "@/components/WebGLApplication"
 import Preloader from "@/components/Preloader"
@@ -31,7 +29,6 @@ import TransitionManager from "~/utils/TransitionManager";
 export default {
   components: {
     Header,
-    Footer,
     WebGLApplication,
     ProjectPopin,
     Preloader,

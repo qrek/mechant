@@ -232,7 +232,7 @@ export default {
       font-family: $apfel
       font-weight: 400
       font-size: 1.1rem
-      letter-spacing: 0.25em
+      letter-spacing: 0.1em
       text-transform: uppercase
       color: rgba(255,255,255,0.65)
 

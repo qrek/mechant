@@ -1,20 +1,19 @@
 <template>
   <header class="Header" :class="{navIsOpen: isMenuOpen}">
-    <div class="Header_navBtn cursorPointer" @click="toggleMainNav">
-      <img class="Header_navBtn_mascotte" src="~assets/images/logo_mascotte.png" alt="mascotte"/>
-      <MenuText ref="menuText"/>
-      <CloseText ref="closeText" />
-    </div>
 
-    <NuxtLink to="/" @click.native="closeMainNav">
-      <img class="Header_logo" src="~assets/images/logo.png" alt="Mechant">
-    </NuxtLink>
+    <!-- Navigation minimale sur la homepage -->
+    <nav class="Header_homeNav" v-if="isHomePage">
+      <NuxtLink to="/works">Work</NuxtLink>
+      <NuxtLink to="/about">About</NuxtLink>
+      <a :href="`mailto:${footerData?.email_address}`">Contact</a>
+    </nav>
 
-    <div class="Header_socials">
-      <a :href="footerData?.instagram_url?.url" target="_blank" class="instagramButton">
-        <img src="~assets/images/instagram.svg" alt="instagram">
-      </a>
-    </div>
+    <!-- Logo seul sur les autres pages -->
+    <template v-if="!isHomePage">
+      <NuxtLink to="/" class="Header_logoLink">
+        <img class="Header_logo" src="~assets/images/logo.png" alt="Mechant">
+      </NuxtLink>
+    </template>
 
     <div class="Header_mainNav" v-if="isMenuOpen" ref="mainNav">
       <div class="svgWrapper">
@@ -177,6 +176,9 @@ export default {
     }),
     footerData() {
       return this.data.footer
+    },
+    isHomePage() {
+      return this.$route.name === 'index' || this.$route.path === '/'
     }
   },
   methods: {
@@ -317,6 +319,34 @@ export default {
 
   +breakpoint(mobile)
     padding: 3.5rem 3rem
+
+  // Navigation minimale homepage
+  &_homeNav
+    margin-left: auto
+    display: flex
+    align-items: center
+    gap: 3.5rem
+
+    a, a:visited
+      font-family: $apfel
+      font-weight: 500
+      font-size: 1.3rem
+      letter-spacing: 0.08em
+      text-transform: uppercase
+      color: $white
+      transition: opacity 0.2s ease
+
+      &:hover
+        opacity: 0.5
+
+      &.nuxt-link-exact-active
+        opacity: 0.5
+
+    +breakpoint(mobile)
+      gap: 2rem
+
+      a, a:visited
+        font-size: 1.1rem
 
   &_navBtn
     position: relative

@@ -193,9 +193,7 @@ export default {
       object-fit: cover
 
     &_overlay
-      position: absolute
-      inset: 0
-      background: rgba(242, 73, 44, 0.55)
+      display: none
 
   // ---------- Liste ----------
   &_list
@@ -209,13 +207,16 @@ export default {
     padding: 1.8rem 0
     border-top: 1px solid rgba(0,0,0,0.18)
     cursor: pointer
-    transition: opacity 0.2s ease
+    transition: color 0.3s ease
 
     &:last-child
       border-bottom: 1px solid rgba(0,0,0,0.18)
 
     &:hover
-      opacity: 0.75
+      .WorksPage_item_title,
+      .WorksPage_item_index,
+      .WorksPage_item_label
+        color: $white
 
     +breakpoint(mobile)
       gap: 1.2rem
@@ -230,6 +231,7 @@ export default {
       letter-spacing: 0.05em
       flex-shrink: 0
       width: 2.4rem
+      transition: color 0.3s ease
 
     &_title
       font-family: $apfel
@@ -240,6 +242,7 @@ export default {
       color: #000
       flex: 1
       min-width: 0
+      transition: color 0.3s ease
 
       +breakpoint(mobile)
         font-size: clamp(2.8rem, 9vw, 5rem)
@@ -255,6 +258,7 @@ export default {
       color: rgba(0,0,0,0.5)
       flex-shrink: 0
       text-align: right
+      transition: color 0.3s ease
 
       +breakpoint(mobile)
         font-size: 0.9rem
