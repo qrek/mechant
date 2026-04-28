@@ -324,7 +324,7 @@ export default {
     height: 100%
     overflow: hidden
     position: relative
-    cursor: none
+    cursor: default
 
     // Close visible au hover du player
     &:hover .ProjectPopin_close
@@ -579,10 +579,9 @@ export default {
     opacity: 1
     transform: scale(1.2)
 
-  &.displayPlayer
-    .ProjectPopin_player_iframe
-      ::v-deep iframe
-        opacity: 1
+.ProjectPopin.displayPlayer .ProjectPopin_player_iframe
+  ::v-deep iframe
+    opacity: 1
 
 @keyframes tag
   0%
