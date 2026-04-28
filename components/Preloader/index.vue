@@ -186,7 +186,7 @@ export default {
   &_panel
     position: absolute
     inset: 0
-    background: #f2492c
+    background: #000000
 
   &_center
     position: absolute
@@ -200,7 +200,6 @@ export default {
     display: block
     width: 22rem
     height: auto
-    filter: brightness(0) invert(1)
 
     +breakpoint(mobile)
       width: 14rem

@@ -35,8 +35,8 @@
       <div class="HomePage_content_inner">
         <transition name="text-fade" mode="out-in">
           <div :key="currentIndex" class="HomePage_content_text">
-            <p class="HomePage_content_client">{{ currentProject && currentProject.client }}</p>
             <h1 class="HomePage_content_title">{{ currentProject && (currentProject.sliderTitle || currentProject.title) }}</h1>
+            <p class="HomePage_content_client">{{ currentProject && currentProject.client }}</p>
           </div>
         </transition>
       </div>

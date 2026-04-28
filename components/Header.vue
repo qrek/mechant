@@ -1,19 +1,17 @@
 <template>
   <header class="Header" :class="{navIsOpen: isMenuOpen}">
 
+    <!-- Logo toujours présent à gauche -->
+    <NuxtLink to="/" class="Header_logoLink" @click.native="closeMainNav">
+      <img class="Header_logo" src="~assets/images/logo.png" alt="Mechant">
+    </NuxtLink>
+
     <!-- Navigation minimale sur la homepage -->
     <nav class="Header_homeNav" v-if="isHomePage">
       <NuxtLink to="/works">Work</NuxtLink>
       <NuxtLink to="/about">About</NuxtLink>
       <a :href="`mailto:${footerData?.email_address}`">Contact</a>
     </nav>
-
-    <!-- Logo seul sur les autres pages -->
-    <template v-if="!isHomePage">
-      <NuxtLink to="/" class="Header_logoLink">
-        <img class="Header_logo" src="~assets/images/logo.png" alt="Mechant">
-      </NuxtLink>
-    </template>
 
     <div class="Header_mainNav" v-if="isMenuOpen" ref="mainNav">
       <div class="svgWrapper">
@@ -370,12 +368,14 @@ export default {
         top: -0.8rem
         left: -1.2rem
 
+  &_logoLink
+    display: flex
+    align-items: center
+    z-index: 2
+
   &_logo
-    position: absolute
-    top: 50%
-    left: 50%
-    transform: translate(-50%, -50%)
-    width: 16rem
+    display: block
+    width: 14rem
     height: auto
     z-index: 2
 

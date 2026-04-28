@@ -56,7 +56,9 @@ export default {
   data() {
     return {
       isLoading: false,
-      _hideTimer: null
+      _hideTimer: null,
+      _currentSrc: null,
+      _preloadCache: {}
     }
   },
 
@@ -71,11 +73,18 @@ export default {
 
   mounted() {
     window.addEventListener('scroll', this._onScroll)
+    this._preloadVideos()
   },
 
   beforeDestroy() {
     window.removeEventListener('scroll', this._onScroll)
     clearTimeout(this._hideTimer)
+    // libérer les éléments vidéo préchargés
+    Object.values(this._preloadCache).forEach(v => {
+      v.src = ''
+      v.load()
+    })
+    this._preloadCache = {}
   },
 
   methods: {
@@ -96,6 +105,20 @@ export default {
       return first?.title || ''
     },
 
+    // Précharge silencieusement les vidéos preview de chaque projet
+    _preloadVideos() {
+      this.projectsData.forEach(project => {
+        const url = project.preview_video || project.video_home
+        if (!url || this._preloadCache[project.id]) return
+        const v = document.createElement('video')
+        v.src = url
+        v.muted = true
+        v.preload = 'auto'
+        v.load()
+        this._preloadCache[project.id] = v
+      })
+    },
+
     onHover(project) {
       const url = project.preview_video || project.video_home
       if (!url) return
@@ -103,8 +126,12 @@ export default {
       const bg = this.$refs.videoBg
       if (!video || !bg) return
       clearTimeout(this._hideTimer)
-      video.src = url
-      video.load()
+      // Évite de recharger si c'est déjà la même source
+      if (this._currentSrc !== url) {
+        this._currentSrc = url
+        video.src = url
+      }
+      video.currentTime = 0
       video.play().catch(() => {})
       bg.classList.add('is-visible')
     },
@@ -117,7 +144,6 @@ export default {
         const video = this.$refs.videoEl
         if (video) {
           video.pause()
-          video.src = ''
         }
       }, 400)
     },
