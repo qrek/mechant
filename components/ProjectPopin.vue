@@ -57,22 +57,46 @@
         @click.stop
         @mousemove.stop
       >
+        <!-- Play / Pause -->
         <button class="ctrl-btn" @click="togglePlay" :title="isPaused ? 'Play' : 'Pause'">
-          <span :class="isPaused ? 'icon-play' : 'icon-pause'"></span>
+          <svg v-if="isPaused" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+            <polygon points="5,3 19,12 5,21"/>
+          </svg>
+          <svg v-else viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+            <rect x="5" y="3" width="4" height="18" rx="1"/>
+            <rect x="15" y="3" width="4" height="18" rx="1"/>
+          </svg>
         </button>
 
+        <!-- Barre de progression -->
         <div class="ctrl-progress" @click.stop="seek">
           <div class="ctrl-progress_bar">
             <div class="ctrl-progress_fill" :style="{ width: `${progress}%` }"></div>
           </div>
         </div>
 
+        <!-- Mute / Volume -->
         <button class="ctrl-btn" @click="toggleMute" :title="isMuted ? 'Activer le son' : 'Couper le son'">
-          <span :class="isMuted ? 'icon-mute' : 'icon-volume'"></span>
+          <svg v-if="isMuted" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+            <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/>
+            <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          <svg v-else viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+            <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/>
+            <path d="M15.5,8.5 a5,5 0 0 1 0,7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M19,5 a10,10 0 0 1 0,14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </svg>
         </button>
 
+        <!-- Plein écran -->
         <button class="ctrl-btn" @click="requestFullscreen" title="Plein écran">
-          <span class="icon-fullscreen"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="20" height="20">
+            <polyline points="15,3 21,3 21,9"/>
+            <polyline points="9,21 3,21 3,15"/>
+            <line x1="21" y1="3" x2="14" y2="10"/>
+            <line x1="3" y1="21" x2="10" y2="14"/>
+          </svg>
         </button>
       </div>
     </div>
