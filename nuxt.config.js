@@ -34,7 +34,11 @@ export default {
       { hid: 'twitter:image:src', name: 'twitter:image:src', content: imageShare },
     ],
     link: [
-      { rel: 'icon', type: 'image/png', href: '/favicon.png' }
+      { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+      { rel: 'preconnect', href: 'https://player.vimeo.com' },
+      { rel: 'preconnect', href: 'https://f.vimeocdn.com' },
+      { rel: 'preconnect', href: 'https://i.vimeocdn.com' },
+      { rel: 'preconnect', href: 'https://fresnel.vimeocdn.com' }
     ],
     script: [
       { src: 'https://player.vimeo.com/api/player.js' }

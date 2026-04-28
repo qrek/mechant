@@ -27,7 +27,7 @@
       <div class="HomePage_bg_gradient" />
 
       <!-- Zone cliquable sur toute la vidéo -->
-      <div class="HomePage_clickZone" @click="openProject" />
+      <div class="HomePage_clickZone" @mouseenter="preloadProject" @click="openProject" />
     </div>
 
     <!-- Contenu bas de page -->
@@ -136,6 +136,10 @@ export default {
       this._stopAutoPlay()
       this.currentIndex = (this.currentIndex - 1 + this.projects.length) % this.projects.length
       this._startAutoPlay()
+    },
+
+    preloadProject() {
+      if (this.currentProject) this.setId(this.currentProject.id)
     },
 
     openProject() {

@@ -120,13 +120,15 @@ export default {
     },
 
     onHover(project) {
+      // Pré-chauffe le player Vimeo pendant que l'utilisateur survole
+      this.setId(project.id)
+
       const url = project.preview_video || project.video_home
       if (!url) return
       const video = this.$refs.videoEl
       const bg = this.$refs.videoBg
       if (!video || !bg) return
       clearTimeout(this._hideTimer)
-      // Évite de recharger si c'est déjà la même source
       if (this._currentSrc !== url) {
         this._currentSrc = url
         video.src = url
