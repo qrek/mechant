@@ -1,76 +1,35 @@
 <template>
-  <div class="ProjectPopin" :class="{ active: isActive }">
-    <div
-      ref="player"
-      class="ProjectPopin_player"
-      @mousemove="showControls"
-      @click="handleVideoClick"
-    >
-      <div class="ProjectPopin_player_iframe" ref="videoIframe"></div>
+  <div class="ProjectPopin" :class="{ 'is-active': isActive, 'is-ready': isDisplayed }">
+    <div class="ProjectPopin_player" @mousemove="onMouseMove" @click="onPlayerClick">
 
-      <!-- Loader pendant le buffering -->
-      <div class="ProjectPopin_player_loader" v-if="!isVideoReady">
-        <div class="loader-ring"></div>
-      </div>
+      <!-- Conteneur iframe Vimeo -->
+      <div class="ProjectPopin_iframe" ref="iframe"></div>
 
-      <!-- Barre de progression centrée -->
-      <div
-        class="ProjectPopin_progress"
-        :class="{ visible: controlsVisible }"
-        @click.stop="seek"
-      >
-        <div class="ProjectPopin_progress_bar">
-          <div class="ProjectPopin_progress_fill" :style="{ width: `${progress}%` }"></div>
+      <!-- Loader -->
+      <transition name="fade">
+        <div v-if="isActive && !isVideoReady" class="ProjectPopin_loader">
+          <div class="loader-ring"></div>
         </div>
-      </div>
+      </transition>
 
-      <!-- Close au hover -->
-      <button class="ProjectPopin_close" @click.stop="handleClose" aria-label="Fermer">
+      <!-- Bouton fermer -->
+      <button class="ProjectPopin_close" @click.stop="close" aria-label="Fermer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="20" height="20">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
       </button>
 
-      <!-- Panneau d'infos -->
-      <div class="ProjectPopin_player_info" :class="{ active: isInfosVisible }" @click.stop>
-        <div class="Infos">
-          <div class="Infos_client">{{ project?.client }}</div>
-          <div class="Infos_title">{{ project?.title }}</div>
-          <ul class="Infos_tags">
-            <li v-for="(tag, index) in project?.categories" :key="index" v-if="categoriesData && categoriesData[tag]">{{ categoriesData[tag].title }}</li>
-          </ul>
-          <div class="Infos_text">{{ project?.description }}</div>
-          <div class="Infos_tag">
-            <Tag
-              v-for="(tag, index) in project?.badges" :key="index"
-              :text="tag"
-            />
-          </div>
-        </div>
-        <div class="ProjectPopin_player_info_icon" id="projectInfoButton" @click.stop="handleClickInfo">
-          <i class="icon-info"></i>
-        </div>
-      </div>
-
-      <!-- Contrôles bas (play/pause, mute, fullscreen) -->
-      <div
-        class="ProjectPopin_controls"
-        :class="{ visible: controlsVisible }"
-        @click.stop
-        @mousemove.stop
-      >
-        <button class="ctrl-btn" @click="togglePlay" :title="isPaused ? 'Play' : 'Pause'">
-          <svg v-if="isPaused" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-            <polygon points="5,3 19,12 5,21"/>
-          </svg>
+      <!-- Contrôles -->
+      <div class="ProjectPopin_controls" :class="{ 'is-visible': controlsVisible }" @click.stop @mousemove.stop>
+        <button class="ctrl-btn" @click="togglePlay">
+          <svg v-if="isPaused" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><polygon points="5,3 19,12 5,21"/></svg>
           <svg v-else viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
             <rect x="5" y="3" width="4" height="18" rx="1"/>
             <rect x="15" y="3" width="4" height="18" rx="1"/>
           </svg>
         </button>
-
-        <button class="ctrl-btn" @click="toggleMute" :title="isMuted ? 'Son' : 'Muet'">
+        <button class="ctrl-btn" @click="toggleMute">
           <svg v-if="isMuted" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
             <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/>
             <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
@@ -82,8 +41,7 @@
             <path d="M19,5 a10,10 0 0 1 0,14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
           </svg>
         </button>
-
-        <button class="ctrl-btn" @click="requestFullscreen" title="Plein écran">
+        <button class="ctrl-btn" @click="goFullscreen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18">
             <polyline points="15,3 21,3 21,9"/>
             <polyline points="9,21 3,21 3,15"/>
@@ -92,264 +50,279 @@
           </svg>
         </button>
       </div>
+
+      <!-- Barre de progression -->
+      <div class="ProjectPopin_progress" :class="{ 'is-visible': controlsVisible }" @click.stop="seek">
+        <div class="ProjectPopin_progress_track">
+          <div class="ProjectPopin_progress_fill" :style="{ width: progress + '%' }"></div>
+        </div>
+      </div>
+
+      <!-- Infos projet -->
+      <div class="ProjectPopin_info" :class="{ 'is-open': infoVisible }" @click.stop>
+        <div class="ProjectPopin_info_panel">
+          <div class="Info_client">{{ project && project.client }}</div>
+          <div class="Info_title">{{ project && project.title }}</div>
+          <div v-if="project && project.description" class="Info_desc">{{ project.description }}</div>
+          <ul v-if="project && project.categories && project.categories.length" class="Info_tags">
+            <li v-for="catId in project.categories" :key="catId">
+              {{ categoriesData && categoriesData[catId] && categoriesData[catId].title }}
+            </li>
+          </ul>
+        </div>
+        <button class="ProjectPopin_info_btn" @click.stop="infoVisible = !infoVisible" :class="{ 'is-active': infoVisible }">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="8" stroke-width="3"/>
+            <line x1="12" y1="12" x2="12" y2="16"/>
+          </svg>
+        </button>
+      </div>
+
     </div>
   </div>
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import gsap from '@/vendor/gsap'
-import Tag from '@/components/Tag'
 
 export default {
   name: 'ProjectPopin',
-  components: { Tag },
-  computed: {
-    ...mapGetters({
-      isActive: 'project/isActive',
-      id: 'project/id',
-      currentRoute: 'router/current',
-      data: 'data/getData'
-    }),
-    project() {
-      const project = this.data?.projects.find((p) => p.id === this.id)
-      return project ? project : this.data?.heroProjects[this.id]
-    },
-    categoriesData() {
-      return this.data?.categories
-    }
-  },
-  watch: {
-    currentRoute(newVal, oldVal) {
-      if (newVal !== oldVal) this.handleClose()
-    },
-    isActive(newVal, oldVal) {
-      if (newVal !== oldVal) this.handleActiveChange(newVal)
-    },
-    // Pré-chauffe le player dès que l'id change (hover), avant le clic
-    id(newVal, oldVal) {
-      if (newVal && newVal !== oldVal && !this.isActive) {
-        this._preWarm()
-      }
-    }
-  },
+
   data() {
     return {
-      isInfosVisible: false,
-      tween: { active: null },
+      // player state
+      player: null,
+      loadedVimeoId: null,
+      isDisplayed: false,
+      isVideoReady: false,
+      // playback UI
       isPaused: false,
       isMuted: false,
       progress: 0,
+      // controls visibility
       controlsVisible: false,
-      isVideoReady: false,
-      _hideControlsTimer: null
+      _hideTimer: null,
+      // info panel
+      infoVisible: false
     }
   },
-  mounted() {},
+
+  computed: {
+    ...mapGetters({
+      isActive: 'project/isActive',
+      projectId: 'project/id',
+      data: 'data/getData',
+      currentRoute: 'router/current'
+    }),
+    project() {
+      if (!this.data || !this.projectId) return null
+      return (this.data.projects || []).find(p => p.id === this.projectId)
+        || (this.data.heroProjects && this.data.heroProjects[this.projectId])
+        || null
+    },
+    categoriesData() {
+      return this.data && this.data.categories
+    }
+  },
+
+  watch: {
+    // Quand isActive passe à true : ouvrir. À false : fermer.
+    isActive(val) {
+      if (val) this._open()
+      else this._close()
+    },
+    // Pré-chauffe la vidéo au hover (avant le clic)
+    projectId(newId) {
+      if (!newId || this.isActive) return
+      this._preWarm(newId)
+    },
+    // Ferme si changement de route
+    currentRoute(to, from) {
+      if (to !== from && this.isActive) this.close()
+    }
+  },
+
   beforeDestroy() {
-    clearTimeout(this._hideControlsTimer)
+    clearTimeout(this._hideTimer)
     this._destroyPlayer()
   },
+
   methods: {
-    ...mapActions({
-      setActive: 'project/setActive'
-    }),
+    ...mapActions({ setActive: 'project/setActive' }),
 
-    checkTween(key) {
-      if (this.tween[key]) {
-        this.tween[key].kill()
-        this.tween[key] = null
-      }
-    },
-
-    handleClickInfo() {
-      this.isInfosVisible = !this.isInfosVisible
-      if (this.isInfosVisible) {
-        this.controlsVisible = true
-        clearTimeout(this._hideControlsTimer)
-      }
-    },
-
-    handleClose() {
+    close() {
       this.setActive(false)
     },
 
-    handleActiveChange(status) {
-      this.checkTween('active')
-      if (status) this.handleEnter()
-      else this.handleLeave()
+    // ─── SDK ──────────────────────────────────────────────────────────────────
+
+    _waitForSDK() {
+      return new Promise((resolve, reject) => {
+        if (window.Vimeo && window.Vimeo.Player) return resolve(window.Vimeo.Player)
+        let attempts = 0
+        const poll = setInterval(() => {
+          attempts++
+          if (window.Vimeo && window.Vimeo.Player) {
+            clearInterval(poll)
+            resolve(window.Vimeo.Player)
+          } else if (attempts > 100) {
+            clearInterval(poll)
+            reject(new Error('Vimeo SDK non disponible'))
+          }
+        }, 50)
+      })
     },
 
-    // Crée le player Vimeo en silence avant que l'utilisateur clique
-    _preWarm() {
-      if (typeof window.Vimeo === 'undefined' || !this.project?.vimeo_id) return
-      // Ne pas pré-chauffer si le player est déjà ouvert
-      if (this.isActive) return
-      // Détruire le player précédent si c'est un projet différent
-      if (this.player) {
-        this.player.destroy()
-        this.player = null
-        this.isVideoReady = false
-        this.progress = 0
-      }
-      this.player = new window.Vimeo.Player(this.$refs.videoIframe, {
-        id: this.project.vimeo_id,
+    // ─── Player lifecycle ─────────────────────────────────────────────────────
+
+    async _initPlayer(vimeoId, muted = false) {
+      // Destroy si déjà un player chargé
+      if (this.player) this._destroyPlayer()
+
+      let VimeoPlayer
+      try { VimeoPlayer = await this._waitForSDK() }
+      catch (e) { console.error(e.message); return }
+
+      this.player = new VimeoPlayer(this.$refs.iframe, {
+        id: vimeoId,
         controls: false,
         playsinline: true,
         autopause: false,
         dnt: true
       })
-      this.player.setMuted(true)
-      this.player.play().catch(() => {})
-      this.player.on('loaded', () => { this.isVideoReady = true })
-      this.player.on('timeupdate', ({ percent }) => {
-        this.progress = percent * 100
-        if (!this.isVideoReady) this.isVideoReady = true
-      })
-    },
-
-    _createPlayer() {
-      if (typeof window.Vimeo === 'undefined' || !this.project?.vimeo_id) return false
+      this.loadedVimeoId = vimeoId
       this.isVideoReady = false
-      this.progress = 0
-      this.player = new window.Vimeo.Player(this.$refs.videoIframe, {
-        id: this.project.vimeo_id,
-        controls: false,
-        playsinline: true,
-        autopause: false,
-        dnt: true
-      })
-      this.player.on('loaded', () => { this.isVideoReady = true })
-      this.player.on('timeupdate', ({ percent }) => {
-        this.progress = percent * 100
-        if (!this.isVideoReady) this.isVideoReady = true
-      })
-      return true
+
+      this.player.on('loaded',      ()              => { this.isVideoReady = true })
+      this.player.on('timeupdate',  ({ percent })   => { this.progress = percent * 100; this.isVideoReady = true })
+      this.player.on('play',        ()              => { this.isPaused = false })
+      this.player.on('pause',       ()              => { this.isPaused = true;  this._showControls() })
+      this.player.on('ended',       ()              => { this.isPaused = true;  this.progress = 0; this._showControls() })
+      this.player.on('error',       ({ message })   => { console.warn('Vimeo:', message); this.isVideoReady = true })
+
+      await this.player.setMuted(muted)
+      this.player.play().catch(() => {})
     },
 
     _destroyPlayer() {
       if (!this.player) return
-      this.player.off('pause')
-      this.player.off('play')
-      this.player.off('ended')
-      this.player.off('error')
-      this.player.off('loaded')
-      this.player.off('timeupdate')
-      this.player.destroy()
+      try { this.player.destroy() } catch (_) {}
       this.player = null
+      this.loadedVimeoId = null
+      this.isVideoReady = false
     },
 
-    handleVideoClick() {
-      if (!this.$el.classList.contains('displayPlayer')) return
-      if (this.isInfosVisible) {
-        this.isInfosVisible = false
-        return
-      }
-      this.togglePlay()
-      this.showControls()
+    // ─── Pre-warm (hover) ─────────────────────────────────────────────────────
+
+    _preWarm(vimeoId) {
+      if (!vimeoId) return
+      const video = this._projectById(this.projectId)
+      const id = video && video.vimeo_id
+      if (!id) return
+      // Déjà chargé
+      if (this.loadedVimeoId === id && this.player) return
+      this._initPlayer(id, true) // muted
     },
 
-    togglePlay() {
-      if (this.isPaused) this.player?.play()
-      else this.player?.pause()
+    _projectById(projectId) {
+      if (!this.data || !projectId) return null
+      return (this.data.projects || []).find(p => p.id === projectId)
+        || (this.data.heroProjects && this.data.heroProjects[projectId])
+        || null
     },
 
-    toggleMute() {
-      this.isMuted = !this.isMuted
-      this.player?.setMuted(this.isMuted)
-    },
+    // ─── Open / Close ─────────────────────────────────────────────────────────
 
-    async seek(e) {
-      const rect = e.currentTarget.getBoundingClientRect()
-      const ratio = (e.clientX - rect.left) / rect.width
-      if (this.player) {
-        const duration = await this.player.getDuration()
-        if (duration) this.player.setCurrentTime(duration * ratio)
-      }
-    },
+    async _open() {
+      const vimeoId = this.project && this.project.vimeo_id
+      if (!vimeoId) return
 
-    requestFullscreen() {
-      this.player?.requestFullscreen()
-    },
-
-    showControls() {
-      if (!this.$el.classList.contains('displayPlayer')) return
-      this.controlsVisible = true
-      clearTimeout(this._hideControlsTimer)
-      this._hideControlsTimer = setTimeout(() => {
-        if (!this.isPaused && !this.isInfosVisible) this.controlsVisible = false
-      }, 3000)
-    },
-
-    handleEnter() {
-      const _el = this.$el
       this.isPaused = false
       this.isMuted = false
-      this.controlsVisible = false
+      this.infoVisible = false
+      this.progress = 0
 
-      // Créer le player s'il n'existe pas encore (démarrage froid)
-      if (!this.player) {
-        if (!this._createPlayer()) {
-          console.error('Vimeo SDK non chargé')
-          return
-        }
+      // Si le pre-warm a chargé la bonne vidéo, on démute juste
+      if (this.loadedVimeoId === vimeoId && this.player) {
+        await this.player.setMuted(false)
+        this.player.play().catch(() => {})
+      } else {
+        // Sinon : chargement direct (clic sans hover, ou hover sur un autre projet)
+        await this._initPlayer(vimeoId, false)
       }
 
-      // Nettoyer les listeners UI avant de les rebrancher (évite les doublons)
-      this.player.off('pause')
-      this.player.off('play')
-      this.player.off('ended')
-      this.player.off('error')
-
-      this.player.on('pause', () => { this.isPaused = true; this.controlsVisible = true })
-      this.player.on('play',  () => { this.isPaused = false })
-      this.player.on('ended', () => { this.isPaused = true; this.progress = 0; this.controlsVisible = true })
-      this.player.on('error', ({ message }) => {
-        console.warn('Vimeo error:', message)
-        this.isVideoReady = true
-        this.isPaused = true
-      })
-
-      // Démute + lecture (safe si déjà en train de jouer depuis le pre-warm)
-      this.player.setMuted(false)
-      this.player.play().catch(err => {
-        console.warn('Lecture bloquée:', err?.message)
-        this.isPaused = true
-        this.isVideoReady = true
-      })
-
-      // Affiche l'iframe immédiatement + fondu du fond noir en parallèle
-      _el.classList.add('displayPlayer')
-      gsap.fromTo(_el,
+      // Animation d'ouverture
+      this.isDisplayed = true
+      gsap.fromTo(this.$el,
         { opacity: 0 },
-        {
-          opacity: 1,
-          duration: 0.35,
-          ease: 'power2.out',
-          onComplete: () => this.showControls()
-        }
+        { opacity: 1, duration: 0.35, ease: 'power2.out', onComplete: () => this._showControls() }
       )
     },
 
-    handleLeave() {
-      const _el = this.$el
-      clearTimeout(this._hideControlsTimer)
+    _close() {
+      clearTimeout(this._hideTimer)
       this.controlsVisible = false
-      this.isInfosVisible = false
-      _el.classList.remove('displayPlayer')
-      if (this.player) this.player.pause()
+      this.infoVisible = false
 
-      gsap.to(_el, {
+      gsap.to(this.$el, {
         opacity: 0,
-        duration: 0.4,
-        ease: 'power2.inOut',
+        duration: 0.35,
+        ease: 'power2.in',
         onComplete: () => {
+          this.isDisplayed = false
           this._destroyPlayer()
           this.isPaused = false
+          this.isMuted = false
           this.progress = 0
-          this.isVideoReady = false
         }
       })
+    },
+
+    // ─── Controls ─────────────────────────────────────────────────────────────
+
+    _showControls() {
+      if (!this.isDisplayed) return
+      this.controlsVisible = true
+      clearTimeout(this._hideTimer)
+      this._hideTimer = setTimeout(() => {
+        if (!this.isPaused && !this.infoVisible) this.controlsVisible = false
+      }, 3000)
+    },
+
+    onMouseMove() {
+      this._showControls()
+    },
+
+    onPlayerClick() {
+      if (!this.isDisplayed) return
+      if (this.infoVisible) { this.infoVisible = false; return }
+      this.togglePlay()
+    },
+
+    togglePlay() {
+      if (!this.player) return
+      if (this.isPaused) this.player.play()
+      else this.player.pause()
+    },
+
+    toggleMute() {
+      if (!this.player) return
+      this.isMuted = !this.isMuted
+      this.player.setMuted(this.isMuted)
+    },
+
+    goFullscreen() {
+      this.player && this.player.requestFullscreen()
+    },
+
+    async seek(e) {
+      if (!this.player) return
+      const rect = e.currentTarget.getBoundingClientRect()
+      const ratio = Math.max(0, Math.min((e.clientX - rect.left) / rect.width, 1))
+      const duration = await this.player.getDuration()
+      if (duration) this.player.setCurrentTime(duration * ratio)
     }
   }
 }
@@ -357,295 +330,254 @@ export default {
 
 <style lang="sass" scoped>
 .ProjectPopin
-  z-index: 11
-  width: 100%
-  height: 100%
   position: fixed
-  top: 0
-  left: 0
+  inset: 0
+  z-index: 11
+  background: $black
   display: flex
   align-items: center
   justify-content: center
   opacity: 0
   pointer-events: none
-  background: $black
 
-  &.active
-    pointer-events: initial
+  &.is-active
+    pointer-events: auto
 
   &_player
+    position: relative
     width: 100%
     height: 100%
-    overflow: hidden
-    position: relative
     cursor: default
 
-    // Close visible au hover du player
+    // Close visible au hover
     &:hover .ProjectPopin_close
       opacity: 1
 
-    &_iframe
+  // ── Iframe ───────────────────────────────────────────────────────────────
+  &_iframe
+    width: 100%
+    height: 100%
+    background: $black
+    pointer-events: none
+
+    ::v-deep iframe
       width: 100%
       height: 100%
-      background: $black
+      object-fit: cover
+      display: block
+      opacity: 0
+      transition: opacity 0.4s ease
+
+  &.is-ready &_iframe ::v-deep iframe
+    opacity: 1
+
+  // ── Loader ───────────────────────────────────────────────────────────────
+  &_loader
+    position: absolute
+    top: 50%
+    left: 50%
+    transform: translate(-50%, -50%)
+    z-index: 3
+    pointer-events: none
+
+    .loader-ring
+      width: 3.5rem
+      height: 3.5rem
+      border: 2px solid rgba(255,255,255,0.2)
+      border-top-color: $white
+      border-radius: 50%
+      animation: spin 0.8s linear infinite
+
+  // ── Close ─────────────────────────────────────────────────────────────────
+  &_close
+    position: absolute
+    top: 2rem
+    right: 2rem
+    width: 3.5rem
+    height: 3.5rem
+    display: flex
+    align-items: center
+    justify-content: center
+    background: rgba(255,255,255,0.08)
+    border: 1px solid rgba(255,255,255,0.2)
+    border-radius: 50%
+    color: $white
+    cursor: pointer
+    z-index: 6
+    opacity: 0
+    transition: opacity 0.2s ease, background 0.2s ease, transform 0.2s ease
+
+    &:hover
+      background: $white
+      color: $black
+      transform: scale(1.08)
+
+  // ── Progress ─────────────────────────────────────────────────────────────
+  &_progress
+    position: absolute
+    bottom: 5rem
+    left: 50%
+    transform: translateX(-50%)
+    width: 60vw
+    padding: 1.2rem 0
+    z-index: 4
+    cursor: pointer
+    opacity: 0
+    pointer-events: none
+    transition: opacity 0.3s ease
+
+    &.is-visible
+      opacity: 1
+      pointer-events: auto
+
+    &_track
+      height: 2px
+      background: rgba(255,255,255,0.2)
+      border-radius: 2px
+      overflow: hidden
+
+    &_fill
+      height: 100%
+      background: $white
+      border-radius: 2px
+      transition: width 0.15s linear
+
+  // ── Controls ─────────────────────────────────────────────────────────────
+  &_controls
+    position: absolute
+    bottom: 0
+    left: 0
+    right: 0
+    z-index: 4
+    padding: 4rem 2rem 2rem
+    background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)
+    display: flex
+    align-items: center
+    justify-content: center
+    gap: 2rem
+    opacity: 0
+    pointer-events: none
+    transition: opacity 0.3s ease
+
+    &.is-visible
+      opacity: 1
+      pointer-events: auto
+
+  // ── Info ─────────────────────────────────────────────────────────────────
+  &_info
+    position: absolute
+    bottom: 5rem
+    right: 2rem
+    z-index: 5
+    display: flex
+    align-items: flex-end
+    flex-direction: column
+    gap: 0.75rem
+
+    &_panel
+      background: rgba(0,0,0,0.85)
+      backdrop-filter: blur(12px)
+      border: 1px solid rgba(255,255,255,0.1)
+      border-radius: 12px
+      padding: 2rem 2.5rem
+      opacity: 0
+      transform: translateY(8px)
       pointer-events: none
+      transition: opacity 0.25s ease, transform 0.25s ease
+      max-width: 320px
 
-      ::v-deep iframe
-        width: 100%
-        height: 100%
-        object-fit: cover
-        opacity: 0
-        transition: opacity 0.4s ease
+    &.is-open &_panel
+      opacity: 1
+      transform: translateY(0)
+      pointer-events: auto
 
-    &_loader
-      position: absolute
-      top: 50%
-      left: 50%
-      transform: translate(-50%, -50%)
-      z-index: 2
-      pointer-events: none
-
-      .loader-ring
-        width: 4rem
-        height: 4rem
-        border: 3px solid rgba(255, 255, 255, 0.25)
-        border-top-color: $white
-        border-radius: 50%
-        animation: popinSpin 0.8s linear infinite
-
-    &_info
-      position: absolute
-      bottom: 6.5rem
-      right: 2.5rem
-      width: auto
-      height: auto
+    &_btn
+      width: 3rem
+      height: 3rem
+      border-radius: 50%
+      border: 1px solid rgba(255,255,255,0.25)
+      background: rgba(255,255,255,0.08)
+      color: $white
       display: flex
       align-items: center
       justify-content: center
       cursor: pointer
-      z-index: 5
+      transition: all 0.2s ease
+      flex-shrink: 0
 
-      &.active
-        &:before
-          transform: scale(1.005, 1.001)
-        &:before, &:after
-          width: 100%
-          height: 100%
-          transition: all ease-in-out .3s
+      &:hover, &.is-active
+        background: $white
+        color: $black
+        border-color: $white
 
-        .Infos
-          pointer-events: initial
-          opacity: 1
-          transition: all ease-in-out .3s .3s
+// ── Info content ─────────────────────────────────────────────────────────
+.Info
+  &_client
+    font-family: $apfel
+    font-weight: 900
+    font-size: 2rem
+    text-transform: uppercase
+    color: $white
+    line-height: 1
+    margin-bottom: 0.4rem
 
-      &:after, &:before
-        transition: all ease-in-out .3s .3s
+  &_title
+    font-family: $apfel
+    font-weight: 400
+    font-size: 0.85rem
+    text-transform: uppercase
+    letter-spacing: 0.1em
+    color: rgba(255,255,255,0.5)
+    margin-bottom: 1rem
 
-      &:after
-        z-index: -1
-        content: ''
-        width: 3.4rem
-        height: 3.4rem
-        position: absolute
-        border-radius: 10px
-        background-color: $white
-        bottom: 0
-        right: 0
+  &_desc
+    font-family: $apfel
+    font-size: 0.85rem
+    color: rgba(255,255,255,0.6)
+    line-height: 1.5
+    margin-bottom: 1rem
 
-      &:before
-        content: ''
-        z-index: -1
-        position: absolute
-        bottom: 0
-        right: 0
-        transform: scale(1.075, 1.075)
-        width: 3.4rem
-        height: 3.4rem
-        border-radius: 10px
-        transform-origin: center
-        background-color: $black
-        box-shadow: textShadow($typoPres, $typoDepth, $black)
+  &_tags
+    display: flex
+    flex-wrap: wrap
+    gap: 0.4rem
 
-      &_icon
-        position: absolute
-        width: 3.4rem
-        height: 3.4rem
-        bottom: calc(3.4rem / 2)
-        right: calc(3.4rem / 2)
-        transform: translate(50%, 50%)
-        display: flex
-        align-items: center
-        justify-content: center
+    li
+      font-family: $apfel
+      font-size: 0.7rem
+      text-transform: uppercase
+      letter-spacing: 0.08em
+      color: rgba(255,255,255,0.4)
+      border: 1px solid rgba(255,255,255,0.15)
+      border-radius: 4px
+      padding: 0.2rem 0.5rem
 
-        .icon-info
-          font-size: 1.9rem
-
-      .Infos
-        pointer-events: none
-        display: flex
-        align-items: flex-start
-        justify-content: flex-start
-        flex-direction: column
-        padding: 3.5rem 4rem 3.5rem 3.5rem
-        gap: 1.2rem
-        opacity: 0
-        transition: all ease-in-out .3s
-
-        &_client,
-        &_title,
-        &_tags,
-        &_text
-          text-transform: uppercase
-          color: $black
-
-        &_client
-          font-family: $briceBlackCondensed
-          margin-bottom: .8rem
-          font-size: 3.5rem
-
-        &_title
-          font-family: $kobeBold
-          font-size: 1.8rem
-
-        &_tag
-          ::v-deep .Tag_wrapper:not(:last-child)
-            margin-right: 1rem
-
-        &_tags
-          font-family: $kobeBold
-          display: flex
-          align-items: center
-          justify-content: center
-          font-size: 1.6rem
-
-          li
-            position: relative
-            padding-right: 1rem
-
-            &:not(:first-child)
-              padding-left: 1rem
-              &:after
-                position: absolute
-                content: ''
-                width: .1rem
-                height: 100%
-                background-color: $black
-                top: 50%
-                left: 0
-                transform: translate(-50%, -70%)
-
-        &_text
-          font-family: $kobeBold
-          font-size: 1.6rem
-
-        .Tag_wrapper
-          animation: 1.5s ease-in-out 0s infinite tag
-
-// ---------- Barre de progression centrée ----------
-.ProjectPopin_progress
-  position: absolute
-  top: 50%
-  left: 50%
-  transform: translate(-50%, -50%)
-  width: 60vw
-  z-index: 4
-  cursor: pointer
-  opacity: 0
-  transition: opacity 0.3s ease
-  pointer-events: none
-  padding: 1.5rem 0
-
-  &.visible
-    opacity: 1
-    pointer-events: auto
-
-  &_bar
-    height: 2px
-    background: rgba(255, 255, 255, 0.25)
-    border-radius: 2px
-    overflow: hidden
-
-  &_fill
-    height: 100%
-    background: $white
-    border-radius: 2px
-    transition: width 0.15s linear
-
-// ---------- Close ----------
-.ProjectPopin_close
-  position: absolute
-  top: 2.5rem
-  right: 2.5rem
-  width: 4rem
-  height: 4rem
-  display: flex
-  align-items: center
-  justify-content: center
-  background: rgba(255, 255, 255, 0.1)
-  border: 1px solid rgba(255, 255, 255, 0.3)
-  border-radius: 50%
-  color: $white
-  cursor: pointer
-  z-index: 6
-  opacity: 0
-  transition: opacity 0.25s ease, background 0.2s ease, transform 0.2s ease
-
-  &:hover
-    background: $white
-    color: $black
-    transform: scale(1.1)
-
-// ---------- Contrôles bas ----------
-.ProjectPopin_controls
-  position: absolute
-  bottom: 0
-  left: 0
-  right: 0
-  z-index: 4
-  padding: 3rem 2.5rem 2rem
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, transparent 100%)
-  display: flex
-  align-items: center
-  justify-content: center
-  gap: 1.5rem
-  opacity: 0
-  transition: opacity 0.3s ease
-  pointer-events: none
-
-  &.visible
-    opacity: 1
-    pointer-events: auto
-
+// ── Boutons contrôle ─────────────────────────────────────────────────────
 .ctrl-btn
   background: none
   border: none
   color: $white
   cursor: pointer
-  padding: 0.4rem
-  opacity: 0.8
+  padding: 0.5rem
+  opacity: 0.75
   transition: opacity 0.2s ease, transform 0.2s ease
-  flex-shrink: 0
   display: flex
   align-items: center
   justify-content: center
+  flex-shrink: 0
 
   &:hover
     opacity: 1
     transform: scale(1.2)
 
-.ProjectPopin.displayPlayer .ProjectPopin_player_iframe
-  ::v-deep iframe
-    opacity: 1
+// ── Transitions ──────────────────────────────────────────────────────────
+.fade-enter-active, .fade-leave-active
+  transition: opacity 0.3s ease
 
-@keyframes tag
-  0%
-    transform: rotate(-3deg)
-  50%
-    transform: rotate(3deg)
-  100%
-    transform: rotate(-3deg)
+.fade-enter, .fade-leave-to
+  opacity: 0
 
-@keyframes popinSpin
+@keyframes spin
   to
     transform: rotate(360deg)
 </style>
