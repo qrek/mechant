@@ -84,6 +84,10 @@
       <div class="form-section">
         <h2>Section Héro</h2>
         <label class="toggle-label">
+          <input type="checkbox" v-model="form.is_featured" />
+          Afficher sur la page Works (sélection)
+        </label>
+        <label class="toggle-label">
           <input type="checkbox" v-model="form.is_hero" />
           Afficher dans le carousel héro
         </label>
@@ -150,6 +154,7 @@ export default {
         categories: [],
         badges: [],
         preview_video: '',
+        is_featured: false,
         is_hero: false,
         hero_title: '',
         hero_order: 0,
@@ -176,6 +181,7 @@ export default {
         categories: project.categories || [],
         badges: project.badges || [],
         preview_video: project.preview_video || '',
+        is_featured: project.is_featured || false,
         is_hero: project.is_hero || false,
         hero_title: project.hero_title || '',
         hero_order: project.hero_order || 0,
