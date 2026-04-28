@@ -178,12 +178,17 @@ export default {
     // ─── Player lifecycle ─────────────────────────────────────────────────────
 
     async _initPlayer(vimeoId, muted = false) {
-      // Destroy si déjà un player chargé
+      // Version counter — si un autre _initPlayer démarre pendant l'await, on abandonne
+      this._initVersion = (this._initVersion || 0) + 1
+      const myVersion = this._initVersion
+
       if (this.player) this._destroyPlayer()
 
       let VimeoPlayer
       try { VimeoPlayer = await this._waitForSDK() }
       catch (e) { console.error(e.message); return }
+
+      if (myVersion !== this._initVersion) return
 
       this.player = new VimeoPlayer(this.$refs.iframe, {
         id: vimeoId,
