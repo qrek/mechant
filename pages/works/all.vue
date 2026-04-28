@@ -1,26 +1,38 @@
 <template>
-  <section class="WorksPage" @mousemove="onMouseMove">
-
-    <!-- Cadre vidéo flottant -->
-    <div class="WorksPage_float" ref="float">
-      <video ref="floatVideo" muted loop playsinline class="WorksPage_float_video" />
-    </div>
-
-    <!-- Cloud typographique — tous les projets -->
-    <div class="WorksPage_cloud" ref="list">
-      <button
+  <section class="AllWork">
+    <div class="AllWork_grid" ref="grid">
+      <div
         v-for="project in projectsData"
         :key="project.id"
-        class="WorksPage_item"
-        @mouseenter="onHover(project)"
-        @mouseleave="onLeave"
+        class="AllWork_card"
+        @mouseenter="(e) => onCardEnter(e, project)"
+        @mouseleave="onCardLeave"
         @click="openProject(project)"
       >
-        <span class="WorksPage_item_title">{{ project.client || getCategoryLabel(project) }}</span>
-        <span class="WorksPage_item_label">{{ project.title }}</span>
-      </button>
+        <div class="AllWork_card_media">
+          <img
+            v-if="project.thumbnail_url || project.poster"
+            :src="project.thumbnail_url || project.poster"
+            :alt="project.title"
+            class="AllWork_card_thumb"
+          />
+          <div v-else class="AllWork_card_placeholder" />
+          <video
+            v-if="project.preview_video || project.video_home"
+            :data-src="project.preview_video || project.video_home"
+            muted
+            loop
+            playsinline
+            preload="none"
+            class="AllWork_card_video"
+          />
+        </div>
+        <div class="AllWork_card_info">
+          <p class="AllWork_card_client">{{ project.client || getCategoryLabel(project) }}</p>
+          <h3 class="AllWork_card_title">{{ project.title }}</h3>
+        </div>
+      </div>
     </div>
-
   </section>
 </template>
 
@@ -40,10 +52,7 @@ export default {
 
   data() {
     return {
-      isLoading: false,
-      _hideTimer: null,
-      _currentSrc: null,
-      _preloadCache: {}
+      isLoading: false
     }
   },
 
@@ -56,14 +65,10 @@ export default {
 
   mounted() {
     window.addEventListener('scroll', this._onScroll)
-    this._preloadVideos()
   },
 
   beforeDestroy() {
     window.removeEventListener('scroll', this._onScroll)
-    clearTimeout(this._hideTimer)
-    Object.values(this._preloadCache).forEach(v => { v.src = ''; v.load() })
-    this._preloadCache = {}
   },
 
   methods: {
@@ -79,57 +84,20 @@ export default {
       return this.data?.categories?.[cats[0]]?.title || ''
     },
 
-    _preloadVideos() {
-      this.projectsData.forEach(project => {
-        const url = project.preview_video || project.video_home
-        if (!url || this._preloadCache[project.id]) return
-        const v = document.createElement('video')
-        v.src = url
-        v.muted = true
-        v.preload = 'metadata'
-        v.load()
-        this._preloadCache[project.id] = v
-      })
-    },
-
-    onMouseMove(e) {
-      const el = this.$refs.float
-      if (!el) return
-      const w = el.offsetWidth
-      const h = el.offsetHeight
-      const vw = window.innerWidth
-      const vh = window.innerHeight
-      let x = e.clientX + 32
-      let y = e.clientY - h / 2
-      if (x + w > vw - 16) x = e.clientX - w - 32
-      y = Math.max(16, Math.min(y, vh - h - 16))
-      el.style.transform = `translate(${x}px, ${y}px)`
-    },
-
-    onHover(project) {
+    onCardEnter(e, project) {
       this.setId(project.id)
-      const url = project.preview_video || project.video_home
-      if (!url) return
-      const video = this.$refs.floatVideo
-      const float = this.$refs.float
-      if (!video || !float) return
-      clearTimeout(this._hideTimer)
-      if (this._currentSrc !== url) {
-        this._currentSrc = url
-        video.src = url
-      }
-      video.currentTime = 0
+      const video = e.currentTarget.querySelector('.AllWork_card_video')
+      if (!video) return
+      if (!video.src && video.dataset.src) video.src = video.dataset.src
       video.play().catch(() => {})
-      float.classList.add('is-visible')
+      video.classList.add('is-playing')
     },
 
-    onLeave() {
-      const float = this.$refs.float
-      if (!float) return
-      float.classList.remove('is-visible')
-      this._hideTimer = setTimeout(() => {
-        if (this.$refs.floatVideo) this.$refs.floatVideo.pause()
-      }, 300)
+    onCardLeave(e) {
+      const video = e.currentTarget.querySelector('.AllWork_card_video')
+      if (!video) return
+      video.pause()
+      video.classList.remove('is-playing')
     },
 
     openProject(project) {
@@ -138,9 +106,9 @@ export default {
     },
 
     async _onScroll() {
-      const { list } = this.$refs
-      if (!list) return
-      const { bottom } = list.getBoundingClientRect()
+      const { grid } = this.$refs
+      if (!grid) return
+      const { bottom } = grid.getBoundingClientRect()
       if (bottom < window.innerHeight * 1.3 && !this.isLoading) {
         await this._loadMore()
       }
@@ -168,90 +136,86 @@ export default {
 </script>
 
 <style lang="sass" scoped>
-.WorksPage
-  position: relative
+.AllWork
   min-height: 100vh
-  background: #f2492c
-  display: flex
-  align-items: center
-  justify-content: center
-  padding: 12rem 5vw 8rem
+  background: #0d0d0d
+  padding: 12rem 5vw 10rem
 
   +breakpoint(mobile)
-    padding: 11rem 5vw 6rem
-    align-items: flex-start
+    padding: 11rem 4vw 8rem
 
-  &_float
-    position: fixed
-    top: 0
-    left: 0
-    width: 30rem
-    aspect-ratio: 16 / 9
-    border-radius: 10px
-    overflow: hidden
-    pointer-events: none
-    z-index: 3
-    opacity: 0
-    transition: opacity 0.25s ease
-    will-change: transform
-    box-shadow: 0 12px 50px rgba(0,0,0,0.45)
+  &_grid
+    display: grid
+    grid-template-columns: repeat(2, 1fr)
+    gap: 5rem 3rem
 
     +breakpoint(mobile)
-      display: none
+      grid-template-columns: 1fr
+      gap: 4rem
 
-    &.is-visible
-      opacity: 1
-
-    &_video
-      width: 100%
-      height: 100%
-      object-fit: cover
-
-  &_cloud
-    position: relative
-    z-index: 1
-    display: flex
-    flex-wrap: wrap
-    align-items: flex-start
-    justify-content: center
-
-.WorksPage_item
-  display: inline-flex
-  align-items: flex-start
-  gap: 0.5em
+.AllWork_card
   cursor: pointer
-  background: none
-  border: none
-  padding: 0
-  padding-right: 0.3em
-  line-height: 1
-  text-decoration: none
 
   &:hover
-    .WorksPage_item_title
-      color: $white
-    .WorksPage_item_label
-      color: rgba(255,255,255,0.7)
+    .AllWork_card_media
+      .AllWork_card_thumb
+        opacity: 0.15
+
+  &_media
+    position: relative
+    aspect-ratio: 16 / 9
+    overflow: hidden
+    background: #111
+
+  &_thumb
+    position: absolute
+    inset: 0
+    width: 100%
+    height: 100%
+    object-fit: cover
+    display: block
+    transition: opacity 0.35s ease
+
+  &_placeholder
+    position: absolute
+    inset: 0
+    background: #1a1a1a
+
+  &_video
+    position: absolute
+    inset: 0
+    width: 100%
+    height: 100%
+    object-fit: cover
+    opacity: 0
+    transition: opacity 0.35s ease
+
+    &.is-playing
+      opacity: 1
+
+  &_info
+    padding: 1.4rem 0 0
+    border-top: 1px solid rgba(255,255,255,0.08)
+    margin-top: 1.2rem
+
+  &_client
+    font-family: $apfel
+    font-weight: 900
+    font-size: clamp(1.8rem, 2.5vw, 3.2rem)
+    line-height: 0.92
+    text-transform: uppercase
+    color: $white
+    margin: 0
+
+    +breakpoint(mobile)
+      font-size: clamp(2rem, 6vw, 3rem)
 
   &_title
     font-family: $apfel
-    font-weight: 900
-    font-size: clamp(2rem, 3.2vw, 4.5rem)
-    line-height: 0.9
-    text-transform: uppercase
-    color: #000
-    transition: color 0.25s ease
-    display: block
-
-  &_label
-    font-family: $apfel
     font-weight: 400
-    font-size: clamp(0.55rem, 0.65vw, 0.75rem)
+    font-size: clamp(0.7rem, 0.85vw, 1rem)
     letter-spacing: 0.1em
     text-transform: uppercase
-    color: rgba(0,0,0,0.5)
-    transition: color 0.25s ease
-    display: block
-    margin-top: 0.45em
-    line-height: 1.3
+    color: rgba(255,255,255,0.4)
+    margin: 0.6rem 0 0
 </style>

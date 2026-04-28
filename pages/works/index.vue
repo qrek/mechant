@@ -1,7 +1,7 @@
 <template>
   <section class="WorksPage" @mousemove="onMouseMove">
 
-    <!-- Cadre vidéo flottant (cursor-follower) -->
+    <!-- Cadre vidéo flottant (cursor-follower, derrière le texte) -->
     <div class="WorksPage_float" ref="float">
       <video ref="floatVideo" muted loop playsinline class="WorksPage_float_video" />
     </div>
@@ -100,12 +100,8 @@ export default {
       if (!el) return
       const w = el.offsetWidth
       const h = el.offsetHeight
-      const vw = window.innerWidth
-      const vh = window.innerHeight
-      let x = e.clientX + 32
-      let y = e.clientY - h / 2
-      if (x + w > vw - 16) x = e.clientX - w - 32
-      y = Math.max(16, Math.min(y, vh - h - 16))
+      const x = Math.max(0, Math.min(e.clientX - w / 2, window.innerWidth - w))
+      const y = Math.max(0, Math.min(e.clientY - h / 2, window.innerHeight - h))
       el.style.transform = `translate(${x}px, ${y}px)`
     },
 
@@ -157,21 +153,19 @@ export default {
     padding: 11rem 5vw 6rem
     align-items: flex-start
 
-  // ---------- Cadre vidéo flottant ----------
+  // ---------- Cadre vidéo flottant (derrière le texte) ----------
   &_float
     position: fixed
     top: 0
     left: 0
     width: 30rem
     aspect-ratio: 16 / 9
-    border-radius: 10px
     overflow: hidden
     pointer-events: none
-    z-index: 3
+    z-index: 1
     opacity: 0
     transition: opacity 0.25s ease
     will-change: transform
-    box-shadow: 0 12px 50px rgba(0,0,0,0.45)
 
     +breakpoint(mobile)
       display: none
@@ -184,10 +178,10 @@ export default {
       height: 100%
       object-fit: cover
 
-  // ---------- Cloud typographique ----------
+  // ---------- Cloud typographique (au-dessus de la vidéo) ----------
   &_cloud
     position: relative
-    z-index: 1
+    z-index: 2
     display: flex
     flex-wrap: wrap
     align-items: flex-start
