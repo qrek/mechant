@@ -1,8 +1,8 @@
 <template>
   <header class="Header" :class="{navIsOpen: isMenuOpen}">
 
-    <!-- Logo toujours présent à gauche -->
-    <NuxtLink to="/" class="Header_logoLink" @click.native="closeMainNav">
+    <!-- Logo masqué sur la page Works -->
+    <NuxtLink v-if="!isWorksPage" to="/" class="Header_logoLink" @click.native="closeMainNav">
       <img class="Header_logo" src="~assets/images/logo.png" alt="Mechant">
     </NuxtLink>
 
@@ -177,6 +177,9 @@ export default {
     },
     isHomePage() {
       return this.$route.name === 'index' || this.$route.path === '/'
+    },
+    isWorksPage() {
+      return this.$route.path === '/works' || this.$route.name === 'works'
     }
   },
   methods: {

@@ -1,6 +1,9 @@
 <template>
   <section class="WorksPage" @mousemove="onMouseMove">
 
+    <!-- Fond orange qui scale in -->
+    <div class="WorksPage_bg" ref="bg" />
+
     <!-- Cadre vidéo flottant (cursor-follower, derrière le texte) -->
     <div class="WorksPage_float" ref="float">
       <video ref="floatVideo" muted loop playsinline class="WorksPage_float_video" />
@@ -30,6 +33,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
+import { gsap } from '@/vendor/gsap'
 
 export default {
   name: 'Works',
@@ -62,6 +66,7 @@ export default {
 
   mounted() {
     this._preloadVideos()
+    this._animateIn()
   },
 
   beforeDestroy() {
@@ -85,7 +90,27 @@ export default {
     getWorkTypes(project) {
       const types = project.work_types
       if (!types || !types.length) return ''
-      return types.join(' · ')
+      return types.join('/')
+    },
+
+    _animateIn() {
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+
+      tl.from(this.$refs.bg, {
+        scale: 0.82,
+        duration: 1,
+        clearProps: 'transform'
+      })
+
+      const items = this.$el.querySelectorAll('.WorksPage_item')
+      tl.from(items, {
+        opacity: 0,
+        y: 18,
+        duration: 0.5,
+        stagger: 0.07,
+        ease: 'power2.out',
+        clearProps: 'all'
+      }, '-=0.5')
     },
 
     _preloadVideos() {
@@ -149,7 +174,7 @@ export default {
 .WorksPage
   position: relative
   min-height: 100vh
-  background: #f2492c
+  background: #000
   display: flex
   align-items: center
   justify-content: center
@@ -158,6 +183,15 @@ export default {
   +breakpoint(mobile)
     padding: 11rem 5vw 6rem
     align-items: flex-start
+
+  // ---------- Fond orange animé ----------
+  &_bg
+    position: fixed
+    inset: 0
+    background: #f2492c
+    z-index: 0
+    transform-origin: center
+    will-change: transform
 
   // ---------- Cadre vidéo flottant (derrière le texte) ----------
   &_float
@@ -196,8 +230,8 @@ export default {
 // Chaque projet
 .WorksPage_item
   display: inline-flex
-  align-items: flex-start
-  gap: 0.5em
+  align-items: flex-end
+  gap: 0.4em
   cursor: pointer
   background: none
   border: none
@@ -210,7 +244,7 @@ export default {
     .WorksPage_item_title
       color: $white
     .WorksPage_item_label
-      color: rgba(255,255,255,0.7)
+      color: rgba(255,255,255,0.6)
 
   &--allwork
     .WorksPage_item_title
@@ -232,12 +266,12 @@ export default {
   &_label
     font-family: $apfel
     font-weight: 400
-    font-size: clamp(0.55rem, 0.65vw, 0.75rem)
-    letter-spacing: 0.1em
+    font-size: clamp(0.5rem, 0.6vw, 0.7rem)
+    letter-spacing: 0.08em
     text-transform: uppercase
-    color: rgba(0,0,0,0.5)
+    color: rgba(0,0,0,0.45)
     transition: color 0.25s ease
     display: block
-    margin-top: 0.45em
-    line-height: 1.3
+    padding-bottom: 0.2em
+    line-height: 1.2
 </style>
