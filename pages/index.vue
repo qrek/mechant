@@ -3,8 +3,7 @@
 
     <!-- Fond vidéo / image full-screen -->
     <div class="HomePage_bg">
-      <transition name="bg-fade">
-        <div class="HomePage_bg_media" :key="currentProject && currentProject.id">
+      <div class="HomePage_bg_media" :key="currentProject && currentProject.id">
           <video
             v-if="currentVideoUrl"
             :src="currentVideoUrl"
@@ -22,7 +21,6 @@
             class="HomePage_bg_img"
           />
         </div>
-      </transition>
 
       <div class="HomePage_bg_gradient" />
 
@@ -169,25 +167,17 @@ export default {
   // ---------- Logo coupé ----------
   &_logo
     position: absolute
-    bottom: -2vw
-    left: 50%
+    bottom: -14vw
+    left: 48%
     transform: translateX(-50%)
     width: 104vw
     pointer-events: none
     z-index: 3
     user-select: none
+    opacity: 0.9
 
     img
       display: block
       width: 100%
       height: auto
-
-// ---------- Transitions fond ----------
-.bg-fade-enter-active,
-.bg-fade-leave-active
-  transition: opacity 1s ease
-
-.bg-fade-enter,
-.bg-fade-leave-to
-  opacity: 0
 </style>
