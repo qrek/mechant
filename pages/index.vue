@@ -30,6 +30,11 @@
       <div class="HomePage_clickZone" @mouseenter="preloadProject" @click="openProject" />
     </div>
 
+    <!-- Logo coupé en bas -->
+    <div class="HomePage_logo" aria-hidden="true">
+      <img src="~assets/images/MECHANT_TRANSPARENT.png" alt="" />
+    </div>
+
     <!-- Contenu bas de page -->
     <div class="HomePage_content">
       <div class="HomePage_content_inner">
@@ -221,6 +226,22 @@ export default {
     z-index: 1
     cursor: pointer
 
+  // ---------- Logo coupé ----------
+  &_logo
+    position: absolute
+    bottom: -2vw
+    left: 50%
+    transform: translateX(-50%)
+    width: 104vw
+    pointer-events: none
+    z-index: 3
+    user-select: none
+
+    img
+      display: block
+      width: 100%
+      height: auto
+
   // ---------- Contenu ----------
   &_content
     position: absolute
@@ -232,7 +253,7 @@ export default {
     align-items: flex-end
     justify-content: space-between
     gap: 2rem
-    z-index: 2
+    z-index: 4
     pointer-events: none
 
     +breakpoint(mobile)

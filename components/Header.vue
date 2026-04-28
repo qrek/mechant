@@ -1,15 +1,15 @@
 <template>
   <header class="Header" :class="{navIsOpen: isMenuOpen}">
 
-    <!-- Logo masqué sur la page Works -->
-    <NuxtLink v-if="!isWorksPage" to="/" class="Header_logoLink" @click.native="closeMainNav">
+    <!-- Logo masqué sur Works et Homepage -->
+    <NuxtLink v-if="!isWorksPage && !isHomePage" to="/" class="Header_logoLink" @click.native="closeMainNav">
       <img class="Header_logo" src="~assets/images/logo.png" alt="Mechant">
     </NuxtLink>
 
-    <!-- Navigation minimale sur la homepage -->
-    <nav class="Header_homeNav" v-if="isHomePage">
-      <NuxtLink to="/works">Work</NuxtLink>
+    <!-- Navigation homepage : étalée sur toute la largeur -->
+    <nav class="Header_homeNav" :class="{ 'is-spread': isHomePage }" v-if="isHomePage">
       <NuxtLink to="/about">About</NuxtLink>
+      <NuxtLink to="/works">Work</NuxtLink>
       <a :href="`mailto:${footerData?.email_address}`">Contact</a>
     </nav>
 
@@ -328,11 +328,16 @@ export default {
     align-items: center
     gap: 3.5rem
 
+    &.is-spread
+      margin-left: 0
+      width: 100%
+      justify-content: space-between
+
     a, a:visited
       font-family: $apfel
       font-weight: 500
-      font-size: 1.3rem
-      letter-spacing: 0.08em
+      font-size: 0.9rem
+      letter-spacing: 0.12em
       text-transform: uppercase
       color: $white
       transition: opacity 0.2s ease
@@ -347,7 +352,7 @@ export default {
       gap: 2rem
 
       a, a:visited
-        font-size: 1.1rem
+        font-size: 0.85rem
 
   &_navBtn
     position: relative
