@@ -1,13 +1,8 @@
 <template>
   <header class="Header" :class="{navIsOpen: isMenuOpen}">
 
-    <!-- Logo masqué sur Works et Homepage -->
-    <NuxtLink v-if="!isWorksPage && !isHomePage" to="/" class="Header_logoLink" @click.native="closeMainNav">
-      <img class="Header_logo" src="~assets/images/logo.png" alt="Mechant">
-    </NuxtLink>
-
-    <!-- Navigation homepage : étalée sur toute la largeur -->
-    <nav class="Header_homeNav" :class="{ 'is-spread': isHomePage }" v-if="isHomePage">
+    <!-- Navigation étalée sur toute la largeur (toutes les pages) -->
+    <nav class="Header_homeNav is-spread">
       <NuxtLink to="/about">About</NuxtLink>
       <NuxtLink to="/works">Work</NuxtLink>
       <a :href="`mailto:${footerData?.email_address}`">Contact</a>
@@ -177,9 +172,6 @@ export default {
     },
     isHomePage() {
       return this.$route.name === 'index' || this.$route.path === '/'
-    },
-    isWorksPage() {
-      return this.$route.path === '/works' || this.$route.name === 'works'
     }
   },
   methods: {
