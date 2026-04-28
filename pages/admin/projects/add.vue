@@ -49,6 +49,17 @@
         </div>
       </div>
 
+      <!-- Type de travail -->
+      <div class="form-section">
+        <h2>Type de travail</h2>
+        <div class="categories-grid">
+          <label v-for="type in workTypeOptions" :key="type" class="cat-checkbox">
+            <input type="checkbox" :value="type" v-model="form.work_types" />
+            {{ type }}
+          </label>
+        </div>
+      </div>
+
       <!-- Catégories -->
       <div class="form-section">
         <h2>Catégories</h2>
@@ -145,6 +156,7 @@ export default {
       uploadProgress: 0,
       uploadError: null,
       categories: [],
+      workTypeOptions: ['Montage', 'VFX', 'IA', 'Color Grading', 'Son', 'Motion Design', 'Direction Artistique', 'Réalisation', 'Animation', 'Étalonnage'],
       form: {
         title: '',
         client: '',
@@ -152,6 +164,7 @@ export default {
         thumbnail_url: '',
         description: '',
         categories: [],
+        work_types: [],
         badges: [],
         preview_video: '',
         is_hero: false,

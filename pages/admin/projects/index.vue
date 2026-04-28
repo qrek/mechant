@@ -14,6 +14,7 @@
         <span>Miniature</span>
         <span>Titre / Client</span>
         <span>Vimeo ID</span>
+        <span>Types</span>
         <span>Héro</span>
         <span>Sélection</span>
         <span>Statut</span>
@@ -42,6 +43,10 @@
           <span>{{ p.client }}</span>
         </div>
         <div class="col-vimeo">{{ p.vimeo_id }}</div>
+        <div class="col-types">
+          <span v-if="p.work_types && p.work_types.length" class="types-list">{{ p.work_types.join(', ') }}</span>
+          <span v-else class="col-vimeo">—</span>
+        </div>
         <div class="col-hero">
           <span :class="['badge', p.is_hero ? 'badge-orange' : 'badge-dim']">
             {{ p.is_hero ? 'Héro' : '—' }}
@@ -221,7 +226,7 @@ export default {
 
 .table-row {
   display: grid;
-  grid-template-columns: 28px 80px 1fr 120px 80px 80px 90px 160px;
+  grid-template-columns: 28px 80px 1fr 120px 140px 80px 80px 90px 160px;
   align-items: center;
   gap: 1rem;
   padding: 0.85rem 1rem;
@@ -291,6 +296,9 @@ export default {
 .col-title span { font-size: 0.8rem; color: #666; }
 
 .col-vimeo { font-size: 0.8rem; color: #888; font-family: monospace; }
+
+.col-types { overflow: hidden; }
+.types-list { font-size: 0.75rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 
 .badge {
   display: inline-block;

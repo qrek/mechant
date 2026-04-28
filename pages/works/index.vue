@@ -83,12 +83,9 @@ export default {
     },
 
     getWorkTypes(project) {
-      const cats = project.categories
-      if (!cats || !cats.length) return ''
-      return cats
-        .map(id => this.data?.categories?.[id]?.title || '')
-        .filter(Boolean)
-        .join(' · ')
+      const types = project.work_types
+      if (!types || !types.length) return ''
+      return types.join(' · ')
     },
 
     _preloadVideos() {
