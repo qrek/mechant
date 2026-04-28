@@ -181,14 +181,14 @@ export default {
   // ---------- Tagline ----------
   &_tagline
     position: absolute
-    right: 6rem
-    top: 50%
+    right: 8rem
+    top: 57%
     transform: translateY(-50%)
-    max-width: 22rem
+    max-width: 39rem
     font-family: $apfel
     font-weight: 400
-    font-size: 0.85rem
-    line-height: 1.6
+    font-size: 1.4rem
+    line-height: 1.3
     color: $white
     z-index: 2
     pointer-events: none
