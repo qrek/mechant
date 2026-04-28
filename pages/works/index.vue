@@ -48,6 +48,7 @@ export default {
 
   data() {
     return {
+      featuredProjects: [],
       _hideTimer: null,
       _currentSrc: null,
       _preloadCache: {}
@@ -55,18 +56,12 @@ export default {
   },
 
   computed: {
-    ...mapGetters({ data: 'data/getData' }),
-    projectsData() {
-      return this.data?.projects || []
-    },
-    featuredProjects() {
-      const featured = this.projectsData.filter(p => p.is_featured)
-      return featured.length ? featured : this.projectsData
-    }
+    ...mapGetters({ data: 'data/getData' })
   },
 
   async mounted() {
-    await this._refreshProjects()
+    await this._fetchFeaturedProjects()
+    await this.$nextTick()
     this._preloadVideos()
     this._animateIn()
   },
@@ -80,18 +75,30 @@ export default {
   methods: {
     ...mapActions({
       setActive: 'project/setActive',
-      setId: 'project/setId',
-      setData: 'data/setData'
+      setId: 'project/setId'
     }),
 
-    async _refreshProjects() {
-      const { data: fresh } = await supabase
+    async _fetchFeaturedProjects() {
+      // Fetch direct Supabase — pas de cache store
+      let { data: featured } = await supabase
         .from('projects')
         .select('*')
         .eq('published', true)
+        .eq('is_featured', true)
         .order('order_index', { ascending: false })
-        .limit(20)
-      if (fresh) await this.setData({ ...this.data, projects: fresh })
+
+      if (!featured || !featured.length) {
+        // Fallback : tous les projets publiés
+        const { data: all } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('published', true)
+          .order('order_index', { ascending: false })
+          .limit(20)
+        featured = all || []
+      }
+
+      this.featuredProjects = featured
     },
 
     getCategoryLabel(project) {
