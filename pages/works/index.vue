@@ -278,8 +278,8 @@ export default {
 
   &_label
     font-family: $apfel
-    font-weight: 400
-    font-size: clamp(0.5rem, 0.6vw, 0.7rem)
+    font-weight: 700
+    font-size: clamp(1rem, 0.6vw, 1.3rem)
     letter-spacing: 0.08em
     text-transform: uppercase
     color: rgba(0,0,0,0.45)
