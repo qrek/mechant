@@ -12,8 +12,8 @@
       <!-- En-tête colonnes -->
       <div class="AllWork_head">
         <span></span>
-        <span></span>
         <span>Projet</span>
+        <span></span>
         <span>Catégorie</span>
         <span>Type</span>
       </div>
@@ -29,6 +29,11 @@
         @click="openProject(project)"
       >
         <span class="AllWork_row_num">{{ String(i + 1).padStart(2, '0') }}.</span>
+
+        <div class="AllWork_row_info">
+          <span class="AllWork_row_client">{{ project.client || getCategoryLabel(project) }}</span>
+          <span class="AllWork_row_title">{{ project.title }}</span>
+        </div>
 
         <div class="AllWork_row_media">
           <img
@@ -46,11 +51,6 @@
             preload="none"
             class="AllWork_row_video"
           />
-        </div>
-
-        <div class="AllWork_row_info">
-          <span class="AllWork_row_client">{{ project.client || getCategoryLabel(project) }}</span>
-          <span class="AllWork_row_title">{{ project.title }}</span>
         </div>
 
         <span class="AllWork_row_cat">{{ getCategoryLabel(project) }}</span>
@@ -98,22 +98,16 @@ export default {
     this.__currentVideo = null
     this.__bgSrc = null
     this.__bgTimer = null
-    this.__scrollY = 0
-    this.__targetY = 0
-    this.__rafId = null
 
     await this._fetchProjects()
     await this.$nextTick()
     this._animateIn()
-    window.addEventListener('wheel', this._onWheel, { passive: false })
     window.addEventListener('scroll', this._onScroll)
   },
 
   beforeDestroy() {
-    window.removeEventListener('wheel', this._onWheel)
     window.removeEventListener('scroll', this._onScroll)
     clearTimeout(this.__bgTimer)
-    if (this.__rafId) cancelAnimationFrame(this.__rafId)
   },
 
   methods: {
@@ -232,33 +226,7 @@ export default {
       })
     },
 
-    _onWheel(e) {
-      e.preventDefault()
-      const maxY = Math.max(0, document.body.scrollHeight - window.innerHeight)
-      this.__targetY = Math.max(0, Math.min(this.__targetY + e.deltaY, maxY))
-      if (!this.__rafId) this.__rafId = requestAnimationFrame(this._tick)
-    },
-
-    _tick() {
-      const diff = this.__targetY - this.__scrollY
-      if (Math.abs(diff) < 0.5) {
-        this.__scrollY = this.__targetY
-        window.scrollTo(0, Math.round(this.__scrollY))
-        this.__rafId = null
-        return
-      }
-      this.__scrollY += diff * 0.1
-      window.scrollTo(0, Math.round(this.__scrollY))
-      this.__rafId = requestAnimationFrame(this._tick)
-    },
-
     _onScroll() {
-      // Sync l'état si le scroll vient du clavier ou d'un touch (hors molette)
-      if (!this.__rafId) {
-        this.__scrollY = window.scrollY
-        this.__targetY = window.scrollY
-      }
-      // Infinite scroll
       const inner = this.$refs.inner
       if (!inner) return
       const { bottom } = inner.getBoundingClientRect()
@@ -306,12 +274,11 @@ export default {
     position: relative
     z-index: 1
     padding: 0 4vw
-    will-change: scroll-position
 
   // ── En-tête ───────────────────────────────────────────────────────────────
   &_head
     display: grid
-    grid-template-columns: 3.5rem 18rem 1fr 18rem 12rem
+    grid-template-columns: 3.5rem 1fr 18rem 18rem 12rem
     align-items: center
     gap: 0 2rem
     padding-bottom: 1.2rem
@@ -342,7 +309,7 @@ export default {
 // ── Ligne projet ──────────────────────────────────────────────────────────
 .AllWork_row
   display: grid
-  grid-template-columns: 3.5rem 18rem 1fr 18rem 12rem
+  grid-template-columns: 3.5rem 1fr 18rem 18rem 12rem
   align-items: center
   gap: 0 2rem
   padding: 1.2rem 0
@@ -351,7 +318,7 @@ export default {
   transition: opacity 0.3s ease
 
   +breakpoint(mobile)
-    grid-template-columns: 2.5rem 8rem 1fr
+    grid-template-columns: 2.5rem 1fr 8rem
     gap: 0 1rem
     padding: 1.2rem 0
 
