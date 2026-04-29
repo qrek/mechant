@@ -1,18 +1,12 @@
 <template>
   <section class="AllWork">
-
-    <!-- Fond vidéo plein écran au hover -->
-    <div class="AllWork_bg" :class="{ 'is-visible': hoveredId }">
-      <video ref="bgVideo" muted loop playsinline preload="none" class="AllWork_bg_video" />
-      <div class="AllWork_bg_overlay" />
-    </div>
-
-    <div class="AllWork_inner" ref="inner">
+    <div class="AllWork_inner" :class="{ 'has-hover': hoveredId }" ref="inner">
 
       <!-- En-tête colonnes -->
       <div class="AllWork_head">
         <span></span>
         <span>Projet</span>
+        <span></span>
         <span>Catégorie</span>
         <span>Type</span>
       </div>
@@ -23,8 +17,8 @@
         :key="project.id"
         class="AllWork_row"
         :class="{ 'is-hovered': hoveredId === project.id }"
-        @mouseenter="onHover(project)"
-        @mouseleave="onLeave"
+        @mouseenter="onHover(project, $event)"
+        @mouseleave="onLeave($event)"
         @click="openProject(project)"
       >
         <span class="AllWork_row_num">{{ String(i + 1).padStart(2, '0') }}.</span>
@@ -32,6 +26,24 @@
         <div class="AllWork_row_info">
           <span class="AllWork_row_client">{{ project.client || getCategoryLabel(project) }}</span>
           <span class="AllWork_row_title">{{ project.title }}</span>
+        </div>
+
+        <div class="AllWork_row_media">
+          <img
+            v-if="project.thumbnail_url || project.poster"
+            :src="project.thumbnail_url || project.poster"
+            loading="lazy"
+            alt=""
+            class="AllWork_row_thumb"
+          />
+          <video
+            :data-src="project.preview_video || project.video_home || ''"
+            muted
+            loop
+            playsinline
+            preload="none"
+            class="AllWork_row_video"
+          />
         </div>
 
         <span class="AllWork_row_cat">{{ getCategoryLabel(project) }}</span>
@@ -76,8 +88,7 @@ export default {
   async mounted() {
     this.__page = 1
     this.__totalPages = 1
-    this.__currentSrc = null
-    this.__hideTimer = null
+    this.__currentVideo = null
 
     await this._fetchProjects()
     await this.$nextTick()
@@ -87,7 +98,6 @@ export default {
 
   beforeDestroy() {
     window.removeEventListener('scroll', this._onScroll)
-    clearTimeout(this.__hideTimer)
   },
 
   methods: {
@@ -140,29 +150,33 @@ export default {
       return types.join(' / ')
     },
 
-    onHover(project) {
+    onHover(project, e) {
       this.hoveredId = project.id
       this.setId(project.id)
-      clearTimeout(this.__hideTimer)
 
-      const url = project.preview_video || project.video_home || null
-      const video = this.$refs.bgVideo
-      if (!video || !url) return
+      const video = e.currentTarget.querySelector('.AllWork_row_video')
+      if (!video) return
+      const src = video.dataset.src
+      if (!src) return
 
-      if (this.__currentSrc !== url) {
-        this.__currentSrc = url
-        video.src = url
+      if (this.__currentVideo && this.__currentVideo !== video) {
+        this.__currentVideo.pause()
+        this.__currentVideo.classList.remove('is-active')
       }
+      if (!video.src) video.src = src
       video.currentTime = 0
       video.play().catch(() => {})
+      video.classList.add('is-active')
+      this.__currentVideo = video
     },
 
-    onLeave() {
+    onLeave(e) {
       this.hoveredId = null
-      this.__hideTimer = setTimeout(() => {
-        const video = this.$refs.bgVideo
-        if (video) video.pause()
-      }, 400)
+      const video = e.currentTarget.querySelector('.AllWork_row_video')
+      if (!video) return
+      video.pause()
+      video.classList.remove('is-active')
+      this.__currentVideo = null
     },
 
     openProject(project) {
@@ -204,39 +218,13 @@ export default {
     padding-top: 8rem
     padding-bottom: 8rem
 
-  // ── Fond vidéo ────────────────────────────────────────────────────────────
-  &_bg
-    position: fixed
-    inset: 0
-    z-index: 0
-    opacity: 0
-    transition: opacity 0.5s ease
-    pointer-events: none
-
-    &.is-visible
-      opacity: 1
-
-    &_video
-      width: 100%
-      height: 100%
-      object-fit: cover
-      display: block
-
-    &_overlay
-      position: absolute
-      inset: 0
-      background: rgba(0, 0, 0, 0.72)
-
-  // ── Contenu ───────────────────────────────────────────────────────────────
   &_inner
-    position: relative
-    z-index: 1
     padding: 0 4vw
 
   // ── En-tête ───────────────────────────────────────────────────────────────
   &_head
     display: grid
-    grid-template-columns: 3.5rem 1fr 18rem 12rem
+    grid-template-columns: 3.5rem 1fr 20rem 16rem 12rem
     align-items: center
     padding-bottom: 1.2rem
     border-bottom: 1px solid rgba(255,255,255,0.1)
@@ -266,27 +254,27 @@ export default {
 // ── Ligne projet ──────────────────────────────────────────────────────────
 .AllWork_row
   display: grid
-  grid-template-columns: 3.5rem 1fr 18rem 12rem
+  grid-template-columns: 3.5rem 1fr 20rem 16rem 12rem
   align-items: center
-  padding: 1.4rem 0
+  padding: 1.2rem 0
   border-bottom: 1px solid rgba(255,255,255,0.06)
   cursor: pointer
-  transition: border-color 0.25s ease
+  transition: opacity 0.3s ease
 
   +breakpoint(mobile)
-    grid-template-columns: 2.5rem 1fr
-    padding: 1.4rem 0
+    grid-template-columns: 2.5rem 1fr 8rem
+    padding: 1.2rem 0
 
-  &:hover,
-  &.is-hovered
-    border-color: rgba(255,255,255,0.15)
+  // Effet spotlight : les lignes non-survolées s'estompent
+  .AllWork_inner.has-hover &:not(.is-hovered)
+    opacity: 0.25
 
   &_num
     font-family: $apfel
     font-weight: 400
     font-size: 0.75rem
     letter-spacing: 0.05em
-    color: rgba(255,255,255,0.2)
+    color: rgba(255,255,255,0.25)
     align-self: flex-start
     padding-top: 0.4rem
 
@@ -294,7 +282,7 @@ export default {
     display: flex
     flex-direction: column
     gap: 0.35rem
-    padding-right: 3rem
+    padding-right: 2rem
 
     +breakpoint(mobile)
       padding-right: 1rem
@@ -307,7 +295,6 @@ export default {
     text-transform: uppercase
     color: $white
     letter-spacing: -0.01em
-    transition: opacity 0.25s ease
 
   &_title
     font-family: $apfel
@@ -317,14 +304,50 @@ export default {
     text-transform: uppercase
     color: rgba(255,255,255,0.3)
 
+  // ── Média ──────────────────────────────────────────────────────────────
+  &_media
+    position: relative
+    width: 100%
+    aspect-ratio: 16 / 9
+    overflow: hidden
+    background: #111
+    border-radius: 3px
+
+    +breakpoint(mobile)
+      border-radius: 2px
+
+  &_thumb
+    position: absolute
+    inset: 0
+    width: 100%
+    height: 100%
+    object-fit: cover
+    display: block
+    transition: opacity 0.35s ease
+
+  &_video
+    position: absolute
+    inset: 0
+    width: 100%
+    height: 100%
+    object-fit: cover
+    opacity: 0
+    transition: opacity 0.35s ease
+
+    &.is-active
+      opacity: 1
+
+  .AllWork_row.is-hovered &_thumb
+    opacity: 0
+
   &_cat
     font-family: $apfel
     font-weight: 400
     font-size: 0.72rem
     letter-spacing: 0.08em
     text-transform: uppercase
-    color: rgba(255,255,255,0.3)
-    transition: color 0.25s ease
+    color: rgba(255,255,255,0.35)
+    padding-left: 2rem
 
     +breakpoint(mobile)
       display: none
@@ -335,18 +358,12 @@ export default {
     font-size: 0.72rem
     letter-spacing: 0.08em
     text-transform: uppercase
-    color: rgba(255,255,255,0.3)
+    color: rgba(255,255,255,0.35)
     text-align: right
-    transition: color 0.25s ease
 
     +breakpoint(mobile)
-      display: none
-
-  &:hover &_cat,
-  &.is-hovered &_cat,
-  &:hover &_type,
-  &.is-hovered &_type
-    color: rgba(255,255,255,0.6)
+      font-size: 0.65rem
+      padding-left: 0.5rem
 
 @keyframes spin
   to
