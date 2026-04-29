@@ -249,6 +249,9 @@ export default {
       const vimeoId = this.project && this.project.vimeo_id
       if (!vimeoId) return
 
+      // Annuler toute animation de fermeture en cours
+      gsap.killTweensOf(this.$el)
+
       this.isPaused = false
       this.isMuted = false
       this.infoVisible = false
@@ -281,6 +284,8 @@ export default {
         duration: 0.35,
         ease: 'power2.in',
         onComplete: () => {
+          // Si un nouveau projet a été ouvert pendant l'animation, ne pas détruire
+          if (this.isActive) return
           this.isDisplayed = false
           this._destroyPlayer()
           this.isPaused = false
