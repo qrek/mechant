@@ -359,11 +359,10 @@ export default {
     letter-spacing: 0.08em
     text-transform: uppercase
     color: rgba(255,255,255,0.35)
-    text-align: right
+    padding-left: 2rem
 
     +breakpoint(mobile)
-      font-size: 0.65rem
-      padding-left: 0.5rem
+      display: none
 
 @keyframes spin
   to
