@@ -63,7 +63,7 @@
         <div class="ProjectPopin_info_panel">
           <div class="Info_client">{{ project && project.client }}</div>
           <div class="Info_title">{{ project && project.title }}</div>
-          <div v-if="project && project.description" class="Info_desc">{{ project.description }}</div>
+          <div v-if="project && project.description" class="Info_desc" v-html="linkifyDescription(project.description)"></div>
           <ul v-if="project && project.categories && project.categories.length" class="Info_tags">
             <li v-for="catId in project.categories" :key="catId">
               {{ categoriesData && categoriesData[catId] && categoriesData[catId].title }}
@@ -159,6 +159,10 @@ export default {
 
     close() {
       this.setActive(false)
+    },
+
+    linkifyDescription(text) {
+      return text.replace(/@(\w+)/g, '<a href="https://instagram.com/$1" target="_blank" rel="noopener noreferrer">@$1</a>')
     },
 
     // ─── SDK ──────────────────────────────────────────────────────────────────
@@ -552,6 +556,15 @@ export default {
     color: rgba(255,255,255,0.6)
     line-height: 1.5
     margin-bottom: 1rem
+
+    ::v-deep a
+      color: $white
+      text-decoration: underline
+      text-underline-offset: 2px
+      transition: opacity 0.15s ease
+
+      &:hover
+        opacity: 0.7
 
   &_tags
     display: flex
