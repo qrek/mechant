@@ -92,19 +92,14 @@ export default {
 
   data() {
     return {
-      // player state
       player: null,
-      loadedVimeoId: null,
       isDisplayed: false,
       isVideoReady: false,
-      // playback UI
       isPaused: false,
       isMuted: false,
       progress: 0,
-      // controls visibility
       controlsVisible: false,
       _hideTimer: null,
-      // info panel
       infoVisible: false
     }
   },
@@ -122,7 +117,6 @@ export default {
       const fromStore = (this.data?.projects || []).find(p => p.id === this.projectId)
         || (this.data?.heroProjects && this.data.heroProjects[this.projectId])
         || null
-      // Fallback sur les données passées par la page Works via setData
       if (fromStore) return fromStore
       if (this.projectStoreData && this.projectStoreData.id === this.projectId) return this.projectStoreData
       return null
@@ -133,17 +127,10 @@ export default {
   },
 
   watch: {
-    // Quand isActive passe à true : ouvrir. À false : fermer.
     isActive(val) {
       if (val) this._open()
       else this._close()
     },
-    // Pré-chauffe la vidéo au hover (avant le clic)
-    projectId(newId) {
-      if (!newId || this.isActive) return
-      this._preWarm(newId)
-    },
-    // Ferme si changement de route
     currentRoute(to, from) {
       if (to !== from && this.isActive) this.close()
     }
@@ -184,20 +171,41 @@ export default {
       })
     },
 
-    // ─── Player lifecycle ─────────────────────────────────────────────────────
+    // ─── Player ───────────────────────────────────────────────────────────────
 
-    async _initPlayer(vimeoId, muted = false) {
-      this._initVersion = (this._initVersion || 0) + 1
-      const myVersion = this._initVersion
+    _destroyPlayer() {
+      if (!this.player) return
+      try { this.player.destroy() } catch (_) {}
+      this.player = null
+      this.isVideoReady = false
+      if (this.$refs.iframe) this.$refs.iframe.innerHTML = ''
+    },
 
-      if (this.player) this._destroyPlayer()
+    async _open() {
+      const vimeoId = this.project?.vimeo_id
+      if (!vimeoId) return
+
+      // Compteur pour annuler une ouverture obsolète
+      this._openId = (this._openId || 0) + 1
+      const myId = this._openId
+
+      gsap.killTweensOf(this.$el)
+
+      this.isPaused = false
+      this.isMuted = false
+      this.infoVisible = false
+      this.progress = 0
+      this.isVideoReady = false
+
+      // Détruire tout player existant avant d'en créer un nouveau
+      this._destroyPlayer()
 
       let VimeoPlayer
       try { VimeoPlayer = await this._waitForSDK() }
       catch (e) { console.error(e.message); return }
 
-      if (myVersion !== this._initVersion) return
-      if (!this.$refs.iframe) return
+      // Abandon si une autre ouverture a démarré ou si l'utilisateur a fermé
+      if (myId !== this._openId || !this.isActive || !this.$refs.iframe) return
 
       this.player = new VimeoPlayer(this.$refs.iframe, {
         id: vimeoId,
@@ -207,75 +215,15 @@ export default {
         dnt: true,
         texttrack: false
       })
-      this.loadedVimeoId = vimeoId
-      this.isVideoReady = false
 
-      this.player.on('loaded',      ()              => { this.isVideoReady = true })
-      this.player.on('timeupdate',  ({ percent })   => { this.progress = percent * 100; this.isVideoReady = true })
-      this.player.on('play',        ()              => { this.isPaused = false })
-      this.player.on('pause',       ()              => { this.isPaused = true;  this._showControls() })
-      this.player.on('ended',       ()              => { this.isPaused = true;  this.progress = 0; this._showControls() })
-      this.player.on('error',       ({ message })   => { console.warn('Vimeo:', message); this.isVideoReady = true })
+      this.player.on('loaded',     ()            => { this.isVideoReady = true })
+      this.player.on('timeupdate', ({ percent }) => { this.progress = percent * 100; this.isVideoReady = true })
+      this.player.on('play',       ()            => { this.isPaused = false })
+      this.player.on('pause',      ()            => { this.isPaused = true;  this._showControls() })
+      this.player.on('ended',      ()            => { this.isPaused = true;  this.progress = 0; this._showControls() })
+      this.player.on('error',      ({ message }) => { console.warn('Vimeo:', message); this.isVideoReady = true })
 
-      // Fire-and-forget — ne pas await : setMuted peut bloquer plusieurs secondes
-      // si l'iframe n'est pas encore chargée, ce qui ferait crasher _open si le
-      // player est détruit entre-temps.
-      this.player.setMuted(muted).catch(() => {})
       this.player.play().catch(() => {})
-    },
-
-    _destroyPlayer() {
-      if (!this.player) return
-      try { this.player.destroy() } catch (_) {}
-      this.player = null
-      this.loadedVimeoId = null
-      this.isVideoReady = false
-      if (this.$refs.iframe) this.$refs.iframe.innerHTML = ''
-    },
-
-    // ─── Pre-warm (hover) ─────────────────────────────────────────────────────
-
-    _preWarm(vimeoId) {
-      if (!vimeoId) return
-      const video = this._projectById(this.projectId)
-      const id = video && video.vimeo_id
-      if (!id) return
-      // Déjà chargé
-      if (this.loadedVimeoId === id && this.player) return
-      this._initPlayer(id, true) // muted
-    },
-
-    _projectById(projectId) {
-      if (!this.data || !projectId) return null
-      return (this.data.projects || []).find(p => p.id === projectId)
-        || (this.data.heroProjects && this.data.heroProjects[projectId])
-        || null
-    },
-
-    // ─── Open / Close ─────────────────────────────────────────────────────────
-
-    async _open() {
-      const vimeoId = this.project && this.project.vimeo_id
-      if (!vimeoId) return
-
-      // Annuler toute animation de fermeture en cours
-      gsap.killTweensOf(this.$el)
-
-      this.isPaused = false
-      this.isMuted = false
-      this.infoVisible = false
-      this.progress = 0
-
-      if (this.loadedVimeoId === vimeoId && this.player) {
-        // Pre-warm prêt : démuter et jouer (fire-and-forget)
-        this.player.setMuted(false).catch(() => {})
-        this.player.play().catch(() => {})
-      } else {
-        // Chargement direct
-        await this._initPlayer(vimeoId, false)
-        // L'utilisateur a peut-être fermé pendant le chargement
-        if (!this.isActive) return
-      }
 
       this.isDisplayed = true
       gsap.fromTo(this.$el,
@@ -294,7 +242,6 @@ export default {
         duration: 0.35,
         ease: 'power2.in',
         onComplete: () => {
-          // Si un nouveau projet a été ouvert pendant l'animation, ne pas détruire
           if (this.isActive) return
           this.isDisplayed = false
           this._destroyPlayer()
@@ -316,9 +263,7 @@ export default {
       }, 3000)
     },
 
-    onMouseMove() {
-      this._showControls()
-    },
+    onMouseMove()  { this._showControls() },
 
     onPlayerClick() {
       if (!this.isDisplayed) return
@@ -328,26 +273,28 @@ export default {
 
     togglePlay() {
       if (!this.player) return
-      if (this.isPaused) this.player.play()
-      else this.player.pause()
+      if (this.isPaused) this.player.play().catch(() => {})
+      else               this.player.pause().catch(() => {})
     },
 
     toggleMute() {
       if (!this.player) return
       this.isMuted = !this.isMuted
-      this.player.setMuted(this.isMuted)
+      this.player.setMuted(this.isMuted).catch(() => {})
     },
 
     goFullscreen() {
-      this.player && this.player.requestFullscreen()
+      if (this.player) this.player.requestFullscreen().catch(() => {})
     },
 
     async seek(e) {
       if (!this.player) return
       const rect = e.currentTarget.getBoundingClientRect()
       const ratio = Math.max(0, Math.min((e.clientX - rect.left) / rect.width, 1))
-      const duration = await this.player.getDuration()
-      if (duration) this.player.setCurrentTime(duration * ratio)
+      try {
+        const duration = await this.player.getDuration()
+        if (duration && this.player) this.player.setCurrentTime(duration * ratio).catch(() => {})
+      } catch (_) {}
     }
   }
 }
