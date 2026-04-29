@@ -34,6 +34,7 @@ export default {
     })
   },
   async mounted () {
+    this._mountTime = Date.now()
     await this.loadData()
     this.registerLoaders()
     this.setupResourceLoader()
@@ -149,8 +150,14 @@ export default {
     },
     loadResourcesCompleteHandler () {
       this.setLoadingCompleted()
+      const elapsed   = Date.now() - this._mountTime
+      const remaining = Math.max(0, 3000 - elapsed)
+      setTimeout(() => this._animateOut(), remaining)
+    },
 
+    _animateOut () {
       const { panel, centerEl } = this.$refs
+      if (!panel || !centerEl) return
 
       gsap.to(centerEl, {
         opacity: 0,

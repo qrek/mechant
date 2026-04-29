@@ -52,8 +52,12 @@
       </div>
 
       <!-- Barre de progression -->
-      <div class="ProjectPopin_progress" :class="{ 'is-visible': controlsVisible }" @click.stop="seek">
-        <div class="ProjectPopin_progress_track">
+      <div
+        class="ProjectPopin_progress"
+        :class="{ 'is-visible': controlsVisible, 'is-scrubbing': isScrubbing }"
+        @mousedown.stop.prevent="onScrubStart"
+      >
+        <div class="ProjectPopin_progress_track" ref="progressTrack">
           <div class="ProjectPopin_progress_fill" :style="{ width: progress + '%' }"></div>
         </div>
       </div>
@@ -99,6 +103,7 @@ export default {
       isMuted: false,
       progress: 0,
       controlsVisible: false,
+      isScrubbing: false,
       _hideTimer: null,
       infoVisible: false
     }
@@ -138,6 +143,7 @@ export default {
 
   beforeDestroy() {
     clearTimeout(this._hideTimer)
+    this._cleanupScrub()
     this._destroyPlayer()
   },
 
@@ -288,11 +294,45 @@ export default {
       if (this.player) this.player.requestFullscreen().catch(() => {})
     },
 
-    seek(e) {
-      if (!this.player || !this.__duration) return
-      const rect = e.currentTarget.getBoundingClientRect()
+    onScrubStart(e) {
+      if (!this.__duration) return
+      this.isScrubbing = true
+      this._wasPlaying = !this.isPaused
+      if (this._wasPlaying && this.player) this.player.pause().catch(() => {})
+      document.body.style.userSelect = 'none'
+
+      this.__scrubMove = (ev) => this._moveScrub(ev)
+      this.__scrubEnd  = (ev) => {
+        this._cleanupScrub()
+        // Seek unique au relâchement
+        if (this.$refs.progressTrack && this.__duration && this.player) {
+          const rect  = this.$refs.progressTrack.getBoundingClientRect()
+          const ratio = Math.max(0, Math.min((ev.clientX - rect.left) / rect.width, 1))
+          this.progress = ratio * 100
+          this.player.setCurrentTime(this.__duration * ratio).catch(() => {})
+        }
+        if (this._wasPlaying && this.player) this.player.play().catch(() => {})
+      }
+
+      window.addEventListener('mousemove', this.__scrubMove)
+      window.addEventListener('mouseup',   this.__scrubEnd)
+      this._moveScrub(e)
+    },
+
+    _moveScrub(e) {
+      if (!this.$refs.progressTrack) return
+      const rect  = this.$refs.progressTrack.getBoundingClientRect()
       const ratio = Math.max(0, Math.min((e.clientX - rect.left) / rect.width, 1))
-      this.player.setCurrentTime(this.__duration * ratio).catch(() => {})
+      this.progress = ratio * 100
+    },
+
+    _cleanupScrub() {
+      this.isScrubbing = false
+      document.body.style.userSelect = ''
+      if (this.__scrubMove) window.removeEventListener('mousemove', this.__scrubMove)
+      if (this.__scrubEnd)  window.removeEventListener('mouseup',   this.__scrubEnd)
+      this.__scrubMove = null
+      this.__scrubEnd  = null
     }
   }
 }
@@ -400,17 +440,29 @@ export default {
       opacity: 1
       pointer-events: auto
 
+    &.is-scrubbing
+      cursor: ew-resize
+      opacity: 1
+      pointer-events: auto
+
     &_track
       height: 2px
       background: rgba(255,255,255,0.2)
       border-radius: 2px
       overflow: hidden
+      transition: height 0.15s ease
+
+    &.is-scrubbing &_track
+      height: 4px
 
     &_fill
       height: 100%
       background: $white
       border-radius: 2px
-      transition: width 0.15s linear
+      transition: width 0.1s linear
+
+    &.is-scrubbing &_fill
+      transition: none
 
   // ── Controls ─────────────────────────────────────────────────────────────
   &_controls

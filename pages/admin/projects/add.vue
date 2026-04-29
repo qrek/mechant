@@ -44,8 +44,8 @@
           <textarea v-model="form.description" rows="3" placeholder="Courte description du projet" />
         </div>
         <div class="field">
-          <label>Date du projet</label>
-          <input type="date" v-model="form.project_date" />
+          <label>Année du projet</label>
+          <input type="number" v-model.number="form.project_date" min="2000" max="2099" placeholder="2024" />
         </div>
         <div class="field">
           <label>Badges (séparés par des virgules)</label>
@@ -160,7 +160,7 @@ export default {
       uploadProgress: 0,
       uploadError: null,
       categories: [],
-      workTypeOptions: ['Edit', 'VFX', '3D', 'IA', 'Color Grading', 'Son', 'Motion Design', 'Direction Artistique', 'Réalisation', 'Animation', 'Étalonnage'],
+      workTypeOptions: ['Edit', 'VFX', '3D', 'IA', 'Motion Design', 'Direction Artistique', 'Animation', 'Étalonnage'],
       form: {
         title: '',
         client: '',
