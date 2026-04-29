@@ -1,12 +1,18 @@
 <template>
   <section class="AllWork">
+
+    <!-- Fond vidéo plein écran au hover -->
+    <div class="AllWork_bg" :class="{ 'is-visible': hoveredId }">
+      <video ref="bgVideo" muted loop playsinline preload="none" class="AllWork_bg_video" />
+      <div class="AllWork_bg_overlay" />
+    </div>
+
     <div class="AllWork_inner" ref="inner">
 
       <!-- En-tête colonnes -->
       <div class="AllWork_head">
         <span></span>
         <span>Projet</span>
-        <span></span>
         <span>Catégorie</span>
         <span>Type</span>
       </div>
@@ -17,8 +23,8 @@
         :key="project.id"
         class="AllWork_row"
         :class="{ 'is-hovered': hoveredId === project.id }"
-        @mouseenter="onHover(project, $event)"
-        @mouseleave="onLeave($event)"
+        @mouseenter="onHover(project)"
+        @mouseleave="onLeave"
         @click="openProject(project)"
       >
         <span class="AllWork_row_num">{{ String(i + 1).padStart(2, '0') }}.</span>
@@ -26,24 +32,6 @@
         <div class="AllWork_row_info">
           <span class="AllWork_row_client">{{ project.client || getCategoryLabel(project) }}</span>
           <span class="AllWork_row_title">{{ project.title }}</span>
-        </div>
-
-        <div class="AllWork_row_media">
-          <img
-            v-if="project.thumbnail_url || project.poster"
-            :src="project.thumbnail_url || project.poster"
-            loading="lazy"
-            alt=""
-            class="AllWork_row_thumb"
-          />
-          <video
-            :data-src="project.preview_video || project.video_home || ''"
-            muted
-            loop
-            playsinline
-            preload="none"
-            class="AllWork_row_video"
-          />
         </div>
 
         <span class="AllWork_row_cat">{{ getCategoryLabel(project) }}</span>
@@ -86,25 +74,20 @@ export default {
   },
 
   async mounted() {
-    // État scroll (hors réactivité Vue)
     this.__page = 1
     this.__totalPages = 1
-    this.__scrollTarget = 0
-    this.__scrollCurrent = 0
-    this.__rafId = null
-    this.__currentVideo = null
+    this.__currentSrc = null
+    this.__hideTimer = null
 
     await this._fetchProjects()
     await this.$nextTick()
     this._animateIn()
-    window.addEventListener('wheel', this._onWheel, { passive: false })
     window.addEventListener('scroll', this._onScroll)
   },
 
   beforeDestroy() {
-    window.removeEventListener('wheel', this._onWheel)
     window.removeEventListener('scroll', this._onScroll)
-    if (this.__rafId) cancelAnimationFrame(this.__rafId)
+    clearTimeout(this.__hideTimer)
   },
 
   methods: {
@@ -157,31 +140,29 @@ export default {
       return types.join(' / ')
     },
 
-    onHover(project, e) {
+    onHover(project) {
       this.hoveredId = project.id
       this.setId(project.id)
-      const video = e.currentTarget.querySelector('.AllWork_row_video')
-      if (!video) return
-      const src = video.dataset.src
-      if (!src) return
-      if (this.__currentVideo && this.__currentVideo !== video) {
-        this.__currentVideo.pause()
-        this.__currentVideo.classList.remove('is-active')
+      clearTimeout(this.__hideTimer)
+
+      const url = project.preview_video || project.video_home || null
+      const video = this.$refs.bgVideo
+      if (!video || !url) return
+
+      if (this.__currentSrc !== url) {
+        this.__currentSrc = url
+        video.src = url
       }
-      if (!video.src) video.src = src
       video.currentTime = 0
       video.play().catch(() => {})
-      video.classList.add('is-active')
-      this.__currentVideo = video
     },
 
-    onLeave(e) {
+    onLeave() {
       this.hoveredId = null
-      const video = e.currentTarget.querySelector('.AllWork_row_video')
-      if (!video) return
-      video.pause()
-      video.classList.remove('is-active')
-      this.__currentVideo = null
+      this.__hideTimer = setTimeout(() => {
+        const video = this.$refs.bgVideo
+        if (video) video.pause()
+      }, 400)
     },
 
     openProject(project) {
@@ -202,32 +183,7 @@ export default {
       })
     },
 
-    _onWheel(e) {
-      e.preventDefault()
-      const maxY = Math.max(0, document.body.scrollHeight - window.innerHeight)
-      this.__scrollTarget = Math.max(0, Math.min(this.__scrollTarget + e.deltaY, maxY))
-      if (!this.__rafId) this.__rafId = requestAnimationFrame(this._tickScroll)
-    },
-
-    _tickScroll() {
-      const diff = this.__scrollTarget - this.__scrollCurrent
-      if (Math.abs(diff) < 0.5) {
-        this.__scrollCurrent = this.__scrollTarget
-        window.scrollTo(0, this.__scrollCurrent)
-        this.__rafId = null
-        return
-      }
-      this.__scrollCurrent += diff * 0.1
-      window.scrollTo(0, this.__scrollCurrent)
-      this.__rafId = requestAnimationFrame(this._tickScroll)
-    },
-
     _onScroll() {
-      // Sync si scroll vient du clavier / touch (pas de la molette)
-      if (!this.__rafId) {
-        this.__scrollTarget = window.scrollY
-        this.__scrollCurrent = window.scrollY
-      }
       const inner = this.$refs.inner
       if (!inner) return
       const { bottom } = inner.getBoundingClientRect()
@@ -248,13 +204,39 @@ export default {
     padding-top: 8rem
     padding-bottom: 8rem
 
+  // ── Fond vidéo ────────────────────────────────────────────────────────────
+  &_bg
+    position: fixed
+    inset: 0
+    z-index: 0
+    opacity: 0
+    transition: opacity 0.5s ease
+    pointer-events: none
+
+    &.is-visible
+      opacity: 1
+
+    &_video
+      width: 100%
+      height: 100%
+      object-fit: cover
+      display: block
+
+    &_overlay
+      position: absolute
+      inset: 0
+      background: rgba(0, 0, 0, 0.72)
+
+  // ── Contenu ───────────────────────────────────────────────────────────────
   &_inner
+    position: relative
+    z-index: 1
     padding: 0 4vw
 
-  // ── En-tête colonnes ──────────────────────────────────────────────────────
+  // ── En-tête ───────────────────────────────────────────────────────────────
   &_head
     display: grid
-    grid-template-columns: 3.5rem 1fr 20rem 16rem 12rem
+    grid-template-columns: 3.5rem 1fr 18rem 12rem
     align-items: center
     padding-bottom: 1.2rem
     border-bottom: 1px solid rgba(255,255,255,0.1)
@@ -284,22 +266,21 @@ export default {
 // ── Ligne projet ──────────────────────────────────────────────────────────
 .AllWork_row
   display: grid
-  grid-template-columns: 3.5rem 1fr 20rem 16rem 12rem
+  grid-template-columns: 3.5rem 1fr 18rem 12rem
   align-items: center
-  padding: 1.6rem 0
+  padding: 1.4rem 0
   border-bottom: 1px solid rgba(255,255,255,0.06)
   cursor: pointer
-  transition: background 0.25s ease
+  transition: border-color 0.25s ease
 
   +breakpoint(mobile)
-    grid-template-columns: 2.5rem 1fr 10rem
+    grid-template-columns: 2.5rem 1fr
     padding: 1.4rem 0
 
   &:hover,
   &.is-hovered
-    background: rgba(255,255,255,0.03)
+    border-color: rgba(255,255,255,0.15)
 
-  // Numéro
   &_num
     font-family: $apfel
     font-weight: 400
@@ -307,13 +288,12 @@ export default {
     letter-spacing: 0.05em
     color: rgba(255,255,255,0.2)
     align-self: flex-start
-    padding-top: 0.5rem
+    padding-top: 0.4rem
 
-  // Info (client + titre)
   &_info
     display: flex
     flex-direction: column
-    gap: 0.4rem
+    gap: 0.35rem
     padding-right: 3rem
 
     +breakpoint(mobile)
@@ -326,8 +306,8 @@ export default {
     line-height: 0.88
     text-transform: uppercase
     color: $white
-    transition: color 0.2s ease
     letter-spacing: -0.01em
+    transition: opacity 0.25s ease
 
   &_title
     font-family: $apfel
@@ -337,44 +317,6 @@ export default {
     text-transform: uppercase
     color: rgba(255,255,255,0.3)
 
-  // Média (thumbnail + vidéo)
-  &_media
-    position: relative
-    width: 100%
-    aspect-ratio: 16 / 9
-    overflow: hidden
-    background: #111
-    border-radius: 2px
-
-    +breakpoint(mobile)
-      display: none
-
-  &_thumb
-    position: absolute
-    inset: 0
-    width: 100%
-    height: 100%
-    object-fit: cover
-    display: block
-    transition: opacity 0.35s ease
-
-  .AllWork_row:hover &_thumb,
-  .AllWork_row.is-hovered &_thumb
-    opacity: 0.15
-
-  &_video
-    position: absolute
-    inset: 0
-    width: 100%
-    height: 100%
-    object-fit: cover
-    opacity: 0
-    transition: opacity 0.35s ease
-
-    &.is-active
-      opacity: 1
-
-  // Catégorie
   &_cat
     font-family: $apfel
     font-weight: 400
@@ -382,16 +324,11 @@ export default {
     letter-spacing: 0.08em
     text-transform: uppercase
     color: rgba(255,255,255,0.3)
-    padding-left: 2rem
-    transition: color 0.2s ease
+    transition: color 0.25s ease
 
     +breakpoint(mobile)
       display: none
 
-  .AllWork_row:hover &_cat
-    color: rgba(255,255,255,0.55)
-
-  // Type
   &_type
     font-family: $apfel
     font-weight: 400
@@ -400,13 +337,16 @@ export default {
     text-transform: uppercase
     color: rgba(255,255,255,0.3)
     text-align: right
-    transition: color 0.2s ease
+    transition: color 0.25s ease
 
     +breakpoint(mobile)
       display: none
 
-  .AllWork_row:hover &_type
-    color: rgba(255,255,255,0.55)
+  &:hover &_cat,
+  &.is-hovered &_cat,
+  &:hover &_type,
+  &.is-hovered &_type
+    color: rgba(255,255,255,0.6)
 
 @keyframes spin
   to
