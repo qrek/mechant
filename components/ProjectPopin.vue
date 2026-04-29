@@ -187,7 +187,6 @@ export default {
     // ─── Player lifecycle ─────────────────────────────────────────────────────
 
     async _initPlayer(vimeoId, muted = false) {
-      // Version counter — si un autre _initPlayer démarre pendant l'await, on abandonne
       this._initVersion = (this._initVersion || 0) + 1
       const myVersion = this._initVersion
 
@@ -198,6 +197,7 @@ export default {
       catch (e) { console.error(e.message); return }
 
       if (myVersion !== this._initVersion) return
+      if (!this.$refs.iframe) return
 
       this.player = new VimeoPlayer(this.$refs.iframe, {
         id: vimeoId,
@@ -217,7 +217,10 @@ export default {
       this.player.on('ended',       ()              => { this.isPaused = true;  this.progress = 0; this._showControls() })
       this.player.on('error',       ({ message })   => { console.warn('Vimeo:', message); this.isVideoReady = true })
 
-      await this.player.setMuted(muted)
+      // Fire-and-forget — ne pas await : setMuted peut bloquer plusieurs secondes
+      // si l'iframe n'est pas encore chargée, ce qui ferait crasher _open si le
+      // player est détruit entre-temps.
+      this.player.setMuted(muted).catch(() => {})
       this.player.play().catch(() => {})
     },
 
@@ -263,16 +266,17 @@ export default {
       this.infoVisible = false
       this.progress = 0
 
-      // Si le pre-warm a chargé la bonne vidéo, on démute juste
       if (this.loadedVimeoId === vimeoId && this.player) {
-        await this.player.setMuted(false)
+        // Pre-warm prêt : démuter et jouer (fire-and-forget)
+        this.player.setMuted(false).catch(() => {})
         this.player.play().catch(() => {})
       } else {
-        // Sinon : chargement direct (clic sans hover, ou hover sur un autre projet)
+        // Chargement direct
         await this._initPlayer(vimeoId, false)
+        // L'utilisateur a peut-être fermé pendant le chargement
+        if (!this.isActive) return
       }
 
-      // Animation d'ouverture
       this.isDisplayed = true
       gsap.fromTo(this.$el,
         { opacity: 0 },
