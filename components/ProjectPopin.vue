@@ -197,7 +197,7 @@ export default {
       this.progress = 0
       this.isVideoReady = false
 
-      // Détruire tout player existant avant d'en créer un nouveau
+      this.__duration = 0
       this._destroyPlayer()
 
       let VimeoPlayer
@@ -216,8 +216,9 @@ export default {
         texttrack: false
       })
 
-      this.player.on('loaded',     ()            => { this.isVideoReady = true })
-      this.player.on('timeupdate', ({ percent }) => { this.progress = percent * 100; this.isVideoReady = true })
+      this.__duration = 0
+      this.player.on('loaded',     ()                        => { this.isVideoReady = true; this.player.getDuration().then(d => { this.__duration = d }).catch(() => {}) })
+      this.player.on('timeupdate', ({ percent, duration })   => { this.progress = percent * 100; this.isVideoReady = true; if (duration) this.__duration = duration })
       this.player.on('play',       ()            => { this.isPaused = false })
       this.player.on('pause',      ()            => { this.isPaused = true;  this._showControls() })
       this.player.on('ended',      ()            => { this.isPaused = true;  this.progress = 0; this._showControls() })
@@ -287,14 +288,11 @@ export default {
       if (this.player) this.player.requestFullscreen().catch(() => {})
     },
 
-    async seek(e) {
-      if (!this.player) return
+    seek(e) {
+      if (!this.player || !this.__duration) return
       const rect = e.currentTarget.getBoundingClientRect()
       const ratio = Math.max(0, Math.min((e.clientX - rect.left) / rect.width, 1))
-      try {
-        const duration = await this.player.getDuration()
-        if (duration && this.player) this.player.setCurrentTime(duration * ratio).catch(() => {})
-      } catch (_) {}
+      this.player.setCurrentTime(this.__duration * ratio).catch(() => {})
     }
   }
 }
