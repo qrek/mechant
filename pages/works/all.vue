@@ -12,8 +12,8 @@
       <!-- En-tête colonnes -->
       <div class="AllWork_head">
         <span></span>
-        <span>Projet</span>
         <span></span>
+        <span>Projet</span>
         <span>Catégorie</span>
         <span>Type</span>
       </div>
@@ -29,11 +29,6 @@
         @click="openProject(project)"
       >
         <span class="AllWork_row_num">{{ String(i + 1).padStart(2, '0') }}.</span>
-
-        <div class="AllWork_row_info">
-          <span class="AllWork_row_client">{{ project.client || getCategoryLabel(project) }}</span>
-          <span class="AllWork_row_title">{{ project.title }}</span>
-        </div>
 
         <div class="AllWork_row_media">
           <img
@@ -51,6 +46,11 @@
             preload="none"
             class="AllWork_row_video"
           />
+        </div>
+
+        <div class="AllWork_row_info">
+          <span class="AllWork_row_client">{{ project.client || getCategoryLabel(project) }}</span>
+          <span class="AllWork_row_title">{{ project.title }}</span>
         </div>
 
         <span class="AllWork_row_cat">{{ getCategoryLabel(project) }}</span>
@@ -278,8 +278,9 @@ export default {
   // ── En-tête ───────────────────────────────────────────────────────────────
   &_head
     display: grid
-    grid-template-columns: 3.5rem 1fr 20rem 16rem 12rem
+    grid-template-columns: 3.5rem 18rem 1fr 18rem 12rem
     align-items: center
+    gap: 0 2rem
     padding-bottom: 1.2rem
     border-bottom: 1px solid rgba(255,255,255,0.1)
     font-family: $apfel
@@ -308,15 +309,17 @@ export default {
 // ── Ligne projet ──────────────────────────────────────────────────────────
 .AllWork_row
   display: grid
-  grid-template-columns: 3.5rem 1fr 20rem 16rem 12rem
+  grid-template-columns: 3.5rem 18rem 1fr 18rem 12rem
   align-items: center
+  gap: 0 2rem
   padding: 1.2rem 0
   border-bottom: 1px solid rgba(255,255,255,0.06)
   cursor: pointer
   transition: opacity 0.3s ease
 
   +breakpoint(mobile)
-    grid-template-columns: 2.5rem 1fr 8rem
+    grid-template-columns: 2.5rem 8rem 1fr
+    gap: 0 1rem
     padding: 1.2rem 0
 
   // Effet spotlight : les lignes non-survolées s'estompent
@@ -336,10 +339,6 @@ export default {
     display: flex
     flex-direction: column
     gap: 0.35rem
-    padding-right: 2rem
-
-    +breakpoint(mobile)
-      padding-right: 1rem
 
   &_client
     font-family: $apfel
@@ -401,7 +400,6 @@ export default {
     letter-spacing: 0.08em
     text-transform: uppercase
     color: rgba(255,255,255,0.35)
-    padding-left: 2rem
 
     +breakpoint(mobile)
       display: none
@@ -413,7 +411,6 @@ export default {
     letter-spacing: 0.08em
     text-transform: uppercase
     color: rgba(255,255,255,0.35)
-    padding-left: 2rem
 
     +breakpoint(mobile)
       display: none
