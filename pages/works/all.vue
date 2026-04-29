@@ -1,5 +1,12 @@
 <template>
   <section class="AllWork">
+
+    <!-- Fond vidéo plein écran au hover -->
+    <div class="AllWork_bg" :class="{ 'is-visible': hoveredId }">
+      <video ref="bgVideo" muted loop playsinline preload="none" class="AllWork_bg_video" />
+      <div class="AllWork_bg_overlay" />
+    </div>
+
     <div class="AllWork_inner" :class="{ 'has-hover': hoveredId }" ref="inner">
 
       <!-- En-tête colonnes -->
@@ -89,6 +96,8 @@ export default {
     this.__page = 1
     this.__totalPages = 1
     this.__currentVideo = null
+    this.__bgSrc = null
+    this.__bgTimer = null
 
     await this._fetchProjects()
     await this.$nextTick()
@@ -98,6 +107,7 @@ export default {
 
   beforeDestroy() {
     window.removeEventListener('scroll', this._onScroll)
+    clearTimeout(this.__bgTimer)
   },
 
   methods: {
@@ -153,30 +163,49 @@ export default {
     onHover(project, e) {
       this.hoveredId = project.id
       this.setId(project.id)
+      clearTimeout(this.__bgTimer)
 
-      const video = e.currentTarget.querySelector('.AllWork_row_video')
-      if (!video) return
-      const src = video.dataset.src
-      if (!src) return
-
-      if (this.__currentVideo && this.__currentVideo !== video) {
-        this.__currentVideo.pause()
-        this.__currentVideo.classList.remove('is-active')
+      // Vidéo par ligne
+      const rowVideo = e.currentTarget.querySelector('.AllWork_row_video')
+      if (rowVideo) {
+        const src = rowVideo.dataset.src
+        if (src) {
+          if (this.__currentVideo && this.__currentVideo !== rowVideo) {
+            this.__currentVideo.pause()
+            this.__currentVideo.classList.remove('is-active')
+          }
+          if (!rowVideo.src) rowVideo.src = src
+          rowVideo.currentTime = 0
+          rowVideo.play().catch(() => {})
+          rowVideo.classList.add('is-active')
+          this.__currentVideo = rowVideo
+        }
       }
-      if (!video.src) video.src = src
-      video.currentTime = 0
-      video.play().catch(() => {})
-      video.classList.add('is-active')
-      this.__currentVideo = video
+
+      // Vidéo fond plein écran
+      const url = project.preview_video || project.video_home || null
+      const bgVideo = this.$refs.bgVideo
+      if (bgVideo && url) {
+        if (this.__bgSrc !== url) {
+          this.__bgSrc = url
+          bgVideo.src = url
+        }
+        bgVideo.currentTime = 0
+        bgVideo.play().catch(() => {})
+      }
     },
 
     onLeave(e) {
       this.hoveredId = null
-      const video = e.currentTarget.querySelector('.AllWork_row_video')
-      if (!video) return
-      video.pause()
-      video.classList.remove('is-active')
+      const rowVideo = e.currentTarget.querySelector('.AllWork_row_video')
+      if (rowVideo) {
+        rowVideo.pause()
+        rowVideo.classList.remove('is-active')
+      }
       this.__currentVideo = null
+      this.__bgTimer = setTimeout(() => {
+        if (this.$refs.bgVideo) this.$refs.bgVideo.pause()
+      }, 400)
     },
 
     openProject(project) {
@@ -218,7 +247,32 @@ export default {
     padding-top: 8rem
     padding-bottom: 8rem
 
+  // ── Fond vidéo ────────────────────────────────────────────────────────────
+  &_bg
+    position: fixed
+    inset: 0
+    z-index: 0
+    opacity: 0
+    transition: opacity 0.5s ease
+    pointer-events: none
+
+    &.is-visible
+      opacity: 1
+
+    &_video
+      width: 100%
+      height: 100%
+      object-fit: cover
+      display: block
+
+    &_overlay
+      position: absolute
+      inset: 0
+      background: rgba(0, 0, 0, 0.75)
+
   &_inner
+    position: relative
+    z-index: 1
     padding: 0 4vw
 
   // ── En-tête ───────────────────────────────────────────────────────────────
