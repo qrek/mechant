@@ -20,8 +20,8 @@
 
       <!-- Lignes projets -->
       <div
-        v-for="(project, i) in projects"
-        :key="project.id"
+        v-for="(project, i) in displayProjects"
+        :key="`${i}-${project.id}`"
         class="AllWork_row"
         :class="{ 'is-hovered': hoveredId === project.id }"
         @mouseenter="onHover(project, $event)"
@@ -83,6 +83,7 @@ export default {
   data() {
     return {
       projects: [],
+      displayProjects: [],
       isLoading: false,
       hoveredId: null
     }
@@ -98,6 +99,7 @@ export default {
     this.__currentVideo = null
     this.__bgSrc = null
     this.__bgTimer = null
+    this.__isAppending = false
 
     await this._fetchProjects()
     await this.$nextTick()
@@ -119,33 +121,22 @@ export default {
 
     async _fetchProjects() {
       this.isLoading = true
-      const { data, count } = await supabase
-        .from('projects')
-        .select('*', { count: 'exact' })
-        .eq('published', true)
-        .order('order_index', { ascending: false })
-        .range(0, 19)
-      this.projects = data || []
-      this.__totalPages = Math.ceil((count || 0) / 20)
-      this.__page = 1
-      this.isLoading = false
-    },
-
-    async _loadMore() {
-      if (this.__page >= this.__totalPages || this.isLoading) return
-      this.isLoading = true
-      const from = this.__page * 20
+      // Charge tous les projets d'un coup (pas de pagination)
       const { data } = await supabase
         .from('projects')
         .select('*')
         .eq('published', true)
         .order('order_index', { ascending: false })
-        .range(from, from + 19)
-      if (data?.length) {
-        this.projects = [...this.projects, ...data]
-        this.__page++
-      }
+      this.projects = data || []
+      this.displayProjects = [...this.projects]
       this.isLoading = false
+    },
+
+    _appendLoop() {
+      if (!this.projects.length || this.__isAppending) return
+      this.__isAppending = true
+      this.displayProjects = [...this.displayProjects, ...this.projects]
+      this.$nextTick(() => { this.__isAppending = false })
     },
 
     getCategoryLabel(project) {
@@ -230,7 +221,7 @@ export default {
       const inner = this.$refs.inner
       if (!inner) return
       const { bottom } = inner.getBoundingClientRect()
-      if (bottom < window.innerHeight * 1.5) this._loadMore()
+      if (bottom < window.innerHeight * 2) this._appendLoop()
     }
   }
 }
