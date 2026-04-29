@@ -200,7 +200,8 @@ export default {
         controls: false,
         playsinline: true,
         autopause: false,
-        dnt: true
+        dnt: true,
+        texttrack: false
       })
       this.loadedVimeoId = vimeoId
       this.isVideoReady = false
