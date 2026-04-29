@@ -98,16 +98,22 @@ export default {
     this.__currentVideo = null
     this.__bgSrc = null
     this.__bgTimer = null
+    this.__scrollY = 0
+    this.__targetY = 0
+    this.__rafId = null
 
     await this._fetchProjects()
     await this.$nextTick()
     this._animateIn()
+    window.addEventListener('wheel', this._onWheel, { passive: false })
     window.addEventListener('scroll', this._onScroll)
   },
 
   beforeDestroy() {
+    window.removeEventListener('wheel', this._onWheel)
     window.removeEventListener('scroll', this._onScroll)
     clearTimeout(this.__bgTimer)
+    if (this.__rafId) cancelAnimationFrame(this.__rafId)
   },
 
   methods: {
@@ -226,7 +232,33 @@ export default {
       })
     },
 
+    _onWheel(e) {
+      e.preventDefault()
+      const maxY = Math.max(0, document.body.scrollHeight - window.innerHeight)
+      this.__targetY = Math.max(0, Math.min(this.__targetY + e.deltaY, maxY))
+      if (!this.__rafId) this.__rafId = requestAnimationFrame(this._tick)
+    },
+
+    _tick() {
+      const diff = this.__targetY - this.__scrollY
+      if (Math.abs(diff) < 0.5) {
+        this.__scrollY = this.__targetY
+        window.scrollTo(0, Math.round(this.__scrollY))
+        this.__rafId = null
+        return
+      }
+      this.__scrollY += diff * 0.1
+      window.scrollTo(0, Math.round(this.__scrollY))
+      this.__rafId = requestAnimationFrame(this._tick)
+    },
+
     _onScroll() {
+      // Sync l'état si le scroll vient du clavier ou d'un touch (hors molette)
+      if (!this.__rafId) {
+        this.__scrollY = window.scrollY
+        this.__targetY = window.scrollY
+      }
+      // Infinite scroll
       const inner = this.$refs.inner
       if (!inner) return
       const { bottom } = inner.getBoundingClientRect()
@@ -274,6 +306,7 @@ export default {
     position: relative
     z-index: 1
     padding: 0 4vw
+    will-change: scroll-position
 
   // ── En-tête ───────────────────────────────────────────────────────────────
   &_head
