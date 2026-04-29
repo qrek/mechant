@@ -61,10 +61,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import { gsap } from '@/vendor/gsap'
-import { ScrollToPlugin } from '@/vendor/gsap/ScrollToPlugin'
 import { supabase } from '@/utils/supabase'
-
-gsap.registerPlugin(ScrollToPlugin)
 
 export default {
   name: 'WorksAll',
@@ -80,11 +77,7 @@ export default {
     return {
       projects: [],
       isLoading: false,
-      hoveredId: null,
-      _page: 1,
-      _totalPages: 1,
-      _targetY: 0,
-      _currentVideo: null
+      hoveredId: null
     }
   },
 
@@ -93,10 +86,17 @@ export default {
   },
 
   async mounted() {
+    // État scroll (hors réactivité Vue)
+    this.__page = 1
+    this.__totalPages = 1
+    this.__scrollTarget = 0
+    this.__scrollCurrent = 0
+    this.__rafId = null
+    this.__currentVideo = null
+
     await this._fetchProjects()
     await this.$nextTick()
     this._animateIn()
-    this._targetY = 0
     window.addEventListener('wheel', this._onWheel, { passive: false })
     window.addEventListener('scroll', this._onScroll)
   },
@@ -104,7 +104,7 @@ export default {
   beforeDestroy() {
     window.removeEventListener('wheel', this._onWheel)
     window.removeEventListener('scroll', this._onScroll)
-    gsap.killTweensOf(window)
+    if (this.__rafId) cancelAnimationFrame(this.__rafId)
   },
 
   methods: {
@@ -123,15 +123,15 @@ export default {
         .order('order_index', { ascending: false })
         .range(0, 19)
       this.projects = data || []
-      this._totalPages = Math.ceil((count || 0) / 20)
-      this._page = 1
+      this.__totalPages = Math.ceil((count || 0) / 20)
+      this.__page = 1
       this.isLoading = false
     },
 
     async _loadMore() {
-      if (this._page >= this._totalPages || this.isLoading) return
+      if (this.__page >= this.__totalPages || this.isLoading) return
       this.isLoading = true
-      const from = this._page * 20
+      const from = this.__page * 20
       const { data } = await supabase
         .from('projects')
         .select('*')
@@ -140,7 +140,7 @@ export default {
         .range(from, from + 19)
       if (data?.length) {
         this.projects = [...this.projects, ...data]
-        this._page++
+        this.__page++
       }
       this.isLoading = false
     },
@@ -164,15 +164,15 @@ export default {
       if (!video) return
       const src = video.dataset.src
       if (!src) return
-      if (this._currentVideo && this._currentVideo !== video) {
-        this._currentVideo.pause()
-        this._currentVideo.classList.remove('is-active')
+      if (this.__currentVideo && this.__currentVideo !== video) {
+        this.__currentVideo.pause()
+        this.__currentVideo.classList.remove('is-active')
       }
       if (!video.src) video.src = src
       video.currentTime = 0
       video.play().catch(() => {})
       video.classList.add('is-active')
-      this._currentVideo = video
+      this.__currentVideo = video
     },
 
     onLeave(e) {
@@ -181,7 +181,7 @@ export default {
       if (!video) return
       video.pause()
       video.classList.remove('is-active')
-      this._currentVideo = null
+      this.__currentVideo = null
     },
 
     openProject(project) {
@@ -205,19 +205,28 @@ export default {
     _onWheel(e) {
       e.preventDefault()
       const maxY = Math.max(0, document.body.scrollHeight - window.innerHeight)
-      this._targetY = Math.max(0, Math.min(this._targetY + e.deltaY, maxY))
-      gsap.to(window, {
-        scrollTo: { y: this._targetY, autoKill: false },
-        duration: 1,
-        ease: 'power3.out',
-        overwrite: 'auto'
-      })
+      this.__scrollTarget = Math.max(0, Math.min(this.__scrollTarget + e.deltaY, maxY))
+      if (!this.__rafId) this.__rafId = requestAnimationFrame(this._tickScroll)
+    },
+
+    _tickScroll() {
+      const diff = this.__scrollTarget - this.__scrollCurrent
+      if (Math.abs(diff) < 0.5) {
+        this.__scrollCurrent = this.__scrollTarget
+        window.scrollTo(0, this.__scrollCurrent)
+        this.__rafId = null
+        return
+      }
+      this.__scrollCurrent += diff * 0.1
+      window.scrollTo(0, this.__scrollCurrent)
+      this.__rafId = requestAnimationFrame(this._tickScroll)
     },
 
     _onScroll() {
-      // Sync target quand scroll vient du clavier ou touch
-      if (Math.abs(window.scrollY - this._targetY) > 80) {
-        this._targetY = window.scrollY
+      // Sync si scroll vient du clavier / touch (pas de la molette)
+      if (!this.__rafId) {
+        this.__scrollTarget = window.scrollY
+        this.__scrollCurrent = window.scrollY
       }
       const inner = this.$refs.inner
       if (!inner) return
