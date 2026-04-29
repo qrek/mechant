@@ -45,7 +45,7 @@
         </div>
         <div class="field">
           <label>Année du projet</label>
-          <input type="number" v-model.number="form.project_date" min="2000" max="2099" placeholder="2024" />
+          <input type="number" v-model.number="form.year" min="2000" max="2099" placeholder="2024" />
         </div>
         <div class="field">
           <label>Badges (séparés par des virgules)</label>
@@ -160,7 +160,7 @@ export default {
       uploadProgress: 0,
       uploadError: null,
       categories: [],
-      workTypeOptions: ['Edit', 'VFX', '3D', 'IA', 'Motion Design', 'Direction Artistique', 'Animation', 'Étalonnage'],
+      workTypeOptions: ['Edit', 'VFX', '3D', 'IA', 'Motion Design', 'Direction Artistique'],
       form: {
         title: '',
         client: '',
@@ -171,7 +171,7 @@ export default {
         work_types: [],
         badges: [],
         preview_video: '',
-        project_date: '',
+        year: null,
         is_hero: false,
         hero_title: '',
         hero_order: 0,
