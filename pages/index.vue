@@ -87,8 +87,8 @@ export default {
     },
     currentVideoUrl() {
       if (!this.currentProject) return null
-      if (this.isMobile) return this.currentProject.video_home_mobile || null
-      return this.currentProject.video_home || null
+      if (this.isMobile) return this.currentProject.video_home_mobile || this.currentProject.preview_video || null
+      return this.currentProject.video_home || this.currentProject.preview_video || null
     },
     currentImageUrl() {
       if (!this.currentProject) return null

@@ -75,7 +75,8 @@ export default {
   methods: {
     ...mapActions({
       setActive: 'project/setActive',
-      setId: 'project/setId'
+      setId: 'project/setId',
+      setProjectData: 'project/setData'
     }),
 
     async _fetchFeaturedProjects() {
@@ -183,6 +184,7 @@ export default {
     },
 
     openProject(project) {
+      this.setProjectData(project)
       this.setId(project.id)
       this.setActive(true)
     }

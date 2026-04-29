@@ -113,14 +113,19 @@ export default {
     ...mapGetters({
       isActive: 'project/isActive',
       projectId: 'project/id',
+      projectStoreData: 'project/data',
       data: 'data/getData',
       currentRoute: 'router/current'
     }),
     project() {
-      if (!this.data || !this.projectId) return null
-      return (this.data.projects || []).find(p => p.id === this.projectId)
-        || (this.data.heroProjects && this.data.heroProjects[this.projectId])
+      if (!this.projectId) return null
+      const fromStore = (this.data?.projects || []).find(p => p.id === this.projectId)
+        || (this.data?.heroProjects && this.data.heroProjects[this.projectId])
         || null
+      // Fallback sur les données passées par la page Works via setData
+      if (fromStore) return fromStore
+      if (this.projectStoreData && this.projectStoreData.id === this.projectId) return this.projectStoreData
+      return null
     },
     categoriesData() {
       return this.data && this.data.categories
