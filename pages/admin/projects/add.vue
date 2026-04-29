@@ -156,7 +156,7 @@ export default {
       uploadProgress: 0,
       uploadError: null,
       categories: [],
-      workTypeOptions: ['Montage', 'VFX', 'IA', 'Color Grading', 'Son', 'Motion Design', 'Direction Artistique', 'Réalisation', 'Animation', 'Étalonnage'],
+      workTypeOptions: ['Edit', 'VFX', '3D', 'IA', 'Color Grading', 'Son', 'Motion Design', 'Direction Artistique', 'Réalisation', 'Animation', 'Étalonnage'],
       form: {
         title: '',
         client: '',
