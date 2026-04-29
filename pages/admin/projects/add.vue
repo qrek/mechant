@@ -44,6 +44,10 @@
           <textarea v-model="form.description" rows="3" placeholder="Courte description du projet" />
         </div>
         <div class="field">
+          <label>Date du projet</label>
+          <input type="date" v-model="form.project_date" />
+        </div>
+        <div class="field">
           <label>Badges (séparés par des virgules)</label>
           <input v-model="badgesInput" placeholder="ex: 4K, HDR, Dolby Atmos" />
         </div>
@@ -167,6 +171,7 @@ export default {
         work_types: [],
         badges: [],
         preview_video: '',
+        project_date: '',
         is_hero: false,
         hero_title: '',
         hero_order: 0,

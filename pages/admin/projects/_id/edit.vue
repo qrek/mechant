@@ -42,6 +42,10 @@
           <textarea v-model="form.description" rows="3" />
         </div>
         <div class="field">
+          <label>Date du projet</label>
+          <input type="date" v-model="form.project_date" />
+        </div>
+        <div class="field">
           <label>Badges (séparés par des virgules)</label>
           <input v-model="badgesInput" />
         </div>
@@ -167,6 +171,7 @@ export default {
         work_types: [],
         badges: [],
         preview_video: '',
+        project_date: '',
         is_featured: false,
         is_hero: false,
         hero_title: '',
@@ -195,6 +200,7 @@ export default {
         work_types: project.work_types || [],
         badges: project.badges || [],
         preview_video: project.preview_video || '',
+        project_date: project.project_date || '',
         is_featured: project.is_featured || false,
         is_hero: project.is_hero || false,
         hero_title: project.hero_title || '',

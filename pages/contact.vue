@@ -170,7 +170,7 @@ export default {
     position: relative
     z-index: 2
     margin: 0 4vw
-    background: #111
+    background: #f2492c
     border-radius: 6px
     padding: 4rem 5vw 5rem
 

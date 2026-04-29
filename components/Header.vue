@@ -5,7 +5,7 @@
     <nav class="Header_homeNav is-spread" ref="nav">
       <NuxtLink to="/about">About</NuxtLink>
       <NuxtLink to="/works">Work</NuxtLink>
-      <a :href="`mailto:${footerData?.email_address}`">Contact</a>
+      <NuxtLink to="/contact">Contact</NuxtLink>
     </nav>
 
     <div class="Header_mainNav" v-if="isMenuOpen" ref="mainNav">
@@ -36,8 +36,8 @@
               <li @click="toggleMainNav">
                 <NuxtLink to="works">Works</NuxtLink>
               </li>
-              <li>
-                <a :href="`mailto:${footerData?.email_address}`">Contact</a>
+              <li @click="toggleMainNav">
+                <NuxtLink to="/contact">Contact</NuxtLink>
               </li>
             </ul>
             <div class="Header_mainNav_contactBloc" ref="mainNavContacts">

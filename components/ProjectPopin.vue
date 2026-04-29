@@ -227,6 +227,7 @@ export default {
       this.player = null
       this.loadedVimeoId = null
       this.isVideoReady = false
+      if (this.$refs.iframe) this.$refs.iframe.innerHTML = ''
     },
 
     // ─── Pre-warm (hover) ─────────────────────────────────────────────────────
@@ -504,7 +505,7 @@ export default {
       transform: translateY(8px)
       pointer-events: none
       transition: opacity 0.25s ease, transform 0.25s ease
-      max-width: 320px
+      max-width: 520px
 
     &.is-open &_panel
       opacity: 1

@@ -259,7 +259,7 @@ export default {
     &_overlay
       position: absolute
       inset: 0
-      background: rgba(0, 0, 0, 0.75)
+      background: rgba(0, 0, 0, 0.55)
 
   &_inner
     position: relative
