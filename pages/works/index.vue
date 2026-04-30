@@ -142,13 +142,13 @@ export default {
 
         if (!titleEl) return { st: null, titleEl: null, labelEl }
 
-        // overflow:hidden pour que les mots qui partent en y:80 ne déforment pas le layout
         titleEl.style.overflow = 'hidden'
 
         const st = new SplitText(titleEl, { type: 'words' })
         this._splits.push(st)
 
-        gsap.set(st.words, { y: 80 })
+        // 120px > line-height max (~101px à 7rem*0.9) → mots totalement cachés
+        gsap.set(st.words, { y: 120 })
         if (labelEl) gsap.set(labelEl, { opacity: 0, y: 10 })
 
         return { st, titleEl, labelEl }
@@ -156,30 +156,30 @@ export default {
 
       const tl = gsap.timeline()
 
-      // 1. Fond orange arrive depuis la gauche
-      tl.to(bg, { xPercent: 0, duration: 0.85, ease: 'power3.out', clearProps: 'transform' })
+      tl.to(bg, { xPercent: 0, duration: 0.55, ease: 'power3.out', clearProps: 'transform' })
 
-      // 2. Mots + label de chaque item en cascade
+      // Temps absolus — les items se chevauchent, pas de séquencement
       splitData.forEach(({ st, titleEl, labelEl }, i) => {
         if (!st) return
         const from = staggerFroms[i % staggerFroms.length]
+        const t = 0.15 + i * 0.07
 
         tl.to(st.words, {
           y: 0,
-          duration: 0.6,
+          duration: 0.45,
           ease: 'power3.inOut',
-          stagger: { each: 0.07, from },
+          stagger: { each: 0.05, from },
           onComplete: () => { if (titleEl) titleEl.style.overflow = '' }
-        }, i === 0 ? '>-0.4' : '>-0.2')
+        }, t)
 
         if (labelEl) {
           tl.to(labelEl, {
             opacity: 1,
             y: 0,
-            duration: 0.4,
+            duration: 0.3,
             ease: 'power2.out',
             clearProps: 'all'
-          }, '<0.3')
+          }, t + 0.2)
         }
       })
     },
