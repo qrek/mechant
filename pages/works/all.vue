@@ -207,9 +207,7 @@ export default {
         ease: 'power2.out',
         clearProps: 'all'
       })
-    },
-
-  }
+    }
   }
 }
 </script>
