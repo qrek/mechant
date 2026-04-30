@@ -60,18 +60,20 @@ export default {
     this._currentSrc = null
     this._preloadCache = {}
     this._splits = []
+    this._itemParallax = []
+    this._floatQuickX = null
+    this._floatQuickY = null
 
-    // Bg hors-écran immédiatement
     const { bg } = this.$refs
     if (bg) gsap.set(bg, { xPercent: -100 })
 
-    // Fetch — on continue même en cas d'erreur réseau
     try {
       await this._fetchFeaturedProjects()
     } catch (_) {}
 
     await this.$nextTick()
     this._preloadVideos()
+    this._setupParallax()
     this._animateIn()
   },
 
@@ -83,6 +85,10 @@ export default {
     this._preloadCache = {}
     ;(this._splits || []).forEach(st => st.revert())
     this._splits = []
+    const float = this.$refs.float
+    if (float) gsap.killTweensOf(float)
+    ;(this._itemParallax || []).forEach(({ el }) => gsap.killTweensOf(el))
+    this._itemParallax = []
   },
 
   methods: {
@@ -197,14 +203,54 @@ export default {
       })
     },
 
+    _setupParallax () {
+      // Float video — lag lent, suit le curseur en retard
+      const float = this.$refs.float
+      if (float) {
+        this._floatQuickX = gsap.quickTo(float, 'x', { duration: 1.4, ease: 'power3.out' })
+        this._floatQuickY = gsap.quickTo(float, 'y', { duration: 1.4, ease: 'power3.out' })
+      }
+
+      // Chaque item a un facteur de profondeur distinct
+      const depths = [0.025, 0.01, 0.035, 0.015, 0.03, 0.012, 0.028]
+      const items = [...this.$el.querySelectorAll('.WorksPage_item')]
+      this._itemParallax = items.map((item, i) => {
+        const factor = depths[i % depths.length]
+        // Les items lointains (petit factor) répondent plus lentement
+        const dur = 0.6 + (0.035 - factor) * 20
+        return {
+          el: item,
+          quickX: gsap.quickTo(item, 'x', { duration: dur, ease: 'power2.out' }),
+          quickY: gsap.quickTo(item, 'y', { duration: dur, ease: 'power2.out' }),
+          factor
+        }
+      })
+    },
+
     onMouseMove (e) {
-      const el = this.$refs.float
-      if (!el) return
-      const w = el.offsetWidth
-      const h = el.offsetHeight
+      const float = this.$refs.float
+      if (!float) return
+
+      const w = float.offsetWidth
+      const h = float.offsetHeight
       const x = Math.max(0, Math.min(e.clientX - w / 2, window.innerWidth - w))
       const y = Math.max(0, Math.min(e.clientY - h / 2, window.innerHeight - h))
-      el.style.transform = `translate(${x}px, ${y}px)`
+
+      if (this._floatQuickX) {
+        this._floatQuickX(x)
+        this._floatQuickY(y)
+      } else {
+        float.style.transform = `translate(${x}px, ${y}px)`
+      }
+
+      if (this._itemParallax && this._itemParallax.length) {
+        const cx = e.clientX - window.innerWidth / 2
+        const cy = e.clientY - window.innerHeight / 2
+        this._itemParallax.forEach(({ quickX, quickY, factor }) => {
+          quickX(cx * factor)
+          quickY(cy * factor)
+        })
+      }
     },
 
     onHover (project) {
