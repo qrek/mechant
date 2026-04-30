@@ -24,6 +24,7 @@
         :key="`${i}-${project.id}`"
         class="AllWork_row"
         :class="{ 'is-hovered': hoveredId === project.id }"
+        ref="rows"
         @mouseenter="onHover(project, $event)"
         @mouseleave="onLeave($event)"
         @click="openProject(project)"
@@ -67,7 +68,6 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import { gsap } from '@/vendor/gsap'
 import { supabase } from '@/utils/supabase'
 
 export default {
@@ -100,16 +100,19 @@ export default {
     this.__bgSrc = null
     this.__bgTimer = null
     this.__isAppending = false
+    this.__revealed = new WeakSet()
+    this.__revealCount = 0
 
     await this._fetchProjects()
     await this.$nextTick()
-    this._animateIn()
+    this._setupReveal()
     window.addEventListener('scroll', this._onScroll)
   },
 
   beforeDestroy() {
     window.removeEventListener('scroll', this._onScroll)
     clearTimeout(this.__bgTimer)
+    if (this.__observer) this.__observer.disconnect()
   },
 
   methods: {
@@ -136,7 +139,10 @@ export default {
       if (!this.projects.length || this.__isAppending) return
       this.__isAppending = true
       this.displayProjects = [...this.displayProjects, ...this.projects]
-      this.$nextTick(() => { this.__isAppending = false })
+      this.$nextTick(() => {
+        this._observeNewRows()
+        this.__isAppending = false
+      })
     },
 
     getCategoryLabel(project) {
@@ -209,15 +215,45 @@ export default {
       this.setActive(true)
     },
 
-    _animateIn() {
-      const rows = this.$el.querySelectorAll('.AllWork_row')
-      gsap.from(rows, {
-        opacity: 0,
-        y: 24,
-        duration: 0.55,
-        stagger: 0.04,
-        ease: 'power2.out',
-        clearProps: 'all'
+    _setupReveal() {
+      if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+        // Fallback : tout révéler immédiatement
+        const rows = this.$refs.rows || []
+        rows.forEach(row => row.classList.add('is-visible'))
+        return
+      }
+
+      this.__observer = new IntersectionObserver((entries) => {
+        // Stagger limité au lot qui entre en vue ensemble
+        const visibleNow = entries.filter(e => e.isIntersecting)
+        visibleNow.sort((a, b) => a.target.getBoundingClientRect().top - b.target.getBoundingClientRect().top)
+        visibleNow.forEach((entry, idx) => {
+          const el = entry.target
+          if (this.__revealed.has(el)) return
+          this.__revealed.add(el)
+          el.style.transitionDelay = `${idx * 70}ms`
+          // Frame suivante pour s'assurer que la transition prend
+          requestAnimationFrame(() => {
+            el.classList.add('is-visible')
+          })
+          this.__observer.unobserve(el)
+        })
+      }, {
+        rootMargin: '0px 0px -10% 0px',
+        threshold: 0.05
+      })
+
+      this._observeNewRows()
+    },
+
+    _observeNewRows() {
+      if (!this.__observer) return
+      const rows = this.$refs.rows || []
+      rows.forEach(row => {
+        if (!this.__revealed.has(row) && !row.dataset.observed) {
+          row.dataset.observed = '1'
+          this.__observer.observe(row)
+        }
       })
     },
 
@@ -310,7 +346,15 @@ export default {
   padding: 1.2rem 0
   border-bottom: 1px solid rgba(255,255,255,0.06)
   cursor: pointer
-  transition: opacity 0.3s ease
+  // État initial : invisible, légèrement décalé vers le bas
+  opacity: 0
+  transform: translate3d(0, 28px, 0)
+  transition: opacity 0.45s ease, transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1)
+  will-change: opacity, transform
+
+  &.is-visible
+    opacity: 1
+    transform: translate3d(0, 0, 0)
 
   +breakpoint(mobile)
     grid-template-columns: 2.5rem 1fr 8rem
@@ -318,8 +362,9 @@ export default {
     padding: 1.2rem 0
 
   // Effet spotlight : les lignes non-survolées s'estompent
-  .AllWork_inner.has-hover &:not(.is-hovered)
+  .AllWork_inner.has-hover &.is-visible:not(.is-hovered)
     opacity: 0.25
+    transform: translate3d(0, 0, 0)
 
   &_num
     font-family: $apfel
