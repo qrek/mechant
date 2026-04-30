@@ -24,7 +24,6 @@
         :key="`${i}-${project.id}`"
         class="AllWork_row"
         :class="{ 'is-hovered': hoveredId === project.id }"
-        ref="rows"
         @mouseenter="onHover(project, $event)"
         @mouseleave="onLeave($event)"
         @click="openProject(project)"
@@ -58,22 +57,18 @@
         <span class="AllWork_row_type">{{ getWorkTypes(project) }}</span>
       </div>
 
+      <div v-if="isLoading" class="AllWork_loading">
+        <span></span>
+      </div>
+
     </div>
-
-    <!-- Rideaux orange : entrée de page -->
-    <div class="AllWork_curtain AllWork_curtain--left" ref="curtainLeft" />
-    <div class="AllWork_curtain AllWork_curtain--right" ref="curtainRight" />
-
   </section>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import { gsap } from '@/vendor/gsap'
-import { SplitText } from '@/vendor/gsap/SplitText'
 import { supabase } from '@/utils/supabase'
-
-gsap.registerPlugin(SplitText)
 
 export default {
   name: 'WorksAll',
@@ -89,6 +84,7 @@ export default {
     return {
       projects: [],
       displayProjects: [],
+      isLoading: false,
       hoveredId: null
     }
   },
@@ -104,25 +100,16 @@ export default {
     this.__bgSrc = null
     this.__bgTimer = null
     this.__isAppending = false
-    this.__revealed = new WeakSet()
-    this.__revealCount = 0
 
-    // Lance le rideau ET le fetch en parallèle, puis attend les deux
-    await Promise.all([
-      this._curtainsArrive(),
-      this._fetchProjects()
-    ])
-
+    await this._fetchProjects()
     await this.$nextTick()
-    await this._curtainsLeave()
-    this._setupReveal()
+    this._animateIn()
     window.addEventListener('scroll', this._onScroll)
   },
 
   beforeDestroy() {
     window.removeEventListener('scroll', this._onScroll)
     clearTimeout(this.__bgTimer)
-    if (this.__observer) this.__observer.disconnect()
   },
 
   methods: {
@@ -133,6 +120,7 @@ export default {
     }),
 
     async _fetchProjects() {
+      this.isLoading = true
       // Charge tous les projets d'un coup (pas de pagination)
       const { data } = await supabase
         .from('projects')
@@ -141,16 +129,14 @@ export default {
         .order('order_index', { ascending: false })
       this.projects = data || []
       this.displayProjects = [...this.projects]
+      this.isLoading = false
     },
 
     _appendLoop() {
       if (!this.projects.length || this.__isAppending) return
       this.__isAppending = true
       this.displayProjects = [...this.displayProjects, ...this.projects]
-      this.$nextTick(() => {
-        this._observeNewRows()
-        this.__isAppending = false
-      })
+      this.$nextTick(() => { this.__isAppending = false })
     },
 
     getCategoryLabel(project) {
@@ -223,136 +209,15 @@ export default {
       this.setActive(true)
     },
 
-    _curtainsArrive() {
-      return new Promise(resolve => {
-        const left = this.$refs.curtainLeft
-        const right = this.$refs.curtainRight
-        if (!left || !right) return resolve()
-        gsap.set(left, { xPercent: -100 })
-        gsap.set(right, { xPercent: 100 })
-        gsap.to([left, right], {
-          xPercent: 0,
-          duration: 0.75,
-          ease: 'power3.inOut',
-          onComplete: resolve
-        })
-      })
-    },
-
-    _curtainsLeave() {
-      return new Promise(resolve => {
-        const left = this.$refs.curtainLeft
-        const right = this.$refs.curtainRight
-        if (!left || !right) return resolve()
-        gsap.to(left, {
-          xPercent: -100,
-          duration: 0.75,
-          ease: 'power3.inOut'
-        })
-        gsap.to(right, {
-          xPercent: 100,
-          duration: 0.75,
-          ease: 'power3.inOut',
-          onComplete: resolve
-        })
-      })
-    },
-
-    _setupReveal() {
-      if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
-        // Fallback : tout révéler immédiatement
-        const rows = this.$refs.rows || []
-        rows.forEach(row => this._revealRow(row, 0))
-        return
-      }
-
-      this.__observer = new IntersectionObserver((entries) => {
-        // Stagger limité au lot qui entre en vue ensemble
-        const visibleNow = entries.filter(e => e.isIntersecting)
-        visibleNow.sort((a, b) => a.target.getBoundingClientRect().top - b.target.getBoundingClientRect().top)
-        visibleNow.forEach((entry, idx) => {
-          const el = entry.target
-          if (this.__revealed.has(el)) return
-          this.__revealed.add(el)
-          this._revealRow(el, idx * 0.12)
-          this.__observer.unobserve(el)
-        })
-      }, {
-        rootMargin: '0px 0px -10% 0px',
-        threshold: 0.05
-      })
-
-      this._observeNewRows()
-    },
-
-    _revealRow(row, baseDelay) {
-      const clientEl = row.querySelector('.AllWork_row_client')
-      const otherEls = [
-        row.querySelector('.AllWork_row_num'),
-        row.querySelector('.AllWork_row_title'),
-        row.querySelector('.AllWork_row_media'),
-        row.querySelector('.AllWork_row_cat'),
-        row.querySelector('.AllWork_row_type')
-      ].filter(Boolean)
-
-      // SplitText sur le nom du client (gros texte)
-      let split = null
-      if (clientEl) {
-        try {
-          split = new SplitText(clientEl, { type: 'chars,words', charsClass: 'AllWork_char', wordsClass: 'AllWork_word' })
-        } catch (_) {}
-      }
-
-      // État initial avant de rendre la ligne visible (évite le flash)
-      if (split && split.chars && split.chars.length) {
-        gsap.set(split.chars, { yPercent: 110, opacity: 0, rotate: 4 })
-      }
-      if (otherEls.length) {
-        gsap.set(otherEls, { opacity: 0, y: 18 })
-      }
-
-      row.classList.add('is-visible')
-
-      const tl = gsap.timeline({
-        delay: baseDelay,
-        onComplete: () => {
-          if (split && split.revert) {
-            try { split.revert() } catch (_) {}
-          }
-        }
-      })
-
-      if (split && split.chars && split.chars.length) {
-        tl.to(split.chars, {
-          yPercent: 0,
-          opacity: 1,
-          rotate: 0,
-          duration: 0.55,
-          stagger: 0.018,
-          ease: 'power3.out'
-        }, 0)
-      }
-
-      if (otherEls.length) {
-        tl.to(otherEls, {
-          opacity: 1,
-          y: 0,
-          duration: 0.5,
-          stagger: 0.05,
-          ease: 'power2.out',
-          clearProps: 'opacity,transform'
-        }, 0.05)
-      }
-    },
-
-    _observeNewRows() {
-      if (!this.__observer) return
-      const rows = this.$refs.rows || []
-      rows.forEach(row => {
-        if (!this.__revealed.has(row) && !row.dataset.observed) {
-          row.dataset.observed = '1'
-          this.__observer.observe(row)
-        }
+    _animateIn() {
+      const rows = this.$el.querySelectorAll('.AllWork_row')
+      gsap.from(rows, {
+        opacity: 0,
+        y: 24,
+        duration: 0.55,
+        stagger: 0.04,
+        ease: 'power2.out',
+        clearProps: 'all'
       })
     },
 
@@ -422,23 +287,19 @@ export default {
     +breakpoint(mobile)
       display: none
 
-  // ── Rideaux orange (entrée de page) ──────────────────────────────────────
-  &_curtain
-    position: fixed
-    top: 0
-    bottom: 0
-    width: 50.5vw
-    background: $orange
-    z-index: 100
-    pointer-events: none
+  // ── Loading ───────────────────────────────────────────────────────────────
+  &_loading
+    padding: 3rem 0
+    display: flex
+    justify-content: center
 
-    &--left
-      left: 0
-      transform: translate3d(-100%, 0, 0)
-
-    &--right
-      right: 0
-      transform: translate3d(100%, 0, 0)
+    span
+      width: 1.5rem
+      height: 1.5rem
+      border: 1px solid rgba(255,255,255,0.15)
+      border-top-color: rgba(255,255,255,0.5)
+      border-radius: 50%
+      animation: spin 0.8s linear infinite
 
 // ── Ligne projet ──────────────────────────────────────────────────────────
 .AllWork_row
@@ -449,12 +310,7 @@ export default {
   padding: 1.2rem 0
   border-bottom: 1px solid rgba(255,255,255,0.06)
   cursor: pointer
-  // État initial : caché jusqu'à l'animation GSAP
-  visibility: hidden
   transition: opacity 0.3s ease
-
-  &.is-visible
-    visibility: visible
 
   +breakpoint(mobile)
     grid-template-columns: 2.5rem 1fr 8rem
@@ -462,18 +318,8 @@ export default {
     padding: 1.2rem 0
 
   // Effet spotlight : les lignes non-survolées s'estompent
-  .AllWork_inner.has-hover &.is-visible:not(.is-hovered)
+  .AllWork_inner.has-hover &:not(.is-hovered)
     opacity: 0.25
-
-  // Wrappers SplitText pour le nom client : chars qui montent de bas
-  .AllWork_word
-    display: inline-block
-    overflow: hidden
-    vertical-align: bottom
-
-  .AllWork_char
-    display: inline-block
-    will-change: transform, opacity
 
   &_num
     font-family: $apfel
@@ -563,4 +409,8 @@ export default {
 
     +breakpoint(mobile)
       display: none
+
+@keyframes spin
+  to
+    transform: rotate(360deg)
 </style>

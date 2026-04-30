@@ -22,9 +22,9 @@ import { gsap } from '@/vendor/gsap'
 export default {
   name: 'Preloader',
   data () {
-    // Sur /works/*, on n'affiche jamais le preloader (animation custom prend le relais)
+    // Sur /works (uniquement), on n'affiche jamais le preloader — l'animation custom prend le relais
     const path = (this.$route && this.$route.path) || ''
-    const isWorksRoute = path === '/works' || path.startsWith('/works/')
+    const isWorksRoute = path === '/works' || path === '/works/'
     return {
       hideLoader: isWorksRoute
     }
@@ -172,7 +172,7 @@ export default {
 
     _shouldSkipAnimation() {
       const path = (this.$route && this.$route.path) || ''
-      return path === '/works' || path.startsWith('/works/')
+      return path === '/works' || path === '/works/'
     },
 
     _dismissImmediate () {
