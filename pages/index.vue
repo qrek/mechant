@@ -131,6 +131,10 @@ export default {
 
     openProject() {
       if (!this.currentProject) return
+      if (this.currentProject.has_case_study && this.currentProject.slug) {
+        this.$router.push(`/works/${this.currentProject.slug}`)
+        return
+      }
       this.setId(this.currentProject.id)
       this.setActive(true)
     },

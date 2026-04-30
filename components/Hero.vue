@@ -19,7 +19,7 @@
           customClass="showProjectHeroButton"
           icon="icon-play"
           :size="1"
-          :onClick="_ => openProjectPopin(item.id)"
+          :onClick="_ => openProjectPopin(item)"
         />
       </div>
     </div>
@@ -135,9 +135,13 @@ export default {
       this.index = realIndex
       this.isMoving = isMoving
     },
-    openProjectPopin(id) {
+    openProjectPopin(item) {
+      if (item && item.has_case_study && item.slug) {
+        this.$router.push(`/works/${item.slug}`)
+        return
+      }
       this.setActive(true)
-      this.setId(id)
+      this.setId(item && item.id)
     }
   }
 }

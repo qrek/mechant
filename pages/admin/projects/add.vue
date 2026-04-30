@@ -99,6 +99,39 @@
         <p v-if="uploadError" class="error">{{ uploadError }}</p>
       </div>
 
+      <!-- Page projet détaillée -->
+      <div class="form-section">
+        <h2>Page projet détaillée</h2>
+        <label class="toggle-label">
+          <input type="checkbox" v-model="form.has_case_study" />
+          Activer une page dédiée pour ce projet
+        </label>
+
+        <template v-if="form.has_case_study">
+          <div class="field" style="margin-top: 1rem">
+            <label>Slug (URL : /works/<strong>mon-slug</strong>) *</label>
+            <input v-model="form.slug" @input="onSlugInput" placeholder="ex: mauritshuis-audio-experience" />
+            <span class="field-hint">Lettres minuscules, chiffres et tirets uniquement</span>
+          </div>
+
+          <div class="field">
+            <label>Paragraphe d'introduction</label>
+            <textarea v-model="form.case_study_intro" rows="3" placeholder="Le pitch du projet" />
+          </div>
+
+          <div class="field">
+            <label>Paragraphe descriptif</label>
+            <textarea v-model="form.case_study_body" rows="5" placeholder="Comment le projet a été réalisé, parti pris créatif…" />
+          </div>
+
+          <div class="field">
+            <label>Vidéos supplémentaires (Vimeo)</label>
+            <span class="field-hint">Une vidéo par ligne. Format : <code>ID</code> ou <code>ID | Titre</code></span>
+            <textarea v-model="extraVideosInput" rows="4" placeholder="123456789 | Behind the scenes&#10;987654321 | Final film" />
+          </div>
+        </template>
+      </div>
+
       <!-- Héro -->
       <div class="form-section">
         <h2>Section Héro (page d'accueil)</h2>
@@ -152,6 +185,7 @@ export default {
     return {
       vimeoInput: '',
       badgesInput: '',
+      extraVideosInput: '',
       fetchingVimeo: false,
       vimeoError: null,
       saving: false,
@@ -172,6 +206,11 @@ export default {
         badges: [],
         preview_video: '',
         year: null,
+        slug: '',
+        has_case_study: false,
+        case_study_intro: '',
+        case_study_body: '',
+        extra_videos: [],
         is_hero: false,
         hero_title: '',
         hero_order: 0,
@@ -185,6 +224,30 @@ export default {
     this.categories = data || []
   },
   methods: {
+    slugify(s) {
+      return (s || '')
+        .toString()
+        .toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    },
+    onSlugInput() {
+      this.form.slug = this.slugify(this.form.slug)
+    },
+    parseExtraVideos(text) {
+      return (text || '')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(line => {
+          const [rawId, ...rest] = line.split('|').map(s => s.trim())
+          const idMatch = rawId.match(/(\d+)/)
+          if (!idMatch) return null
+          return { vimeo_id: idMatch[1], title: rest.join(' | ') || '' }
+        })
+        .filter(Boolean)
+    },
     extractVimeoId(input) {
       if (!input) return null
       const trimmed = input.trim()
@@ -203,6 +266,7 @@ export default {
         const data = await res.json()
         this.form.vimeo_id = id
         if (!this.form.title) this.form.title = data.title || ''
+        if (!this.form.slug && data.title) this.form.slug = this.slugify(data.title)
         if (!this.form.thumbnail_url) {
           const raw = data.thumbnail_url || ''
           this.form.thumbnail_url = raw.replace(/_\d+x\d+(\.\w+)/, '_1920x1080$1').replace(/_\d+(\.\w+)$/, '_1920x1080$1')
@@ -244,13 +308,20 @@ export default {
       const id = this.extractVimeoId(this.vimeoInput)
       if (!id) { this.saveError = 'ID Vimeo invalide.'; return }
 
+      if (this.form.has_case_study && !this.form.slug) {
+        this.saveError = 'Le slug est obligatoire pour une page projet détaillée.'
+        return
+      }
+
       this.saveError = null
       this.saving = true
 
       const payload = {
         ...this.form,
         vimeo_id: id,
-        badges: this.badgesInput.split(',').map(b => b.trim()).filter(Boolean)
+        badges: this.badgesInput.split(',').map(b => b.trim()).filter(Boolean),
+        slug: this.form.slug ? this.slugify(this.form.slug) : null,
+        extra_videos: this.parseExtraVideos(this.extraVideosInput)
       }
 
       const { error } = await supabase.from('projects').insert(payload)

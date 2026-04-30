@@ -200,6 +200,10 @@ export default {
     },
 
     openProject(project) {
+      if (project.has_case_study && project.slug) {
+        this.$router.push(`/works/${project.slug}`)
+        return
+      }
       this.setProjectData(project)
       this.setId(project.id)
       this.setActive(true)

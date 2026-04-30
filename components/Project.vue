@@ -99,6 +99,10 @@ export default {
       }, 100)
     },
     handleClick() {
+      if (this.data && this.data.has_case_study && this.data.slug) {
+        this.$router.push(`/works/${this.data.slug}`)
+        return
+      }
       this.setActive(true)
       this.setId(this.data.id)
     },
