@@ -68,7 +68,11 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
+import { gsap } from '@/vendor/gsap'
+import { SplitText } from '@/vendor/gsap/SplitText'
 import { supabase } from '@/utils/supabase'
+
+gsap.registerPlugin(SplitText)
 
 export default {
   name: 'WorksAll',
@@ -219,7 +223,7 @@ export default {
       if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
         // Fallback : tout révéler immédiatement
         const rows = this.$refs.rows || []
-        rows.forEach(row => row.classList.add('is-visible'))
+        rows.forEach(row => this._revealRow(row, 0))
         return
       }
 
@@ -231,11 +235,7 @@ export default {
           const el = entry.target
           if (this.__revealed.has(el)) return
           this.__revealed.add(el)
-          el.style.transitionDelay = `${idx * 70}ms`
-          // Frame suivante pour s'assurer que la transition prend
-          requestAnimationFrame(() => {
-            el.classList.add('is-visible')
-          })
+          this._revealRow(el, idx * 0.12)
           this.__observer.unobserve(el)
         })
       }, {
@@ -244,6 +244,66 @@ export default {
       })
 
       this._observeNewRows()
+    },
+
+    _revealRow(row, baseDelay) {
+      const clientEl = row.querySelector('.AllWork_row_client')
+      const otherEls = [
+        row.querySelector('.AllWork_row_num'),
+        row.querySelector('.AllWork_row_title'),
+        row.querySelector('.AllWork_row_media'),
+        row.querySelector('.AllWork_row_cat'),
+        row.querySelector('.AllWork_row_type')
+      ].filter(Boolean)
+
+      // SplitText sur le nom du client (gros texte)
+      let split = null
+      if (clientEl) {
+        try {
+          split = new SplitText(clientEl, { type: 'chars,words', charsClass: 'AllWork_char', wordsClass: 'AllWork_word' })
+        } catch (_) {}
+      }
+
+      // État initial avant de rendre la ligne visible (évite le flash)
+      if (split && split.chars && split.chars.length) {
+        gsap.set(split.chars, { yPercent: 110, opacity: 0, rotate: 4 })
+      }
+      if (otherEls.length) {
+        gsap.set(otherEls, { opacity: 0, y: 18 })
+      }
+
+      row.classList.add('is-visible')
+
+      const tl = gsap.timeline({
+        delay: baseDelay,
+        onComplete: () => {
+          if (split && split.revert) {
+            try { split.revert() } catch (_) {}
+          }
+        }
+      })
+
+      if (split && split.chars && split.chars.length) {
+        tl.to(split.chars, {
+          yPercent: 0,
+          opacity: 1,
+          rotate: 0,
+          duration: 0.55,
+          stagger: 0.018,
+          ease: 'power3.out'
+        }, 0)
+      }
+
+      if (otherEls.length) {
+        tl.to(otherEls, {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          stagger: 0.05,
+          ease: 'power2.out',
+          clearProps: 'opacity,transform'
+        }, 0.05)
+      }
     },
 
     _observeNewRows() {
@@ -346,15 +406,12 @@ export default {
   padding: 1.2rem 0
   border-bottom: 1px solid rgba(255,255,255,0.06)
   cursor: pointer
-  // État initial : invisible, légèrement décalé vers le bas
-  opacity: 0
-  transform: translate3d(0, 28px, 0)
-  transition: opacity 0.45s ease, transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1)
-  will-change: opacity, transform
+  // État initial : caché jusqu'à l'animation GSAP
+  visibility: hidden
+  transition: opacity 0.3s ease
 
   &.is-visible
-    opacity: 1
-    transform: translate3d(0, 0, 0)
+    visibility: visible
 
   +breakpoint(mobile)
     grid-template-columns: 2.5rem 1fr 8rem
@@ -364,7 +421,16 @@ export default {
   // Effet spotlight : les lignes non-survolées s'estompent
   .AllWork_inner.has-hover &.is-visible:not(.is-hovered)
     opacity: 0.25
-    transform: translate3d(0, 0, 0)
+
+  // Wrappers SplitText pour le nom client : chars qui montent de bas
+  .AllWork_word
+    display: inline-block
+    overflow: hidden
+    vertical-align: bottom
+
+  .AllWork_char
+    display: inline-block
+    will-change: transform, opacity
 
   &_num
     font-family: $apfel
