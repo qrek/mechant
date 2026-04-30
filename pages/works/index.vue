@@ -118,42 +118,41 @@ export default {
       const { bg } = this.$refs
       if (!bg) return
       const items = [...this.$el.querySelectorAll('.WorksPage_item')]
+
+      // États initiaux posés immédiatement pour éviter tout flash
+      gsap.set(bg, { xPercent: -100 })
+      items.forEach((item, i) => {
+        switch (i % 4) {
+          case 0: gsap.set(item, { clipPath: 'inset(0% 100% 0% 0%)' }); break
+          case 1: gsap.set(item, { y: 65, opacity: 0 }); break
+          case 2: gsap.set(item, { clipPath: 'inset(0% 0% 0% 100%)' }); break
+          case 3: gsap.set(item, { scale: 0.72, opacity: 0 }); break
+        }
+      })
+
       const tl = gsap.timeline()
 
-      // Fond orange : arrive depuis la gauche
-      tl.from(bg, {
-        xPercent: -100,
-        duration: 1.1,
-        ease: 'power3.out',
-        clearProps: 'transform'
-      })
+      // Fond orange : slide depuis la gauche
+      tl.to(bg, { xPercent: 0, duration: 1.2, ease: 'power3.out', clearProps: 'transform' })
 
       // Projets : 4 animations distinctes en cascade
       items.forEach((item, i) => {
-        let fromVars, toVars
+        let toVars
         switch (i % 4) {
           case 0:
-            // Wipe depuis la gauche (clip-path)
-            fromVars = { clipPath: 'inset(0% 100% 0% 0%)' }
-            toVars   = { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.9, ease: 'power3.out', clearProps: 'all' }
+            toVars = { clipPath: 'inset(0% 0% 0% 0%)', duration: 1, ease: 'power3.out', clearProps: 'all' }
             break
           case 1:
-            // Monte depuis le bas
-            fromVars = { y: 65, opacity: 0 }
-            toVars   = { y: 0, opacity: 1, duration: 0.85, ease: 'power2.out', clearProps: 'all' }
+            toVars = { y: 0, opacity: 1, duration: 0.9, ease: 'power2.out', clearProps: 'all' }
             break
           case 2:
-            // Wipe depuis la droite (clip-path)
-            fromVars = { clipPath: 'inset(0% 0% 0% 100%)' }
-            toVars   = { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.9, ease: 'power3.out', clearProps: 'all' }
+            toVars = { clipPath: 'inset(0% 0% 0% 0%)', duration: 1, ease: 'power3.out', clearProps: 'all' }
             break
           case 3:
-            // Scale + fade depuis le centre
-            fromVars = { scale: 0.72, opacity: 0 }
-            toVars   = { scale: 1, opacity: 1, duration: 0.8, ease: 'back.out(1.4)', clearProps: 'all' }
+            toVars = { scale: 1, opacity: 1, duration: 0.85, ease: 'back.out(1.4)', clearProps: 'all' }
             break
         }
-        tl.fromTo(item, fromVars, toVars, i === 0 ? '>-0.4' : '>-0.3')
+        tl.to(item, toVars, i === 0 ? '>-0.4' : '>-0.3')
       })
     },
 
@@ -275,6 +274,10 @@ export default {
     flex-wrap: wrap
     align-items: flex-start
     justify-content: center
+    row-gap: 1rem
+
+    +breakpoint(mobile)
+      row-gap: 0.6rem
 
 // Chaque projet
 .WorksPage_item
