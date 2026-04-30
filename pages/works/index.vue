@@ -211,20 +211,7 @@ export default {
         this._floatQuickY = gsap.quickTo(float, 'y', { duration: 1.4, ease: 'power3.out' })
       }
 
-      // Chaque item a un facteur de profondeur distinct
-      const depths = [0.025, 0.01, 0.035, 0.015, 0.03, 0.012, 0.028]
-      const items = [...this.$el.querySelectorAll('.WorksPage_item')]
-      this._itemParallax = items.map((item, i) => {
-        const factor = depths[i % depths.length]
-        // Les items lointains (petit factor) répondent plus lentement
-        const dur = 0.6 + (0.035 - factor) * 20
-        return {
-          el: item,
-          quickX: gsap.quickTo(item, 'x', { duration: dur, ease: 'power2.out' }),
-          quickY: gsap.quickTo(item, 'y', { duration: dur, ease: 'power2.out' }),
-          factor
-        }
-      })
+      this._itemParallax = []
     },
 
     onMouseMove (e) {
