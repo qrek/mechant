@@ -298,14 +298,14 @@ export default {
     flex-wrap: wrap
     align-items: flex-start
     justify-content: center
-    row-gap: 1rem
+    row-gap: 1.8rem
 
     +breakpoint(mobile)
-      row-gap: 0.6rem
+      row-gap: 1rem
 
 .WorksPage_item
   display: inline-flex
-  align-items: flex-end
+  align-items: baseline
   gap: 0.4em
   cursor: pointer
   background: none
@@ -348,7 +348,6 @@ export default {
     color: rgba(0,0,0,0.45)
     transition: color 0.25s ease
     display: block
-    padding-bottom: 0.2em
     line-height: 1.2
     opacity: 0
 </style>
