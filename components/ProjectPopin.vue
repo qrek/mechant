@@ -63,8 +63,8 @@
       </div>
 
       <!-- Infos projet -->
-      <div class="ProjectPopin_info" :class="{ 'is-open': infoVisible }" @click.stop>
-        <div class="ProjectPopin_info_panel">
+      <div class="ProjectPopin_info" @mouseenter="onInfoEnter" @mouseleave="onInfoLeave" @click.stop>
+        <div class="ProjectPopin_info_panel" ref="infoPanel">
           <div class="Info_client">{{ project && project.client }}</div>
           <div class="Info_title">{{ project && project.title }}</div>
           <div v-if="project && project.description" class="Info_desc" v-html="linkifyDescription(project.description)"></div>
@@ -74,7 +74,7 @@
             </li>
           </ul>
         </div>
-        <button class="ProjectPopin_info_btn" @click.stop="infoVisible = !infoVisible" :class="{ 'is-active': infoVisible }">
+        <button class="ProjectPopin_info_btn" :class="{ 'is-active': infoVisible }">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16">
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="8" x2="12" y2="8" stroke-width="3"/>
@@ -141,10 +141,16 @@ export default {
     }
   },
 
+  mounted () {
+    this._infoTl = null
+    this.$nextTick(() => this._setupInfoHover())
+  },
+
   beforeDestroy() {
     clearTimeout(this._hideTimer)
     this._cleanupScrub()
     this._destroyPlayer()
+    if (this._infoTl) { this._infoTl.kill(); this._infoTl = null }
   },
 
   methods: {
@@ -152,6 +158,27 @@ export default {
 
     close() {
       this.setActive(false)
+    },
+
+    // ─── Info hover (easeReverse) ─────────────────────────────────────────────
+
+    _setupInfoHover () {
+      const panel = this.$refs.infoPanel
+      if (!panel) return
+      gsap.set(panel, { opacity: 0, y: 16, pointerEvents: 'none' })
+      this._infoTl = gsap.timeline({ paused: true })
+        .to(panel, { opacity: 1, y: 0, pointerEvents: 'auto', duration: 0.45, ease: 'power3.out' })
+    },
+
+    onInfoEnter () {
+      if (!this.isDisplayed) return
+      this.infoVisible = true
+      if (this._infoTl) this._infoTl.play()
+    },
+
+    onInfoLeave () {
+      this.infoVisible = false
+      if (this._infoTl) this._infoTl.reverse()
     },
 
     linkifyDescription(text) {
@@ -243,6 +270,7 @@ export default {
       clearTimeout(this._hideTimer)
       this.controlsVisible = false
       this.infoVisible = false
+      if (this._infoTl) this._infoTl.pause(0)
 
       gsap.to(this.$el, {
         opacity: 0,
@@ -502,16 +530,8 @@ export default {
       border: 1px solid rgba(255,255,255,0.1)
       border-radius: 12px
       padding: 2rem 2.5rem
-      opacity: 0
-      transform: translateY(8px)
-      pointer-events: none
-      transition: opacity 0.25s ease, transform 0.25s ease
       max-width: 520px
-
-    &.is-open &_panel
-      opacity: 1
-      transform: translateY(0)
-      pointer-events: auto
+      will-change: transform, opacity
 
     &_btn
       width: 3rem
