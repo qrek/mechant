@@ -60,21 +60,14 @@ export default {
   },
 
   async mounted () {
-    // Cacher "All Work" (seul élément présent avant la data) et préparer le bg
+    // Masquer "All Work" et le bg dès le départ
     const allWorkLink = this.$el.querySelector('.WorksPage_item--allwork')
     if (allWorkLink) gsap.set(allWorkLink, { opacity: 0 })
     const { bg } = this.$refs
     if (bg) gsap.set(bg, { xPercent: -100 })
 
-    // Slide du bg ET fetch en parallèle — on attend les deux
-    await Promise.all([
-      new Promise(resolve => {
-        if (!bg) { resolve(); return }
-        gsap.to(bg, { xPercent: 0, duration: 1.1, ease: 'power3.out', clearProps: 'transform', onComplete: resolve })
-      }),
-      this._fetchFeaturedProjects()
-    ])
-
+    // Attendre la data, puis animer
+    await this._fetchFeaturedProjects()
     await this.$nextTick()
     this._preloadVideos()
     this._animateItems()
@@ -129,10 +122,11 @@ export default {
     },
 
     _animateItems () {
+      const { bg } = this.$refs
       const items = [...this.$el.querySelectorAll('.WorksPage_item')]
       if (!items.length) return
 
-      // États initiaux pour tous les items (data chargée, DOM à jour)
+      // États initiaux : tous les items cachés
       items.forEach((item, i) => {
         switch (i % 4) {
           case 0: gsap.set(item, { opacity: 0, clipPath: 'inset(0% 100% 0% 0%)' }); break
@@ -143,6 +137,13 @@ export default {
       })
 
       const tl = gsap.timeline()
+
+      // 1. Fond orange slide depuis la gauche
+      if (bg) {
+        tl.to(bg, { xPercent: 0, duration: 1.1, ease: 'power3.out', clearProps: 'transform' })
+      }
+
+      // 2. Items en cascade avec 4 animations distinctes
       items.forEach((item, i) => {
         let toVars
         switch (i % 4) {
@@ -159,7 +160,7 @@ export default {
             toVars = { scale: 1, opacity: 1, duration: 0.85, ease: 'back.out(1.4)', clearProps: 'all' }
             break
         }
-        tl.to(item, toVars, i === 0 ? 0 : '>-0.3')
+        tl.to(item, toVars, i === 0 ? '>-0.4' : '>-0.3')
       })
     },
 
