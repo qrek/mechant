@@ -1,16 +1,13 @@
 <template>
   <section class="WorksPage" @mousemove="onMouseMove">
 
-    <!-- Fond orange qui scale in -->
     <div class="WorksPage_bg" ref="bg" />
 
-    <!-- Cadre vidéo flottant (cursor-follower, derrière le texte) -->
     <div class="WorksPage_float" ref="float">
       <video ref="floatVideo" muted loop playsinline class="WorksPage_float_video" />
     </div>
 
-    <!-- Cloud typographique -->
-    <div class="WorksPage_cloud" ref="list">
+    <div class="WorksPage_cloud" ref="cloud">
       <button
         v-for="project in featuredProjects"
         :key="project.id"
@@ -39,19 +36,16 @@ import { supabase } from '@/utils/supabase'
 export default {
   name: 'Works',
 
-  head() {
+  head () {
     return {
       title: this.data?.projectsPage?.meta_title || 'Works — Méchant',
       meta: [{ hid: 'description', name: 'description', content: this.data?.projectsPage?.meta_description || '' }]
     }
   },
 
-  data() {
+  data () {
     return {
-      featuredProjects: [],
-      _hideTimer: null,
-      _currentSrc: null,
-      _preloadCache: {}
+      featuredProjects: []
     }
   },
 
@@ -60,22 +54,30 @@ export default {
   },
 
   async mounted () {
-    // Masquer "All Work" et le bg dès le départ
-    const allWorkLink = this.$el.querySelector('.WorksPage_item--allwork')
-    if (allWorkLink) gsap.set(allWorkLink, { opacity: 0 })
+    // Propriétés d'instance non-réactives (ne pas mettre dans data() avec _ préfixe)
+    this._hideTimer = null
+    this._currentSrc = null
+    this._preloadCache = {}
+
+    // Bg hors-écran immédiatement
     const { bg } = this.$refs
     if (bg) gsap.set(bg, { xPercent: -100 })
 
-    // Attendre la data, puis animer
-    await this._fetchFeaturedProjects()
+    // Fetch — on continue même en cas d'erreur réseau
+    try {
+      await this._fetchFeaturedProjects()
+    } catch (_) {}
+
     await this.$nextTick()
     this._preloadVideos()
-    this._animateItems()
+    this._animateIn()
   },
 
-  beforeDestroy() {
+  beforeDestroy () {
     clearTimeout(this._hideTimer)
-    Object.values(this._preloadCache).forEach(v => { v.src = ''; v.load() })
+    const video = this.$refs.floatVideo
+    if (video) { video.pause(); video.src = '' }
+    Object.values(this._preloadCache || {}).forEach(v => { v.src = ''; v.load() })
     this._preloadCache = {}
   },
 
@@ -86,85 +88,76 @@ export default {
       setProjectData: 'project/setData'
     }),
 
-    async _fetchFeaturedProjects() {
-      // Fetch direct Supabase — pas de cache store
-      let { data: featured } = await supabase
+    async _fetchFeaturedProjects () {
+      const { data: featured, error } = await supabase
         .from('projects')
         .select('*')
         .eq('published', true)
         .eq('is_featured', true)
         .order('order_index', { ascending: false })
 
-      if (!featured || !featured.length) {
-        // Fallback : tous les projets publiés
-        const { data: all } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('published', true)
-          .order('order_index', { ascending: false })
-          .limit(20)
-        featured = all || []
+      if (!error && featured && featured.length) {
+        this.featuredProjects = featured
+        return
       }
 
-      this.featuredProjects = featured
+      // Fallback : tous les projets publiés
+      const { data: all } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('published', true)
+        .order('order_index', { ascending: false })
+        .limit(20)
+      this.featuredProjects = all || []
     },
 
-    getCategoryLabel(project) {
+    getCategoryLabel (project) {
       const cats = project.categories
       if (!cats || !cats.length) return ''
       return this.data?.categories?.[cats[0]]?.title || ''
     },
 
-    getWorkTypes(project) {
+    getWorkTypes (project) {
       const types = project.work_types
       if (!types || !types.length) return ''
       return types.join('/')
     },
 
-    _animateItems () {
+    _animateIn () {
       const { bg } = this.$refs
+      if (!bg) return
       const items = [...this.$el.querySelectorAll('.WorksPage_item')]
       if (!items.length) return
 
-      // États initiaux : tous les items cachés
+      // Offsets Y distincts par item — synchrone, pas de flash possible
+      const yOffsets = [80, 50, 110, 65]
       items.forEach((item, i) => {
-        switch (i % 4) {
-          case 0: gsap.set(item, { opacity: 0, clipPath: 'inset(0% 100% 0% 0%)' }); break
-          case 1: gsap.set(item, { y: 65, opacity: 0 }); break
-          case 2: gsap.set(item, { opacity: 0, clipPath: 'inset(0% 0% 0% 100%)' }); break
-          case 3: gsap.set(item, { scale: 0.72, opacity: 0 }); break
-        }
+        gsap.set(item, { opacity: 0, y: yOffsets[i % yOffsets.length] })
       })
 
       const tl = gsap.timeline()
 
-      // 1. Fond orange slide depuis la gauche
-      if (bg) {
-        tl.to(bg, { xPercent: 0, duration: 1.1, ease: 'power3.out', clearProps: 'transform' })
-      }
+      // 1. Fond orange arrive depuis la gauche
+      tl.to(bg, {
+        xPercent: 0,
+        duration: 1.1,
+        ease: 'power3.out',
+        clearProps: 'transform'
+      })
 
-      // 2. Items en cascade avec 4 animations distinctes
+      // 2. Projets en cascade, chacun avec un déplacement distinct
       items.forEach((item, i) => {
-        let toVars
-        switch (i % 4) {
-          case 0:
-            toVars = { opacity: 1, clipPath: 'inset(0% 0% 0% 0%)', duration: 1, ease: 'power3.out', clearProps: 'all' }
-            break
-          case 1:
-            toVars = { y: 0, opacity: 1, duration: 0.9, ease: 'power2.out', clearProps: 'all' }
-            break
-          case 2:
-            toVars = { opacity: 1, clipPath: 'inset(0% 0% 0% 0%)', duration: 1, ease: 'power3.out', clearProps: 'all' }
-            break
-          case 3:
-            toVars = { scale: 1, opacity: 1, duration: 0.85, ease: 'back.out(1.4)', clearProps: 'all' }
-            break
-        }
-        tl.to(item, toVars, i === 0 ? '>-0.4' : '>-0.3')
+        tl.to(item, {
+          opacity: 1,
+          y: 0,
+          duration: 0.75,
+          ease: 'power2.out',
+          clearProps: 'all'
+        }, i === 0 ? '>-0.5' : '>-0.35')
       })
     },
 
-    _preloadVideos() {
+    _preloadVideos () {
       this.featuredProjects.forEach(project => {
         const url = project.preview_video || project.video_home
         if (!url || this._preloadCache[project.id]) return
@@ -177,7 +170,7 @@ export default {
       })
     },
 
-    onMouseMove(e) {
+    onMouseMove (e) {
       const el = this.$refs.float
       if (!el) return
       const w = el.offsetWidth
@@ -187,7 +180,7 @@ export default {
       el.style.transform = `translate(${x}px, ${y}px)`
     },
 
-    onHover(project) {
+    onHover (project) {
       this.setId(project.id)
       const url = project.preview_video || project.video_home
       if (!url) return
@@ -204,7 +197,7 @@ export default {
       float.classList.add('is-visible')
     },
 
-    onLeave() {
+    onLeave () {
       const float = this.$refs.float
       if (!float) return
       float.classList.remove('is-visible')
@@ -213,7 +206,7 @@ export default {
       }, 300)
     },
 
-    openProject(project) {
+    openProject (project) {
       if (project.has_case_study && project.slug) {
         this.$router.push(`/works/${project.slug}`)
         return
@@ -240,16 +233,13 @@ export default {
     padding: 11rem 5vw 6rem
     align-items: flex-start
 
-  // ---------- Fond orange animé ----------
   &_bg
     position: fixed
     inset: 0
     background: #f2492c
     z-index: 0
-    transform-origin: center
     will-change: transform
 
-  // ---------- Cadre vidéo flottant (derrière le texte) ----------
   &_float
     position: fixed
     top: 0
@@ -274,7 +264,6 @@ export default {
       height: 100%
       object-fit: cover
 
-  // ---------- Cloud typographique (au-dessus de la vidéo) ----------
   &_cloud
     position: relative
     z-index: 2
@@ -287,7 +276,6 @@ export default {
     +breakpoint(mobile)
       row-gap: 0.6rem
 
-// Chaque projet
 .WorksPage_item
   display: inline-flex
   align-items: flex-end
