@@ -141,14 +141,14 @@ export default {
         { y: -55, from: 'random' }   // aléatoire, depuis le haut
       ]
 
-      // Split + état initial pour chaque item
-      const charSets = items.map((item, i) => {
+      // Split par mots + état initial pour chaque item
+      const wordSets = items.map((item, i) => {
         const titleEl = item.querySelector('.WorksPage_item_title')
         if (!titleEl) return null
-        const st = new SplitText(titleEl, { type: 'chars' })
+        const st = new SplitText(titleEl, { type: 'words' })
         this._splits.push(st)
         const { y } = patterns[i % patterns.length]
-        gsap.set(st.chars, { opacity: 0, y })
+        gsap.set(st.words, { opacity: 0, y })
         return st
       })
 
@@ -157,23 +157,23 @@ export default {
       // 1. Fond orange arrive depuis la gauche
       tl.to(bg, {
         xPercent: 0,
-        duration: 0.85,
+        duration: 0.7,
         ease: 'power3.out',
         clearProps: 'transform'
       })
 
-      // 2. Lettres de chaque item en cascade
-      charSets.forEach((st, i) => {
+      // 2. Mots de chaque item en cascade
+      wordSets.forEach((st, i) => {
         if (!st) return
         const { from } = patterns[i % patterns.length]
-        tl.to(st.chars, {
+        tl.to(st.words, {
           opacity: 1,
           y: 0,
-          duration: 0.5,
+          duration: 0.35,
           ease: 'power2.out',
-          stagger: { each: 0.025, from },
+          stagger: { each: 0.06, from },
           clearProps: 'all'
-        }, i === 0 ? '>-0.4' : '>-0.25')
+        }, i === 0 ? '>-0.3' : '>-0.2')
       })
     },
 
