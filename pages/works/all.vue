@@ -94,21 +94,16 @@ export default {
   },
 
   async mounted() {
-    this.__page = 1
-    this.__totalPages = 1
     this.__currentVideo = null
     this.__bgSrc = null
     this.__bgTimer = null
-    this.__isAppending = false
 
     await this._fetchProjects()
     await this.$nextTick()
     this._animateIn()
-    window.addEventListener('scroll', this._onScroll)
   },
 
   beforeDestroy() {
-    window.removeEventListener('scroll', this._onScroll)
     clearTimeout(this.__bgTimer)
   },
 
@@ -130,13 +125,6 @@ export default {
       this.projects = data || []
       this.displayProjects = [...this.projects]
       this.isLoading = false
-    },
-
-    _appendLoop() {
-      if (!this.projects.length || this.__isAppending) return
-      this.__isAppending = true
-      this.displayProjects = [...this.displayProjects, ...this.projects]
-      this.$nextTick(() => { this.__isAppending = false })
     },
 
     getCategoryLabel(project) {
@@ -221,12 +209,7 @@ export default {
       })
     },
 
-    _onScroll() {
-      const inner = this.$refs.inner
-      if (!inner) return
-      const { bottom } = inner.getBoundingClientRect()
-      if (bottom < window.innerHeight * 2) this._appendLoop()
-    }
+  }
   }
 }
 </script>
