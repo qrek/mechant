@@ -31,6 +31,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import { gsap } from '@/vendor/gsap'
+import { SplitText } from '@/vendor/gsap/SplitText'
 import { supabase } from '@/utils/supabase'
 
 export default {
@@ -58,6 +59,7 @@ export default {
     this._hideTimer = null
     this._currentSrc = null
     this._preloadCache = {}
+    this._splits = []
 
     // Bg hors-écran immédiatement
     const { bg } = this.$refs
@@ -79,6 +81,8 @@ export default {
     if (video) { video.pause(); video.src = '' }
     Object.values(this._preloadCache || {}).forEach(v => { v.src = ''; v.load() })
     this._preloadCache = {}
+    ;(this._splits || []).forEach(st => st.revert())
+    this._splits = []
   },
 
   methods: {
@@ -129,10 +133,23 @@ export default {
       const items = [...this.$el.querySelectorAll('.WorksPage_item')]
       if (!items.length) return
 
-      // Offsets Y distincts par item — synchrone, pas de flash possible
-      const yOffsets = [80, 50, 110, 65]
-      items.forEach((item, i) => {
-        gsap.set(item, { opacity: 0, y: yOffsets[i % yOffsets.length] })
+      // 4 patterns distincts : direction Y + ordre d'apparition des lettres
+      const patterns = [
+        { y: 55,  from: 'start' },   // gauche → droite, depuis le bas
+        { y: -55, from: 'end' },     // droite → gauche, depuis le haut
+        { y: 55,  from: 'center' },  // centre → bords, depuis le bas
+        { y: -55, from: 'random' }   // aléatoire, depuis le haut
+      ]
+
+      // Split + état initial pour chaque item
+      const charSets = items.map((item, i) => {
+        const titleEl = item.querySelector('.WorksPage_item_title')
+        if (!titleEl) return null
+        const st = new SplitText(titleEl, { type: 'chars' })
+        this._splits.push(st)
+        const { y } = patterns[i % patterns.length]
+        gsap.set(st.chars, { opacity: 0, y })
+        return st
       })
 
       const tl = gsap.timeline()
@@ -140,20 +157,23 @@ export default {
       // 1. Fond orange arrive depuis la gauche
       tl.to(bg, {
         xPercent: 0,
-        duration: 1.1,
+        duration: 0.85,
         ease: 'power3.out',
         clearProps: 'transform'
       })
 
-      // 2. Projets en cascade, chacun avec un déplacement distinct
-      items.forEach((item, i) => {
-        tl.to(item, {
+      // 2. Lettres de chaque item en cascade
+      charSets.forEach((st, i) => {
+        if (!st) return
+        const { from } = patterns[i % patterns.length]
+        tl.to(st.chars, {
           opacity: 1,
           y: 0,
-          duration: 0.75,
+          duration: 0.5,
           ease: 'power2.out',
+          stagger: { each: 0.025, from },
           clearProps: 'all'
-        }, i === 0 ? '>-0.5' : '>-0.35')
+        }, i === 0 ? '>-0.4' : '>-0.25')
       })
     },
 
