@@ -58,11 +58,12 @@
         <span class="AllWork_row_type">{{ getWorkTypes(project) }}</span>
       </div>
 
-      <div v-if="isLoading" class="AllWork_loading">
-        <span></span>
-      </div>
-
     </div>
+
+    <!-- Rideaux orange : entrée de page -->
+    <div class="AllWork_curtain AllWork_curtain--left" ref="curtainLeft" />
+    <div class="AllWork_curtain AllWork_curtain--right" ref="curtainRight" />
+
   </section>
 </template>
 
@@ -88,7 +89,6 @@ export default {
     return {
       projects: [],
       displayProjects: [],
-      isLoading: false,
       hoveredId: null
     }
   },
@@ -107,8 +107,14 @@ export default {
     this.__revealed = new WeakSet()
     this.__revealCount = 0
 
-    await this._fetchProjects()
+    // Lance le rideau ET le fetch en parallèle, puis attend les deux
+    await Promise.all([
+      this._curtainsArrive(),
+      this._fetchProjects()
+    ])
+
     await this.$nextTick()
+    await this._curtainsLeave()
     this._setupReveal()
     window.addEventListener('scroll', this._onScroll)
   },
@@ -127,7 +133,6 @@ export default {
     }),
 
     async _fetchProjects() {
-      this.isLoading = true
       // Charge tous les projets d'un coup (pas de pagination)
       const { data } = await supabase
         .from('projects')
@@ -136,7 +141,6 @@ export default {
         .order('order_index', { ascending: false })
       this.projects = data || []
       this.displayProjects = [...this.projects]
-      this.isLoading = false
     },
 
     _appendLoop() {
@@ -217,6 +221,41 @@ export default {
       this.setProjectData(project)
       this.setId(project.id)
       this.setActive(true)
+    },
+
+    _curtainsArrive() {
+      return new Promise(resolve => {
+        const left = this.$refs.curtainLeft
+        const right = this.$refs.curtainRight
+        if (!left || !right) return resolve()
+        gsap.set(left, { xPercent: -100 })
+        gsap.set(right, { xPercent: 100 })
+        gsap.to([left, right], {
+          xPercent: 0,
+          duration: 0.75,
+          ease: 'power3.inOut',
+          onComplete: resolve
+        })
+      })
+    },
+
+    _curtainsLeave() {
+      return new Promise(resolve => {
+        const left = this.$refs.curtainLeft
+        const right = this.$refs.curtainRight
+        if (!left || !right) return resolve()
+        gsap.to(left, {
+          xPercent: -100,
+          duration: 0.75,
+          ease: 'power3.inOut'
+        })
+        gsap.to(right, {
+          xPercent: 100,
+          duration: 0.75,
+          ease: 'power3.inOut',
+          onComplete: resolve
+        })
+      })
     },
 
     _setupReveal() {
@@ -383,19 +422,23 @@ export default {
     +breakpoint(mobile)
       display: none
 
-  // ── Loading ───────────────────────────────────────────────────────────────
-  &_loading
-    padding: 3rem 0
-    display: flex
-    justify-content: center
+  // ── Rideaux orange (entrée de page) ──────────────────────────────────────
+  &_curtain
+    position: fixed
+    top: 0
+    bottom: 0
+    width: 50.5vw
+    background: $orange
+    z-index: 100
+    pointer-events: none
 
-    span
-      width: 1.5rem
-      height: 1.5rem
-      border: 1px solid rgba(255,255,255,0.15)
-      border-top-color: rgba(255,255,255,0.5)
-      border-radius: 50%
-      animation: spin 0.8s linear infinite
+    &--left
+      left: 0
+      transform: translate3d(-100%, 0, 0)
+
+    &--right
+      right: 0
+      transform: translate3d(100%, 0, 0)
 
 // ── Ligne projet ──────────────────────────────────────────────────────────
 .AllWork_row
@@ -520,8 +563,4 @@ export default {
 
     +breakpoint(mobile)
       display: none
-
-@keyframes spin
-  to
-    transform: rotate(360deg)
 </style>
