@@ -1,9 +1,11 @@
 <template>
   <div class="Preloader" :class="{ 'is-hidden': hideLoader }">
-    <div class="Preloader_panel" ref="panel" />
-    <div class="Preloader_center" ref="centerEl">
-      <img src="~assets/images/logo.png" alt="Méchant" class="Preloader_logo" />
-    </div>
+    <template v-if="!isWorksPage">
+      <div class="Preloader_panel" ref="panel" />
+      <div class="Preloader_center" ref="centerEl">
+        <img src="~assets/images/logo.png" alt="Méchant" class="Preloader_logo" />
+      </div>
+    </template>
   </div>
 </template>
 
@@ -31,7 +33,11 @@ export default {
       isLoadingCompleted: 'preloader/isLoadingCompleted',
       data: 'data/getData',
       isMobile: 'layout/isMobile'
-    })
+    }),
+    isWorksPage () {
+      const path = this.$route?.path || ''
+      return path === '/works' || path === '/works/'
+    }
   },
   async mounted () {
     this._mountTime = Date.now()
@@ -150,6 +156,10 @@ export default {
     },
     loadResourcesCompleteHandler () {
       this.setLoadingCompleted()
+      if (this.isWorksPage) {
+        this.hideLoader = true
+        return
+      }
       const elapsed   = Date.now() - this._mountTime
       const remaining = Math.max(0, 3000 - elapsed)
       setTimeout(() => this._animateOut(), remaining)
