@@ -147,9 +147,10 @@ export default {
         const st = new SplitText(titleEl, { type: 'words' })
         this._splits.push(st)
 
-        // 120px > line-height max (~101px à 7rem*0.9) → mots totalement cachés
         gsap.set(st.words, { y: 120 })
-        if (labelEl) gsap.set(labelEl, { opacity: 0, y: 10 })
+        // Rendre le container visible — les mots restent cachés par y:120 + overflow
+        gsap.set(titleEl, { opacity: 1 })
+        if (labelEl) gsap.set(labelEl, { y: 10 })
 
         return { st, titleEl, labelEl }
       })
@@ -158,11 +159,10 @@ export default {
 
       tl.to(bg, { xPercent: 0, duration: 0.55, ease: 'power3.out', clearProps: 'transform' })
 
-      // Temps absolus — les items se chevauchent, pas de séquencement
       splitData.forEach(({ st, titleEl, labelEl }, i) => {
         if (!st) return
         const from = staggerFroms[i % staggerFroms.length]
-        const t = 0.15 + i * 0.07
+        const t = 0.15 + i * 0.04
 
         tl.to(st.words, {
           y: 0,
@@ -177,8 +177,7 @@ export default {
             opacity: 1,
             y: 0,
             duration: 0.3,
-            ease: 'power2.out',
-            clearProps: 'all'
+            ease: 'power2.out'
           }, t + 0.2)
         }
       })
@@ -337,6 +336,7 @@ export default {
     color: #000
     transition: color 0.25s ease
     display: block
+    opacity: 0
 
   &_label
     font-family: $apfel
@@ -349,4 +349,5 @@ export default {
     display: block
     padding-bottom: 0.2em
     line-height: 1.2
+    opacity: 0
 </style>
