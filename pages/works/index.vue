@@ -123,7 +123,7 @@ export default {
       // Fond orange : arrive depuis la gauche
       tl.from(bg, {
         xPercent: -100,
-        duration: 0.85,
+        duration: 1.1,
         ease: 'power3.out',
         clearProps: 'transform'
       })
@@ -135,25 +135,25 @@ export default {
           case 0:
             // Wipe depuis la gauche (clip-path)
             fromVars = { clipPath: 'inset(0% 100% 0% 0%)' }
-            toVars   = { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.65, ease: 'power3.out', clearProps: 'all' }
+            toVars   = { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.9, ease: 'power3.out', clearProps: 'all' }
             break
           case 1:
             // Monte depuis le bas
             fromVars = { y: 65, opacity: 0 }
-            toVars   = { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out', clearProps: 'all' }
+            toVars   = { y: 0, opacity: 1, duration: 0.85, ease: 'power2.out', clearProps: 'all' }
             break
           case 2:
             // Wipe depuis la droite (clip-path)
             fromVars = { clipPath: 'inset(0% 0% 0% 100%)' }
-            toVars   = { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.65, ease: 'power3.out', clearProps: 'all' }
+            toVars   = { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.9, ease: 'power3.out', clearProps: 'all' }
             break
           case 3:
             // Scale + fade depuis le centre
             fromVars = { scale: 0.72, opacity: 0 }
-            toVars   = { scale: 1, opacity: 1, duration: 0.55, ease: 'back.out(1.4)', clearProps: 'all' }
+            toVars   = { scale: 1, opacity: 1, duration: 0.8, ease: 'back.out(1.4)', clearProps: 'all' }
             break
         }
-        tl.fromTo(item, fromVars, toVars, i === 0 ? '>-0.45' : '>-0.38')
+        tl.fromTo(item, fromVars, toVars, i === 0 ? '>-0.4' : '>-0.3')
       })
     },
 
