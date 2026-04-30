@@ -124,7 +124,8 @@ export default {
     getWorkTypes (project) {
       const types = project.work_types
       if (!types || !types.length) return ''
-      return types.join('/')
+      const excluded = ['Animation', 'Montage']
+      return types.filter(t => !excluded.includes(t)).join('/')
     },
 
     _animateIn () {
