@@ -1,8 +1,6 @@
 <template>
   <section class="CaseStudy" v-if="project">
 
-    <NuxtLink to="/works" class="CaseStudy_back">← Works</NuxtLink>
-
     <div class="CaseStudy_inner">
 
       <!-- Titre -->
@@ -180,40 +178,13 @@ export default {
     padding-top: 6rem
     padding-bottom: 6rem
 
-  &_back
-    position: fixed
-    top: 2rem
-    left: 2rem
-    z-index: 5
-    font-family: $apfel
-    font-size: 0.8rem
-    letter-spacing: 0.08em
-    text-transform: uppercase
-    color: rgba(255,255,255,0.5)
-    text-decoration: none
-    padding: 0.6rem 1rem
-    border: 1px solid rgba(255,255,255,0.15)
-    border-radius: 999px
-    backdrop-filter: blur(8px)
-    background: rgba(0,0,0,0.4)
-    transition: color 0.25s ease, border-color 0.25s ease
-
-    &:hover
-      color: $white
-      border-color: rgba(255,255,255,0.4)
-
-    +breakpoint(mobile)
-      top: 1rem
-      left: 1rem
-      font-size: 0.7rem
-
   &_inner
-    max-width: 1280px
+    max-width: 1680px
     margin: 0 auto
-    padding: 0 6vw
+    padding: 0 4vw
     display: flex
     flex-direction: column
-    gap: 4rem
+    gap: 4.5rem
 
     +breakpoint(mobile)
       padding: 0 5vw
@@ -223,16 +194,16 @@ export default {
     font-family: $apfel
     font-weight: 900
     text-transform: uppercase
-    font-size: clamp(3rem, 9vw, 9rem)
-    line-height: 0.85
-    letter-spacing: -0.02em
+    font-size: clamp(4rem, 13vw, 14rem)
+    line-height: 0.82
+    letter-spacing: -0.025em
     color: $orange
     margin: 0
 
   &_subtitle
     font-family: $apfel
     font-weight: 500
-    font-size: clamp(1rem, 1.4vw, 1.5rem)
+    font-size: clamp(1rem, 1.6vw, 1.7rem)
     letter-spacing: 0.06em
     text-transform: uppercase
     color: rgba(255,255,255,0.55)
@@ -298,8 +269,7 @@ export default {
   &_text
     display: grid
     grid-template-columns: 1fr 1fr
-    gap: 4rem
-    max-width: 1100px
+    gap: 5rem
 
     +breakpoint(mobile)
       grid-template-columns: 1fr
@@ -307,7 +277,7 @@ export default {
 
     p
       font-family: $apfel
-      font-size: clamp(1rem, 1.15vw, 1.2rem)
+      font-size: clamp(1rem, 1.25vw, 1.35rem)
       line-height: 1.55
       color: rgba(255,255,255,0.78)
       margin: 0

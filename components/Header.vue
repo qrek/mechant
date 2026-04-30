@@ -1,8 +1,14 @@
 <template>
   <header class="Header" :class="{navIsOpen: isMenuOpen}">
 
+    <!-- Lien retour contextuel (sous-pages uniquement) -->
+    <NuxtLink v-if="backLink" :to="backLink.to" class="Header_back">
+      <span class="Header_back_arrow" aria-hidden="true">←</span>
+      <span class="Header_back_label">{{ backLink.label }}</span>
+    </NuxtLink>
+
     <!-- Navigation étalée sur toute la largeur (toutes les pages) -->
-    <nav class="Header_homeNav is-spread" ref="nav">
+    <nav class="Header_homeNav is-spread" :class="{ 'has-back': !!backLink }" ref="nav">
       <NuxtLink to="/about">About</NuxtLink>
       <NuxtLink to="/works">Work</NuxtLink>
       <NuxtLink to="/contact">Contact</NuxtLink>
@@ -180,6 +186,17 @@ export default {
     },
     isHomePage() {
       return this.$route.name === 'index' || this.$route.path === '/'
+    },
+    backLink() {
+      const path = this.$route.path || ''
+      // Pages racines : pas de lien retour
+      if (path === '/' || path === '/works' || path === '/works/') return null
+      // Sous-pages de Works → retour à Works
+      if (path.startsWith('/works/')) return { to: '/works', label: 'Works' }
+      // Backoffice : pas de retour (l'admin gère sa nav)
+      if (path.startsWith('/admin')) return null
+      // Toute autre page interne → retour à l'accueil
+      return { to: '/', label: 'Home' }
     }
   },
   methods: {
@@ -335,6 +352,46 @@ export default {
   +breakpoint(mobile)
     padding: 3.5rem 3rem
 
+  // Lien retour contextuel
+  &_back
+    position: absolute
+    top: 3rem
+    left: 6rem
+    z-index: 4
+    display: inline-flex
+    align-items: center
+    gap: 0.55rem
+    padding: 0.55rem 1rem
+    border: 1px solid rgba(255,255,255,0.18)
+    border-radius: 999px
+    background: rgba(0,0,0,0.35)
+    backdrop-filter: blur(6px)
+    color: rgba(255,255,255,0.75)
+    font-family: $apfel
+    font-weight: 500
+    font-size: 0.78rem
+    letter-spacing: 0.1em
+    text-transform: uppercase
+    text-decoration: none
+    transition: color 0.25s ease, border-color 0.25s ease, transform 0.3s ease
+
+    &:hover
+      color: $white
+      border-color: rgba(255,255,255,0.45)
+
+      .Header_back_arrow
+        transform: translateX(-3px)
+
+    &_arrow
+      display: inline-block
+      transition: transform 0.3s ease
+
+    +breakpoint(mobile)
+      top: 3.5rem
+      left: 3rem
+      font-size: 0.7rem
+      padding: 0.45rem 0.8rem
+
   // Navigation minimale homepage
   &_homeNav
     margin-left: auto
@@ -346,6 +403,12 @@ export default {
       margin-left: 0
       width: 100%
       justify-content: space-between
+
+    // Quand un lien retour est visible, on aligne la nav à droite pour libérer le coin gauche
+    &.has-back
+      width: auto
+      margin-left: auto
+      justify-content: flex-end
 
     a, a:visited
       font-family: $apfel
