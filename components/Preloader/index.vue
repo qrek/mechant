@@ -22,11 +22,8 @@ import { gsap } from '@/vendor/gsap'
 export default {
   name: 'Preloader',
   data () {
-    // Sur /works (uniquement), on n'affiche jamais le preloader — l'animation custom prend le relais
-    const path = (this.$route && this.$route.path) || ''
-    const isWorksRoute = path === '/works' || path === '/works/'
     return {
-      hideLoader: isWorksRoute
+      hideLoader: false
     }
   },
   computed: {
@@ -38,17 +35,7 @@ export default {
   },
   async mounted () {
     this._mountTime = Date.now()
-    // Sur /works/*, on cache le panneau immédiatement pour laisser place à
-    // l'animation custom dès que la data est prête
-    if (this._shouldSkipAnimation()) {
-      this._dismissImmediate()
-    }
     await this.loadData()
-    // Pour /works/*, on relâche le gate dès que la data est chargée,
-    // sans attendre le preload des ressources (vidéos / textures)
-    if (this._shouldSkipAnimation()) {
-      this.setLoadingCompleted()
-    }
     this.registerLoaders()
     this.setupResourceLoader()
     this.setupEventListeners()
@@ -163,23 +150,9 @@ export default {
     },
     loadResourcesCompleteHandler () {
       this.setLoadingCompleted()
-      // Sur /works/*, on a déjà tout dismissé dans mounted() — rien à faire ici
-      if (this._shouldSkipAnimation()) return
       const elapsed   = Date.now() - this._mountTime
       const remaining = Math.max(0, 3000 - elapsed)
       setTimeout(() => this._animateOut(), remaining)
-    },
-
-    _shouldSkipAnimation() {
-      const path = (this.$route && this.$route.path) || ''
-      return path === '/works' || path === '/works/'
-    },
-
-    _dismissImmediate () {
-      const { panel, centerEl } = this.$refs
-      if (panel) gsap.set(panel, { yPercent: -100, opacity: 0 })
-      if (centerEl) gsap.set(centerEl, { opacity: 0 })
-      this.hideLoader = true
     },
 
     _animateOut () {

@@ -1,11 +1,8 @@
 <template>
   <section class="WorksPage" @mousemove="onMouseMove">
 
-    <!-- Fond orange : deux moitiés qui se rejoignent au centre -->
-    <div class="WorksPage_bg">
-      <div class="WorksPage_bg_half WorksPage_bg_half--left" ref="bgLeft" />
-      <div class="WorksPage_bg_half WorksPage_bg_half--right" ref="bgRight" />
-    </div>
+    <!-- Fond orange qui scale in -->
+    <div class="WorksPage_bg" ref="bg" />
 
     <!-- Cadre vidéo flottant (cursor-follower, derrière le texte) -->
     <div class="WorksPage_float" ref="float">
@@ -18,7 +15,6 @@
         v-for="project in featuredProjects"
         :key="project.id"
         class="WorksPage_item"
-        ref="items"
         @mouseenter="onHover(project)"
         @mouseleave="onLeave"
         @click="openProject(project)"
@@ -27,7 +23,7 @@
         <span class="WorksPage_item_label">{{ getWorkTypes(project) }}</span>
       </button>
 
-      <NuxtLink to="/works/all" class="WorksPage_item WorksPage_item--allwork" ref="allWork" @mouseleave.native="onLeave">
+      <NuxtLink to="/works/all" class="WorksPage_item WorksPage_item--allwork" @mouseleave.native="onLeave">
         <span class="WorksPage_item_title">All Work</span>
       </NuxtLink>
     </div>
@@ -38,10 +34,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import { gsap } from '@/vendor/gsap'
-import { SplitText } from '@/vendor/gsap/SplitText'
 import { supabase } from '@/utils/supabase'
-
-gsap.registerPlugin(SplitText)
 
 export default {
   name: 'Works',
@@ -67,13 +60,7 @@ export default {
   },
 
   async mounted() {
-    // Cache les items dès le mount pour éviter le flash avant SplitText
-    this._setItemsHidden()
-    // Lance le rideau orange + le fetch en parallèle
-    await Promise.all([
-      this._curtainArrive(),
-      this._fetchFeaturedProjects()
-    ])
+    await this._fetchFeaturedProjects()
     await this.$nextTick()
     this._preloadVideos()
     this._animateIn()
@@ -83,9 +70,6 @@ export default {
     clearTimeout(this._hideTimer)
     Object.values(this._preloadCache).forEach(v => { v.src = ''; v.load() })
     this._preloadCache = {}
-    if (this._splits) {
-      this._splits.forEach(s => { try { s.revert() } catch (_) {} })
-    }
   },
 
   methods: {
@@ -130,93 +114,24 @@ export default {
       return types.join('/')
     },
 
-    _setItemsHidden() {
-      // Cache l'ensemble des items via une classe avant que SplitText ne tourne
-      const cloud = this.$refs.list
-      if (cloud) cloud.classList.add('is-pre-reveal')
-    },
-
-    _curtainArrive() {
-      return new Promise(resolve => {
-        const left = this.$refs.bgLeft
-        const right = this.$refs.bgRight
-        if (!left || !right) return resolve()
-        gsap.set(left, { xPercent: -100 })
-        gsap.set(right, { xPercent: 100 })
-        gsap.to([left, right], {
-          xPercent: 0,
-          duration: 0.8,
-          ease: 'power3.inOut',
-          onComplete: resolve
-        })
-      })
-    },
-
     _animateIn() {
-      const itemEls = this._getAllItemEls()
-      if (!itemEls.length) return
-
-      // SplitText sur le titre de chaque item
-      this._splits = []
-      itemEls.forEach(item => {
-        const title = item.querySelector('.WorksPage_item_title')
-        if (!title) return
-        try {
-          const split = new SplitText(title, {
-            type: 'chars,words',
-            charsClass: 'WorksPage_char',
-            wordsClass: 'WorksPage_word'
-          })
-          this._splits.push(split)
-        } catch (_) {}
-      })
-
-      // État initial : chars en bas + invisibles, labels invisibles
-      const allChars = this._splits.flatMap(s => s.chars || [])
-      const labels = itemEls.map(el => el.querySelector('.WorksPage_item_label')).filter(Boolean)
-      if (allChars.length) gsap.set(allChars, { yPercent: 110, opacity: 0, rotate: 4 })
-      if (labels.length) gsap.set(labels, { opacity: 0, y: 12 })
-
-      // Retire la classe is-pre-reveal pour que les items soient visibles
-      const cloud = this.$refs.list
-      if (cloud) cloud.classList.remove('is-pre-reveal')
-
-      // Timeline d'entrée
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
 
-      itemEls.forEach((item, idx) => {
-        const split = this._splits[idx]
-        const chars = split && split.chars
-        const label = item.querySelector('.WorksPage_item_label')
-        const itemDelay = idx * 0.18
-
-        if (chars && chars.length) {
-          tl.to(chars, {
-            yPercent: 0,
-            opacity: 1,
-            rotate: 0,
-            duration: 0.6,
-            stagger: 0.022,
-            ease: 'power3.out'
-          }, itemDelay)
-        }
-
-        if (label) {
-          tl.to(label, {
-            opacity: 1,
-            y: 0,
-            duration: 0.4,
-            ease: 'power2.out'
-          }, itemDelay + 0.15)
-        }
+      tl.from(this.$refs.bg, {
+        scale: 0.82,
+        duration: 1.5,
+        clearProps: 'transform'
       })
-    },
 
-    _getAllItemEls() {
-      const items = (this.$refs.items || []).slice()
-      const allWork = this.$refs.allWork && this.$refs.allWork.$el
-      if (allWork) items.push(allWork)
-      return items
+      const items = this.$el.querySelectorAll('.WorksPage_item')
+      tl.from(items, {
+        opacity: 0,
+        y: 20,
+        duration: 0.65,
+        stagger: 0.09,
+        ease: 'power2.out',
+        clearProps: 'all'
+      }, '-=0.7')
     },
 
     _preloadVideos() {
@@ -295,28 +210,14 @@ export default {
     padding: 11rem 5vw 6rem
     align-items: flex-start
 
-  // ---------- Fond orange : deux moitiés qui se rejoignent ----------
+  // ---------- Fond orange animé ----------
   &_bg
     position: fixed
     inset: 0
+    background: #f2492c
     z-index: 0
-    pointer-events: none
-
-    &_half
-      position: absolute
-      top: 0
-      bottom: 0
-      width: 50.5vw
-      background: #f2492c
-      will-change: transform
-
-      &--left
-        left: 0
-        transform: translate3d(-100%, 0, 0)
-
-      &--right
-        right: 0
-        transform: translate3d(100%, 0, 0)
+    transform-origin: center
+    will-change: transform
 
   // ---------- Cadre vidéo flottant (derrière le texte) ----------
   &_float
@@ -351,10 +252,6 @@ export default {
     flex-wrap: wrap
     align-items: flex-start
     justify-content: center
-
-    // Cache les items le temps que SplitText soit appliqué
-    &.is-pre-reveal
-      visibility: hidden
 
 // Chaque projet
 .WorksPage_item
@@ -403,14 +300,4 @@ export default {
     display: block
     padding-bottom: 0.2em
     line-height: 1.2
-
-// Wrappers SplitText : chars qui montent depuis le bas (clippés au mot)
-.WorksPage_word
-  display: inline-block
-  overflow: hidden
-  vertical-align: bottom
-
-.WorksPage_char
-  display: inline-block
-  will-change: transform, opacity
 </style>
