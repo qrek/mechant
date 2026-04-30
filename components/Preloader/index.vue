@@ -150,9 +150,28 @@ export default {
     },
     loadResourcesCompleteHandler () {
       this.setLoadingCompleted()
+      // Sur la page works (et ses sous-pages), le preloader cède la place à l'animation
+      // d'entrée custom — pas de délai min, pas d'animation de panneau
+      const skipAnimation = this._shouldSkipAnimation()
+      if (skipAnimation) {
+        this._dismissImmediate()
+        return
+      }
       const elapsed   = Date.now() - this._mountTime
       const remaining = Math.max(0, 3000 - elapsed)
       setTimeout(() => this._animateOut(), remaining)
+    },
+
+    _shouldSkipAnimation() {
+      const path = (this.$route && this.$route.path) || ''
+      return path === '/works' || path.startsWith('/works/')
+    },
+
+    _dismissImmediate () {
+      const { panel, centerEl } = this.$refs
+      if (panel) gsap.set(panel, { yPercent: -100, opacity: 0 })
+      if (centerEl) gsap.set(centerEl, { opacity: 0 })
+      this.hideLoader = true
     },
 
     _animateOut () {
