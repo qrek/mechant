@@ -59,11 +59,25 @@ export default {
     ...mapGetters({ data: 'data/getData' })
   },
 
-  async mounted() {
-    await this._fetchFeaturedProjects()
+  async mounted () {
+    // Cacher "All Work" (seul élément présent avant la data) et préparer le bg
+    const allWorkLink = this.$el.querySelector('.WorksPage_item--allwork')
+    if (allWorkLink) gsap.set(allWorkLink, { opacity: 0 })
+    const { bg } = this.$refs
+    if (bg) gsap.set(bg, { xPercent: -100 })
+
+    // Slide du bg ET fetch en parallèle — on attend les deux
+    await Promise.all([
+      new Promise(resolve => {
+        if (!bg) { resolve(); return }
+        gsap.to(bg, { xPercent: 0, duration: 1.1, ease: 'power3.out', clearProps: 'transform', onComplete: resolve })
+      }),
+      this._fetchFeaturedProjects()
+    ])
+
     await this.$nextTick()
     this._preloadVideos()
-    this._animateIn()
+    this._animateItems()
   },
 
   beforeDestroy() {
@@ -114,45 +128,38 @@ export default {
       return types.join('/')
     },
 
-    _animateIn () {
-      const { bg } = this.$refs
-      if (!bg) return
+    _animateItems () {
       const items = [...this.$el.querySelectorAll('.WorksPage_item')]
+      if (!items.length) return
 
-      // États initiaux posés immédiatement pour éviter tout flash
-      gsap.set(bg, { xPercent: -100 })
+      // États initiaux pour tous les items (data chargée, DOM à jour)
       items.forEach((item, i) => {
         switch (i % 4) {
-          case 0: gsap.set(item, { clipPath: 'inset(0% 100% 0% 0%)' }); break
+          case 0: gsap.set(item, { opacity: 0, clipPath: 'inset(0% 100% 0% 0%)' }); break
           case 1: gsap.set(item, { y: 65, opacity: 0 }); break
-          case 2: gsap.set(item, { clipPath: 'inset(0% 0% 0% 100%)' }); break
+          case 2: gsap.set(item, { opacity: 0, clipPath: 'inset(0% 0% 0% 100%)' }); break
           case 3: gsap.set(item, { scale: 0.72, opacity: 0 }); break
         }
       })
 
       const tl = gsap.timeline()
-
-      // Fond orange : slide depuis la gauche
-      tl.to(bg, { xPercent: 0, duration: 1.2, ease: 'power3.out', clearProps: 'transform' })
-
-      // Projets : 4 animations distinctes en cascade
       items.forEach((item, i) => {
         let toVars
         switch (i % 4) {
           case 0:
-            toVars = { clipPath: 'inset(0% 0% 0% 0%)', duration: 1, ease: 'power3.out', clearProps: 'all' }
+            toVars = { opacity: 1, clipPath: 'inset(0% 0% 0% 0%)', duration: 1, ease: 'power3.out', clearProps: 'all' }
             break
           case 1:
             toVars = { y: 0, opacity: 1, duration: 0.9, ease: 'power2.out', clearProps: 'all' }
             break
           case 2:
-            toVars = { clipPath: 'inset(0% 0% 0% 0%)', duration: 1, ease: 'power3.out', clearProps: 'all' }
+            toVars = { opacity: 1, clipPath: 'inset(0% 0% 0% 0%)', duration: 1, ease: 'power3.out', clearProps: 'all' }
             break
           case 3:
             toVars = { scale: 1, opacity: 1, duration: 0.85, ease: 'back.out(1.4)', clearProps: 'all' }
             break
         }
-        tl.to(item, toVars, i === 0 ? '>-0.4' : '>-0.3')
+        tl.to(item, toVars, i === 0 ? 0 : '>-0.3')
       })
     },
 
