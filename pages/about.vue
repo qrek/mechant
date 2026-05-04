@@ -74,71 +74,56 @@
       </div>
     </section>
 
-    <!-- ── SERVICES : grandes lignes éditoriales avec numéros XL ───────── -->
-    <section class="AboutPage_services" ref="services">
-      <div class="AboutPage_services_head">
-        <p class="AboutPage_services_kicker">{{ content.services.kicker }}</p>
-        <h2 class="AboutPage_services_title" ref="servicesTitle">
-          <span class="line">What</span>
-          <span class="line italic">we do.</span>
-        </h2>
-        <p class="AboutPage_services_count">
-          <span ref="serviceCounter">{{ String(content.services.list.length).padStart(2, '0') }}</span><span class="total">/{{ String(content.services.list.length).padStart(2, '0') }}</span>
-        </p>
+    <!-- ── CAPABILITIES : Services + Awards en grille compacte 2 colonnes ─ -->
+    <section class="AboutPage_capa" ref="capa">
+      <div class="AboutPage_capa_grid">
+
+        <!-- Colonne gauche : Services -->
+        <div class="AboutPage_capa_col AboutPage_capa_col--services" ref="services">
+          <header class="AboutPage_capa_head">
+            <span class="num">01</span>
+            <span class="title">{{ content.services.kicker.replace(/^—\s*/, '') }}</span>
+            <span class="count" ref="serviceCounter">{{ String(content.services.list.length).padStart(2, '0') }}</span>
+          </header>
+
+          <ul class="AboutPage_capa_servicesList" ref="servicesList">
+            <li
+              v-for="(s, i) in content.services.list"
+              :key="s.label"
+              class="AboutPage_capa_serviceItem"
+            >
+              <span class="idx">{{ String(i + 1).padStart(2, '0') }}</span>
+              <span class="label">{{ s.label }}</span>
+              <span class="desc">{{ s.desc }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Séparateur vertical -->
+        <div class="AboutPage_capa_divider" aria-hidden="true"></div>
+
+        <!-- Colonne droite : Awards -->
+        <div class="AboutPage_capa_col AboutPage_capa_col--awards" ref="awards">
+          <header class="AboutPage_capa_head">
+            <span class="num">02</span>
+            <span class="title">{{ content.awards.kicker.replace(/^—\s*/, '') }}</span>
+            <span class="count">{{ String(content.awards.list.length).padStart(2, '0') }}</span>
+          </header>
+
+          <ul class="AboutPage_capa_awardsList" ref="awardsList">
+            <li
+              v-for="(award, i) in content.awards.list"
+              :key="i"
+              class="AboutPage_capa_awardItem"
+            >
+              <span class="year">{{ award.year }}</span>
+              <span class="name">{{ award.name }}</span>
+              <span class="tag">{{ award.tag }}</span>
+            </li>
+          </ul>
+        </div>
+
       </div>
-
-      <ul class="AboutPage_services_list" ref="servicesList">
-        <li
-          v-for="(s, i) in content.services.list"
-          :key="s.label"
-          class="AboutPage_services_item"
-        >
-          <span class="num">{{ String(i + 1).padStart(2, '0') }}.</span>
-          <span class="label">{{ s.label }}</span>
-          <span class="desc">{{ s.desc }}</span>
-        </li>
-      </ul>
-    </section>
-
-    <!-- ── AWARDS : section autonome, fond dark, typo éditoriale ──────── -->
-    <section class="AboutPage_awards" ref="awards">
-
-      <div class="AboutPage_awards_intro" ref="awardsIntro">
-        <p class="AboutPage_awards_kicker">{{ content.awards.kicker }}</p>
-        <h2 class="AboutPage_awards_title">
-          <span
-            v-for="(line, i) in content.awards.titleLines"
-            :key="i"
-            class="line"
-            :class="{ italic: line.italic }"
-          >{{ line.text }}</span>
-        </h2>
-        <p class="AboutPage_awards_total">
-          <span class="num">{{ content.awards.list.length }}</span>
-          <span class="sep">/</span>
-          <span>{{ content.awards.totalLabel }}</span>
-        </p>
-      </div>
-
-      <ul class="AboutPage_awards_list" ref="awardsList">
-        <li
-          v-for="(award, i) in content.awards.list"
-          :key="i"
-          class="AboutPage_awards_item"
-        >
-          <span class="index">{{ String(i + 1).padStart(2, '0') }}</span>
-          <span class="year">{{ award.year }}</span>
-          <span class="name">{{ award.name }}</span>
-          <span class="tag">
-            <span class="dot"></span>
-            {{ award.tag }}
-          </span>
-          <svg class="arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <line x1="5" y1="12" x2="19" y2="12"/>
-            <polyline points="12,5 19,12 12,19"/>
-          </svg>
-        </li>
-      </ul>
     </section>
 
     <!-- ── VISIT US (slot pour scan 3D) ────────────────────────────────── -->
@@ -233,8 +218,7 @@ export default {
       this._animateBgColors()
       this._animateIntro()
       this._animateManifesto()
-      this._animateServices()
-      this._animateAwards()
+      this._animateCapa()
       this._animateVisit()
     },
 
@@ -287,9 +271,8 @@ export default {
       const stops = [
         { trigger: this.$refs.intro,     enter: c.intro,     back: c.hero      },
         { trigger: this.$refs.manifesto, enter: c.manifesto, back: c.intro     },
-        { trigger: this.$refs.services,  enter: c.services,  back: c.manifesto },
-        { trigger: this.$refs.awards,    enter: c.awards,    back: c.services  },
-        { trigger: this.$refs.visit,     enter: c.visit,     back: c.awards    }
+        { trigger: this.$refs.capa,      enter: c.capa,      back: c.manifesto },
+        { trigger: this.$refs.visit,     enter: c.visit,     back: c.capa      }
       ]
 
       stops.forEach(({ trigger, enter, back }) => {
@@ -390,29 +373,37 @@ export default {
       })
     },
 
-    // ── Services : titre éditorial + items qui slident ─────────────────
-    _animateServices () {
-      const items = this.$refs.servicesList.querySelectorAll('.AboutPage_services_item')
-      const head = this.$refs.services.querySelector('.AboutPage_services_head')
-      const titleLines = this.$refs.servicesTitle.querySelectorAll('.line')
+    // ── Capabilities : Services + Awards combinés ──────────────────────
+    _animateCapa () {
+      const capa = this.$refs.capa
+      const heads = capa.querySelectorAll('.AboutPage_capa_head')
+      const divider = capa.querySelector('.AboutPage_capa_divider')
+      const serviceItems = this.$refs.servicesList.querySelectorAll('.AboutPage_capa_serviceItem')
+      const awardItems = this.$refs.awardsList.querySelectorAll('.AboutPage_capa_awardItem')
 
-      gsap.set(items, { x: -80, opacity: 0 })
-      gsap.set(head, { opacity: 0 })
-      gsap.set(titleLines, { yPercent: 110, opacity: 0 })
+      gsap.set(heads, { opacity: 0, y: 15 })
+      gsap.set(divider, { scaleY: 0, transformOrigin: 'top' })
+      gsap.set(serviceItems, { x: -30, opacity: 0 })
+      gsap.set(awardItems, { x: 30, opacity: 0 })
 
-      this._track(gsap.to(head, {
-        opacity: 1, duration: 0.6, ease: 'power2.out',
-        scrollTrigger: { trigger: this.$refs.services, start: 'top 75%' }
+      this._track(gsap.to(heads, {
+        opacity: 1, y: 0, stagger: 0.1, duration: 0.6, ease: 'power2.out',
+        scrollTrigger: { trigger: capa, start: 'top 80%' }
       }))
 
-      this._track(gsap.to(titleLines, {
-        yPercent: 0, opacity: 1, stagger: 0.12, duration: 0.9, ease: 'power4.out',
-        scrollTrigger: { trigger: this.$refs.servicesTitle, start: 'top 80%' }
+      this._track(gsap.to(divider, {
+        scaleY: 1, duration: 0.9, ease: 'power3.inOut',
+        scrollTrigger: { trigger: capa, start: 'top 80%' }
       }))
 
-      this._track(gsap.to(items, {
-        x: 0, opacity: 1, stagger: 0.08, duration: 0.7, ease: 'power3.out',
-        scrollTrigger: { trigger: this.$refs.servicesList, start: 'top 80%' }
+      this._track(gsap.to(serviceItems, {
+        x: 0, opacity: 1, stagger: 0.06, duration: 0.55, ease: 'power3.out',
+        scrollTrigger: { trigger: this.$refs.servicesList, start: 'top 85%' }
+      }))
+
+      this._track(gsap.to(awardItems, {
+        x: 0, opacity: 1, stagger: 0.06, duration: 0.55, ease: 'power3.out',
+        scrollTrigger: { trigger: this.$refs.awardsList, start: 'top 85%' }
       }))
 
       // Counter 00 → length
@@ -421,44 +412,12 @@ export default {
         val: this.content.services.list.length,
         duration: 1.2,
         ease: 'power2.out',
-        scrollTrigger: { trigger: this.$refs.services, start: 'top 75%' },
+        scrollTrigger: { trigger: capa, start: 'top 80%' },
         onUpdate: () => {
           if (this.$refs.serviceCounter) {
             this.$refs.serviceCounter.textContent = String(Math.round(counter.val)).padStart(2, '0')
           }
         }
-      }))
-    },
-
-    // ── Awards : titre + items en cascade ──────────────────────────────
-    _animateAwards () {
-      const items = this.$refs.awardsList.querySelectorAll('.AboutPage_awards_item')
-      const titleLines = this.$refs.awards.querySelectorAll('.AboutPage_awards_title .line')
-      const kicker = this.$refs.awards.querySelector('.AboutPage_awards_kicker')
-      const total = this.$refs.awards.querySelector('.AboutPage_awards_total')
-
-      gsap.set(items, { y: 40, opacity: 0 })
-      gsap.set(titleLines, { yPercent: 110, opacity: 0 })
-      gsap.set([kicker, total], { opacity: 0, y: 20 })
-
-      this._track(gsap.to(kicker, {
-        opacity: 1, y: 0, duration: 0.6, ease: 'power2.out',
-        scrollTrigger: { trigger: this.$refs.awards, start: 'top 75%' }
-      }))
-
-      this._track(gsap.to(titleLines, {
-        yPercent: 0, opacity: 1, stagger: 0.12, duration: 0.9, ease: 'power4.out',
-        scrollTrigger: { trigger: this.$refs.awardsIntro, start: 'top 80%' }
-      }))
-
-      this._track(gsap.to(total, {
-        opacity: 1, y: 0, duration: 0.6, ease: 'power2.out',
-        scrollTrigger: { trigger: this.$refs.awardsIntro, start: 'top 75%' }
-      }))
-
-      this._track(gsap.to(items, {
-        y: 0, opacity: 1, stagger: 0.08, duration: 0.7, ease: 'power3.out',
-        scrollTrigger: { trigger: this.$refs.awardsList, start: 'top 85%' }
       }))
     },
 
@@ -585,11 +544,11 @@ export default {
 
   // ── INTRO ────────────────────────────────────────────────────────────
   &_intro
-    padding: 18vh 6vw 18vh
+    padding: 12vh 6vw 12vh
     max-width: 1500px
 
     +breakpoint(mobile)
-      padding: 12vh 5vw
+      padding: 8vh 5vw
 
     &_meta
       display: flex
@@ -703,8 +662,8 @@ export default {
   // ── MANIFESTO ────────────────────────────────────────────────────────
   &_manifesto
     position: relative
-    min-height: 110vh
-    padding: 14vh 0
+    min-height: 80vh
+    padding: 10vh 0
     display: flex
     flex-direction: column
     justify-content: center
@@ -750,361 +709,164 @@ export default {
         background: $white
         margin: 0 0.4em 0 0.4em
 
-  // ── SERVICES (section éditoriale standalone) ─────────────────────────
-  &_services
-    padding: 18vh 5vw
-    max-width: 1700px
+  // ── CAPABILITIES (Services + Awards en grille compacte) ─────────────
+  &_capa
+    padding: 12vh 5vw
+    max-width: 1500px
     margin: 0 auto
 
     +breakpoint(mobile)
-      padding: 12vh 5vw
+      padding: 10vh 5vw
 
-    &_head
+    &_grid
       display: grid
-      grid-template-columns: 1fr auto
-      align-items: end
-      gap: 2rem
-      margin-bottom: 6rem
-      padding-bottom: 2rem
-      border-bottom: 2px solid rgba(0, 0, 0, 0.18)
+      grid-template-columns: 1fr 1px 1fr
+      gap: 4rem
+      align-items: start
 
       +breakpoint(mobile)
         grid-template-columns: 1fr
-        margin-bottom: 4rem
+        gap: 4rem
 
-    &_kicker
-      grid-column: 1
-      grid-row: 1
-      font-family: $apfel
-      font-size: 0.8rem
-      letter-spacing: 0.2em
-      text-transform: uppercase
-      color: rgba(0, 0, 0, 0.6)
-      margin: 0 0 2rem
-
-    &_title
-      grid-column: 1
-      grid-row: 2
-      font-family: $apfel
-      font-weight: 900
-      font-size: clamp(2.8rem, 7vw, 7.5rem)
-      line-height: 0.92
-      text-transform: uppercase
-      color: $black
-      letter-spacing: -0.02em
-      margin: 0
-
-      .line
-        display: block
-        overflow: hidden
-        padding-bottom: 0.05em
-
-        &.italic
-          font-weight: 400
-          font-style: italic
-          color: $white
-
-    &_count
-      grid-column: 2
-      grid-row: 2
-      align-self: end
-      font-family: $apfel
-      font-weight: 700
-      font-size: 0.85rem
-      letter-spacing: 0.18em
-      color: rgba(0, 0, 0, 0.6)
-      margin: 0
-      display: flex
-      align-items: baseline
-      gap: 0.3rem
-
-      > span:first-child
-        font-family: $apfel
-        font-weight: 900
-        font-size: clamp(2rem, 3vw, 3rem)
-        color: $black
-        letter-spacing: -0.02em
-        line-height: 1
-
-      .total
-        opacity: 0.4
+    &_divider
+      background: rgba(255, 255, 255, 0.15)
+      width: 1px
+      align-self: stretch
+      min-height: 100%
 
       +breakpoint(mobile)
-        grid-column: 1
-        grid-row: 3
-        margin-top: 1rem
+        height: 1px
+        width: 100%
+        min-height: 0
 
-    &_list
+    &_col
+      width: 100%
+
+    &_head
+      display: flex
+      align-items: baseline
+      gap: 1rem
+      margin-bottom: 2.5rem
+      padding-bottom: 1rem
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2)
+
+      .num
+        font-family: $apfel
+        font-weight: 900
+        font-size: 0.75rem
+        letter-spacing: 0.15em
+        color: #ff8600
+
+      .title
+        flex: 1
+        font-family: $apfel
+        font-weight: 700
+        font-size: 0.85rem
+        letter-spacing: 0.2em
+        text-transform: uppercase
+        color: $white
+
+      .count
+        font-family: $apfel
+        font-weight: 900
+        font-size: 0.85rem
+        color: rgba(255, 255, 255, 0.4)
+
+    &_servicesList,
+    &_awardsList
       list-style: none
       padding: 0
       margin: 0
 
-    &_item
+    // Services : ligne dense avec numéro · label · desc inline
+    &_serviceItem
       display: grid
-      grid-template-columns: 6rem 1fr 2fr
+      grid-template-columns: 2.2rem 1fr
       align-items: baseline
-      gap: 2rem
-      padding: 2rem 0
-      border-bottom: 1px solid rgba(0, 0, 0, 0.12)
-      cursor: default
-      transition: padding-left 0.4s $easeOutQuart
+      gap: 0.8rem
+      padding: 0.9rem 0
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08)
+      transition: color 0.3s ease
 
-      &:hover
-        padding-left: 1.5rem
+      &:hover .label
+        color: #ff8600
 
-        .label
-          color: $white
-
-      +breakpoint(mobile)
-        grid-template-columns: 3rem 1fr
-        gap: 1rem
-
-        .desc
-          grid-column: 2
-          padding-top: 0.5rem
-
-      .num
+      .idx
         font-family: $apfel
         font-weight: 400
-        font-size: 0.85rem
+        font-size: 0.7rem
         letter-spacing: 0.1em
-        color: rgba(0, 0, 0, 0.4)
+        color: rgba(255, 255, 255, 0.35)
 
       .label
         font-family: $apfel
-        font-weight: 900
-        font-size: clamp(2rem, 4vw, 4.5rem)
-        line-height: 1
+        font-weight: 700
+        font-size: clamp(1.1rem, 1.4vw, 1.35rem)
         text-transform: uppercase
-        color: $black
-        letter-spacing: -0.02em
-        transition: color 0.4s $easeOutQuart
+        color: $white
+        letter-spacing: 0.01em
+        line-height: 1.2
+        transition: color 0.3s ease
 
       .desc
+        grid-column: 2
         font-family: $apfel
         font-weight: 400
-        font-size: clamp(0.9rem, 1vw, 1.1rem)
-        color: rgba(0, 0, 0, 0.6)
+        font-size: 0.85rem
         font-style: italic
+        color: rgba(255, 255, 255, 0.5)
+        line-height: 1.3
+        margin-top: 0.2rem
 
-  // ── AWARDS (section autonome sur fond dark) ──────────────────────────
-  &_awards
-    padding: 22vh 5vw 18vh
-    max-width: 1700px
-    margin: 0 auto
-
-    +breakpoint(mobile)
-      padding: 14vh 5vw
-
-    &_intro
+    // Awards : ligne tabulée year · name · tag
+    &_awardItem
       display: grid
-      grid-template-columns: 1fr auto
-      align-items: end
-      gap: 2rem
-      margin-bottom: 8rem
-      padding-bottom: 2rem
-      border-bottom: 2px solid rgba(255, 255, 255, 0.15)
-
-      +breakpoint(mobile)
-        grid-template-columns: 1fr
-        margin-bottom: 5rem
-        gap: 2rem
-
-    &_kicker
-      grid-column: 1
-      grid-row: 1
-      font-family: $apfel
-      font-size: 0.8rem
-      letter-spacing: 0.2em
-      text-transform: uppercase
-      color: rgba(255, 255, 255, 0.5)
-      margin: 0 0 2rem
-
-    &_title
-      grid-column: 1
-      grid-row: 2
-      font-family: $apfel
-      font-weight: 900
-      font-size: clamp(2.8rem, 7vw, 7.5rem)
-      line-height: 0.92
-      text-transform: uppercase
-      color: $white
-      letter-spacing: -0.02em
-      margin: 0
-
-      .line
-        display: block
-        overflow: hidden
-        padding-bottom: 0.05em
-
-        &.italic
-          font-weight: 400
-          font-style: italic
-          color: #ff8600
-
-    &_total
-      grid-column: 2
-      grid-row: 2
-      align-self: end
-      font-family: $apfel
-      font-size: 0.85rem
-      letter-spacing: 0.18em
-      text-transform: uppercase
-      color: rgba(255, 255, 255, 0.4)
-      margin: 0
-      display: flex
+      grid-template-columns: 3rem 1fr auto
       align-items: baseline
-      gap: 0.5rem
-
-      .num
-        font-family: $apfel
-        font-weight: 900
-        font-size: clamp(2rem, 3vw, 3rem)
-        color: #ff8600
-        letter-spacing: -0.02em
-        line-height: 1
-
-      .sep
-        font-size: 1.5rem
-        color: rgba(255, 255, 255, 0.25)
-
-      +breakpoint(mobile)
-        grid-column: 1
-        grid-row: 3
-
-    &_list
-      list-style: none
-      padding: 0
-      margin: 0
-
-    &_item
-      position: relative
-      display: grid
-      grid-template-columns: 4rem 6rem 1fr auto 2.5rem
-      align-items: center
-      gap: 2.5rem
-      padding: 2.4rem 1.5rem
+      gap: 1rem
+      padding: 0.9rem 0
       border-bottom: 1px solid rgba(255, 255, 255, 0.08)
-      transition: padding-left 0.5s $easeOutQuart, background 0.4s ease
-
-      &::before
-        content: ''
-        position: absolute
-        left: 0
-        top: 0
-        height: 100%
-        width: 0
-        background: #ff8600
-        transition: width 0.5s $easeOutQuart
-        z-index: -1
+      transition: color 0.3s ease
 
       &:hover
-        padding-left: 3rem
-
-        &::before
-          width: 100%
-
-        .index
-          color: $black
-
-        .year
-          color: $black
-          opacity: 0.7
-
         .name
-          color: $black
-
-        .tag
-          color: $black
-
-          .dot
-            background: $black
-
-        .arrow
-          transform: translateX(6px)
-          color: $black
-
-      +breakpoint(mobile)
-        grid-template-columns: 2.5rem 1fr auto
-        gap: 1rem
-        padding: 1.8rem 0.5rem
-
-        .year
-          grid-column: 2 / 3
-          grid-row: 1
-
-        .name
-          grid-column: 2 / 4
-          grid-row: 2
-          margin-top: 0.3rem
-
-        .tag
-          grid-column: 2 / 4
-          grid-row: 3
-          margin-top: 0.5rem
-
-        .arrow
-          display: none
-
-      .index
-        font-family: $apfel
-        font-weight: 400
-        font-size: 0.75rem
-        letter-spacing: 0.15em
-        color: rgba(255, 255, 255, 0.3)
-        transition: color 0.4s ease
+          color: #ff8600
 
       .year
         font-family: $apfel
-        font-weight: 700
-        font-size: 1rem
+        font-weight: 400
+        font-size: 0.8rem
+        color: rgba(255, 255, 255, 0.45)
         letter-spacing: 0.05em
-        color: rgba(255, 255, 255, 0.55)
-        transition: color 0.4s ease
 
       .name
         font-family: $apfel
-        font-weight: 900
-        font-size: clamp(1.8rem, 3.8vw, 4.2rem)
+        font-weight: 700
+        font-size: clamp(1.05rem, 1.3vw, 1.25rem)
         text-transform: uppercase
-        line-height: 0.95
         color: $white
-        letter-spacing: -0.015em
-        transition: color 0.4s ease
+        letter-spacing: 0.01em
+        line-height: 1.2
+        transition: color 0.3s ease
 
       .tag
-        display: inline-flex
-        align-items: center
-        gap: 0.6rem
         font-family: $apfel
         font-weight: 700
-        font-size: 0.8rem
-        letter-spacing: 0.18em
+        font-size: 0.7rem
+        letter-spacing: 0.15em
         text-transform: uppercase
         color: #ff8600
         white-space: nowrap
-        transition: color 0.4s ease
-
-        .dot
-          width: 0.5rem
-          height: 0.5rem
-          border-radius: 50%
-          background: #ff8600
-          transition: background 0.4s ease
-
-      .arrow
-        color: rgba(255, 255, 255, 0.3)
-        transition: transform 0.5s $easeOutQuart, color 0.4s ease
 
   // ── VISIT (slot 3D) ──────────────────────────────────────────────────
   &_visit
-    padding: 16vh 5vw 12vh
+    padding: 12vh 5vw 10vh
     max-width: 1600px
     margin: 0 auto
     text-align: center
 
     +breakpoint(mobile)
-      padding: 12vh 5vw
+      padding: 8vh 5vw
 
     &_kicker
       font-family: $apfel
