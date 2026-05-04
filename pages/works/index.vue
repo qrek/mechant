@@ -7,24 +7,27 @@
       <video ref="floatVideo" muted loop playsinline class="WorksPage_float_video" />
     </div>
 
-    <div class="WorksPage_cloud" ref="cloud">
-      <button
-        v-for="project in featuredProjects"
-        :key="project.id"
-        class="WorksPage_item"
-        @mouseenter="onHover(project)"
-        @mouseleave="onLeave"
-        @click="openProject(project)"
-      >
-        <span class="WorksPage_item_title">{{ project.client || getCategoryLabel(project) }}</span>
-        <span class="WorksPage_item_label">{{ getWorkTypes(project) }}</span>
-      </button>
+    <div class="WorksPage_main">
+      <div class="WorksPage_cloud" ref="cloud">
+        <button
+          v-for="project in featuredProjects"
+          :key="project.id"
+          class="WorksPage_item"
+          @mouseenter="onHover(project)"
+          @mouseleave="onLeave"
+          @click="openProject(project)"
+        >
+          <span class="WorksPage_item_title">{{ project.client || getCategoryLabel(project) }}</span>
+          <span class="WorksPage_item_label">{{ getWorkTypes(project) }}</span>
+        </button>
 
-      <NuxtLink to="/works/all" class="WorksPage_item WorksPage_item--allwork" @mouseleave.native="onLeave">
-        <span class="WorksPage_item_title">All Work</span>
-      </NuxtLink>
+        <NuxtLink to="/works/all" class="WorksPage_item WorksPage_item--allwork" @mouseleave.native="onLeave">
+          <span class="WorksPage_item_title">All Work</span>
+        </NuxtLink>
+      </div>
     </div>
 
+    <SimpleFooter />
   </section>
 </template>
 
@@ -33,9 +36,11 @@ import { mapGetters, mapActions } from 'vuex'
 import { gsap } from '@/vendor/gsap'
 import { SplitText } from '@/vendor/gsap/SplitText'
 import { supabase } from '@/utils/supabase'
+import SimpleFooter from '@/components/SimpleFooter'
 
 export default {
   name: 'Works',
+  components: { SimpleFooter },
 
   head () {
     return {
@@ -282,16 +287,20 @@ export default {
 <style lang="sass" scoped>
 .WorksPage
   position: relative
-  min-height: 100vh
   background: #000
-  display: flex
-  align-items: center
-  justify-content: center
-  padding: 12rem 5vw 8rem
 
-  +breakpoint(mobile)
-    padding: 11rem 5vw 6rem
-    align-items: flex-start
+  &_main
+    min-height: 100vh
+    display: flex
+    align-items: center
+    justify-content: center
+    padding: 12rem 5vw 8rem
+    position: relative
+    z-index: 2
+
+    +breakpoint(mobile)
+      padding: 11rem 5vw 6rem
+      align-items: flex-start
 
   &_bg
     position: fixed

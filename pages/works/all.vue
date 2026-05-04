@@ -62,6 +62,8 @@
       </div>
 
     </div>
+
+    <SimpleFooter />
   </section>
 </template>
 
@@ -69,9 +71,11 @@
 import { mapGetters, mapActions } from 'vuex'
 import { gsap } from '@/vendor/gsap'
 import { supabase } from '@/utils/supabase'
+import SimpleFooter from '@/components/SimpleFooter'
 
 export default {
   name: 'WorksAll',
+  components: { SimpleFooter },
 
   head() {
     return {

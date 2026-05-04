@@ -1,495 +1,882 @@
 <template>
-  <section class="aboutPage">
-    <div class="aboutPage_hero" ref="hero">
-      <VideoPlayer :id="aboutPageData?.video_id[0]?.text" :poster="aboutPageData?.video_poster?.url"/>
+  <section class="AboutPage" ref="root">
 
-      <div class="aboutPage_hero_star star1" ref="star1">
-        <span class="icon-star2"></span>
-      </div>
-      <div class="aboutPage_hero_star star2" ref="star2">
-        <span class="icon-star3"></span>
-      </div>
-      <div class="aboutPage_hero_star star3" ref="star3">
-        <span class="icon-star2"></span>
-      </div>
-      <img src="~assets/images/wave_pink_black.svg" alt="wave" class="wave reverse">
-    </div>
+    <!-- Fond animé via ScrollTrigger (couleur change au scroll) -->
+    <div class="AboutPage_bg" ref="bg" />
 
-    <div class="aboutPage_columns">
-      <div ref="aboutTextWrapper">
-        <h2 class="aboutPage_title" ref="aboutTitle" v-html="aboutPageData?.title[0]?.text"></h2>
-        <span class="icon-star aboutPage_title_star"></span>
+    <!-- ── HERO : catchphrase ───────────────────────────────────────────── -->
+    <section class="AboutPage_hero" ref="hero">
+      <div class="AboutPage_hero_eyebrow" ref="eyebrow">
+        <span>Paris</span>
+        <span class="dot">●</span>
+        <span>Est. 2019</span>
+      </div>
 
-        <DynamicText class="aboutPage_text" ref="aboutText" :html="aboutPageData?.text[0]?.text" />
-        <p class="aboutPage_text2" ref="aboutText2">
-          <img src="~assets/images/cap.png" alt="mascotte"/>
-          {{ aboutPageData?.services }}
+      <h1 class="AboutPage_hero_title" ref="heroTitle">
+        <span class="line line--italic">Once upon</span>
+        <span class="line line--italic">a frame,</span>
+        <span class="line line--bold">MÉCHANT</span>
+        <span class="line line--bold">was born.</span>
+      </h1>
+
+      <div class="AboutPage_hero_scroll" ref="scrollHint">
+        <span>Scroll</span>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <polyline points="5,12 12,19 19,12"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- ── INTRO : qui on est ─────────────────────────────────────────── -->
+    <section class="AboutPage_intro" ref="intro">
+      <p class="AboutPage_intro_kicker" ref="introKicker">— The studio</p>
+
+      <h2 class="AboutPage_intro_text" ref="introText">
+        We are a creative <em>post-production studio</em> based in Paris,
+        founded in <em>2019</em> by <em>Théo Bacholier</em> and <em>Ronan Fourreau</em>.
+      </h2>
+
+      <p class="AboutPage_intro_sub" ref="introSub">
+        We dedicate our craft and technical obsession to <em>commercials</em>
+        and <em>music videos</em> — bringing an aesthetic vision that's a little
+        rough around the edges. Méchant, on purpose.
+      </p>
+    </section>
+
+    <!-- ── MANIFESTO : grande phrase qui se révèle mot par mot ────────── -->
+    <section class="AboutPage_manifesto" ref="manifesto">
+      <h2 class="AboutPage_manifesto_text" ref="manifestoText">
+        Pretty pictures.<br/>
+        Bad influence.<br/>
+        Clean cuts.<br/>
+        Dirty habits.
+      </h2>
+    </section>
+
+    <!-- ── SERVICES ────────────────────────────────────────────────────── -->
+    <section class="AboutPage_services" ref="services">
+      <div class="AboutPage_services_head">
+        <p class="AboutPage_services_kicker">— What we do</p>
+        <p class="AboutPage_services_count">
+          <span ref="serviceCounter">05</span><span class="total">/05</span>
         </p>
-
-        <img class="mascotte_ordi showOnMobile" src="~assets/images/about_mascotte.gif" alt="mascotte">
-      </div>
-      <div class="aboutPage_columns_right">
-        <img class="mascotte_ordi hideOnMobile" src="~assets/images/about_mascotte.gif" alt="mascotte">
-        <span class="icon-star aboutPage_columns_right_star"></span>
-      </div>
-    </div>
-    <div class="aboutPage_tagsWrappers">
-
-      <div class="awardsTagWrapper">
-        <Tag
-          text="Awards"
-          background="pink"
-          color="white"
-          customClass="awardsTag"
-          :size="5"
-          ref="awardsTag"
-        />
       </div>
 
-      <ul class="aboutPage_awardsList" ref="awardsList">
-        <li class="aboutPage_awardsList_item" v-for="(award, index) in aboutPageData?.awards" :key="index">
-          <div class="aboutPage_awardsList_item_date">{{ award?.year }}</div>
-          <p class="aboutPage_awardsList_item_name">{{ award?.award_title }}</p>
-          <Tag
-            :text="award?.tag"
-            background="white"
-            color="pink"
-            customClass="awardsItemTag"
-            :size="2"
-          />
-          <p class="aboutPage_awardsList_item_details">{{ award?.details[0]?.text }}</p>
+      <ul class="AboutPage_services_list" ref="servicesList">
+        <li v-for="(s, i) in serviceList" :key="s.label" class="AboutPage_services_item">
+          <span class="num">{{ String(i + 1).padStart(2, '0') }}</span>
+          <span class="label">{{ s.label }}</span>
+          <span class="desc">{{ s.desc }}</span>
         </li>
       </ul>
+    </section>
 
-      <div class="lastWorksButtonWrapper" ref="lastWorksButtonWrapper">
-        <Button
-          text="Latest works"
-          background="pink"
-          color="white"
-          customClass="lastWorksButton"
-          icon="icon-arrow-right"
-          to="/works"
-        />
+    <!-- ── AWARDS ──────────────────────────────────────────────────────── -->
+    <section class="AboutPage_awards" ref="awards">
+      <div class="AboutPage_awards_head">
+        <p class="AboutPage_awards_kicker">— Awards</p>
+        <p class="AboutPage_awards_total">
+          <span>{{ awards.length }}</span> selected
+        </p>
       </div>
-    </div>
+
+      <ul class="AboutPage_awards_list" ref="awardsList">
+        <li
+          v-for="(award, i) in awards"
+          :key="i"
+          class="AboutPage_awards_item"
+        >
+          <span class="year">{{ award.year }}</span>
+          <span class="name">{{ award.name }}</span>
+          <span class="tag">{{ award.tag }}</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ── VISIT US (slot pour scan 3D) ────────────────────────────────── -->
+    <section class="AboutPage_visit" ref="visit">
+      <p class="AboutPage_visit_kicker">— Come say hi</p>
+
+      <h2 class="AboutPage_visit_title">
+        <span>The studio</span>
+        <span class="italic">is open.</span>
+      </h2>
+
+      <!--
+        Slot 3D scan : remplacer ce placeholder par un canvas Three.js
+        avec GLTFLoader quand le scan sera prêt (export GLB optimisé).
+        Référence d'intégration : voir SimpleFooter / Three.js.
+      -->
+      <div class="AboutPage_visit_canvas" ref="visitCanvas">
+        <div class="AboutPage_visit_placeholder">
+          <span class="placeholderLine">3D studio scan</span>
+          <span class="placeholderSub">Coming soon</span>
+        </div>
+      </div>
+
+      <div class="AboutPage_visit_address">
+        <a
+          href="https://www.google.fr/maps/place/27+Rue+des+Cascades,+75020+Paris"
+          target="_blank"
+          rel="noopener"
+        >
+          27 rue des Cascades — 75020 Paris
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="7" y1="17" x2="17" y2="7"/>
+            <polyline points="7,7 17,7 17,17"/>
+          </svg>
+        </a>
+      </div>
+    </section>
+
+    <SimpleFooter />
   </section>
 </template>
 
 <script>
-import { ref } from 'vue'
-import { mapGetters } from 'vuex'
-import Tag from "@/components/Tag"
-import Button from "@/components/Button"
-import VideoPlayer from '@/components/VideoPlayer'
-import DynamicText from "@/components/DynamicText";
-
 import { gsap } from '@/vendor/gsap'
-import { ScrollTrigger } from "@/vendor/gsap/ScrollTrigger";
+import { ScrollTrigger } from '@/vendor/gsap/ScrollTrigger'
 import { SplitText } from '@/vendor/gsap/SplitText'
-gsap.registerPlugin(SplitText)
-gsap.registerPlugin(ScrollTrigger)
+import SimpleFooter from '@/components/SimpleFooter'
 
-import customPageTransitions from '@/mixins/customPageTransitions'
+gsap.registerPlugin(ScrollTrigger)
+gsap.registerPlugin(SplitText)
 
 export default {
   name: 'About',
-  components: {
-    Tag,
-    Button,
-    VideoPlayer,
-    DynamicText
-  },
-  mixins: [customPageTransitions],
-  head() {
+
+  components: { SimpleFooter },
+
+  head () {
     return {
-      title: this.aboutPageData.meta_title,
-      meta: [
-        {
-          hid: 'description',
-          name: 'description',
-          content: this.aboutPageData.meta_description
-        }
+      title: 'About — MÉCHANT',
+      meta: [{
+        hid: 'description',
+        name: 'description',
+        content: 'Méchant is a creative post-production studio in Paris, founded in 2019 by Théo Bacholier and Ronan Fourreau.'
+      }]
+    }
+  },
+
+  data () {
+    return {
+      serviceList: [
+        { label: 'Editing',        desc: 'Story-driven cuts.' },
+        { label: 'VFX',            desc: 'Invisible to spectacular.' },
+        { label: '3D / 2D Animation', desc: 'Frame by frame, pixel by pixel.' },
+        { label: 'Motion Design',  desc: 'Make graphics move.' },
+        { label: 'Art Direction',  desc: 'Set the visual rules.' }
+      ],
+      awards: [
+        { year: '2024', name: 'Cannes Lions', tag: 'Shortlist' },
+        { year: '2023', name: 'Ciclope Festival', tag: 'Bronze' },
+        { year: '2023', name: 'Young Directors Award', tag: 'Selection' },
+        { year: '2022', name: 'AICP Awards', tag: 'Honor' }
       ]
     }
   },
-  data () {
-    return {
-    }
-  },
+
   mounted () {
-    this._tween = {}
+    this._splits = []
+    this._triggers = []
+    this.$nextTick(() => this._initAnimations())
   },
-  computed: {
-    ...mapGetters({
-      data: 'data/getData',
-    }),
-    aboutPageData() {
-      return this.data.aboutpage
-    }
+
+  beforeDestroy () {
+    ;(this._splits || []).forEach(s => s.revert && s.revert())
+    ;(this._triggers || []).forEach(t => t.kill && t.kill())
+    this._splits = []
+    this._triggers = []
   },
+
   methods: {
-    transitionIn() {
-      this.aboutTextRef = ref('aboutText')
-      this.setAnimations()
+    _initAnimations () {
+      this._animateHero()
+      this._animateBgColors()
+      this._animateIntro()
+      this._animateManifesto()
+      this._animateServices()
+      this._animateAwards()
+      this._animateVisit()
     },
-    setAnimations () {
-      setTimeout(_ => {
-        this.$refs.hero.classList.add('animated')
 
-        this._tween.heroAnimation = gsap.to([this.$refs.star3, this.$refs.star2, this.$refs.star1], {
-          scrollTrigger: {
-            trigger: this.$refs.hero,
-            start: 'top 50%'
-          },
-          duration: 2,
-          stagger: 0.3,
-          scale: 1,
-          ease: "elastic.out",
-        })
-      }, 0)
+    _track (st) {
+      if (st && st.scrollTrigger) this._triggers.push(st.scrollTrigger)
+      else if (st) this._triggers.push(st)
+      return st
+    },
 
-      const title = new SplitText(this.$refs.aboutTitle, { type: "words" })
-      const text = new SplitText(this.$refs.aboutText.$el, { type: "words" })
-      const text2 = new SplitText(this.$refs.aboutText2, { type: "words" })
+    // ── Hero : reveal mot par mot au load + parallaxe au scroll ─────────
+    _animateHero () {
+      const lines = this.$refs.heroTitle.querySelectorAll('.line')
+      gsap.set(lines, { yPercent: 110, opacity: 0 })
+      gsap.set([this.$refs.eyebrow, this.$refs.scrollHint], { opacity: 0, y: 20 })
 
-      this._tween.textAnimation = gsap.to(this.$refs.aboutTitle.querySelectorAll('div:not(.Tag)'), {
-        scrollTrigger: {
-          trigger: this.$refs.aboutTextWrapper,
-          start: 'top 70%'
-        },
-        duration: 1,
-        stagger: 0.09,
-        y: 0,
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+      tl.to(this.$refs.eyebrow, { opacity: 1, y: 0, duration: 0.6 }, 0.1)
+      tl.to(lines, {
+        yPercent: 0,
         opacity: 1,
-        ease: "power4.out"
-      })
+        duration: 0.9,
+        stagger: 0.12,
+        ease: 'power4.out'
+      }, 0.2)
+      tl.to(this.$refs.scrollHint, { opacity: 1, y: 0, duration: 0.5 }, 0.9)
 
-      this._tween.textAnimation2 = gsap.to([this.$refs.aboutText.$el.querySelectorAll('div:not(.Tag)'), this.$refs.aboutText2.querySelectorAll('div:not(.Tag)')], {
+      // Parallax sortie hero
+      this._track(gsap.to(this.$refs.heroTitle, {
+        yPercent: -25,
+        ease: 'none',
         scrollTrigger: {
-          trigger: this.$refs.aboutTextWrapper,
-          start: 'top 70%'
-        },
-        duration: 1,
+          trigger: this.$refs.hero,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 0.8
+        }
+      }))
+    },
+
+    // ── Background : transition de couleurs continue au scroll ─────────
+    _animateBgColors () {
+      const bg = this.$refs.bg
+
+      // Hero → Intro : orange Méchant
+      gsap.set(bg, { backgroundColor: '#ff8600' })
+
+      // Manifesto → couleur plus chaude / coraille
+      this._track(gsap.to(bg, {
+        backgroundColor: '#ff5b14',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: this.$refs.manifesto,
+          start: 'top bottom',
+          end: 'top top',
+          scrub: 1
+        }
+      }))
+
+      // Manifesto → Services : pink
+      this._track(gsap.to(bg, {
+        backgroundColor: '#fe82ae',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: this.$refs.services,
+          start: 'top bottom',
+          end: 'top center',
+          scrub: 1
+        }
+      }))
+
+      // Services → Awards : noir
+      this._track(gsap.to(bg, {
+        backgroundColor: '#0a0a0a',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: this.$refs.awards,
+          start: 'top bottom',
+          end: 'top center',
+          scrub: 1
+        }
+      }))
+
+      // Awards → Visit : retour orange
+      this._track(gsap.to(bg, {
+        backgroundColor: '#ff8600',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: this.$refs.visit,
+          start: 'top bottom',
+          end: 'top center',
+          scrub: 1
+        }
+      }))
+    },
+
+    // ── Intro : reveal mot par mot ─────────────────────────────────────
+    _animateIntro () {
+      const split1 = new SplitText(this.$refs.introText, { type: 'words,lines' })
+      const split2 = new SplitText(this.$refs.introSub, { type: 'words,lines' })
+      this._splits.push(split1, split2)
+
+      gsap.set([split1.words, split2.words], { yPercent: 110, opacity: 0 })
+      gsap.set(this.$refs.introKicker, { opacity: 0, x: -20 })
+
+      this._track(gsap.to(this.$refs.introKicker, {
+        opacity: 1,
+        x: 0,
+        duration: 0.6,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: this.$refs.intro, start: 'top 75%' }
+      }))
+
+      this._track(gsap.to(split1.words, {
+        yPercent: 0,
+        opacity: 1,
+        stagger: 0.025,
+        duration: 0.8,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: this.$refs.introText, start: 'top 80%' }
+      }))
+
+      this._track(gsap.to(split2.words, {
+        yPercent: 0,
+        opacity: 1,
         stagger: 0.015,
+        duration: 0.6,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: this.$refs.introSub, start: 'top 85%' }
+      }))
+    },
+
+    // ── Manifesto : pinned, lignes apparaissent au scroll ──────────────
+    _animateManifesto () {
+      const split = new SplitText(this.$refs.manifestoText, { type: 'lines' })
+      this._splits.push(split)
+
+      gsap.set(split.lines, { yPercent: 100, opacity: 0 })
+
+      this._track(gsap.to(split.lines, {
+        yPercent: 0,
+        opacity: 1,
+        stagger: 0.18,
+        duration: 0.8,
+        ease: 'power4.out',
+        scrollTrigger: {
+          trigger: this.$refs.manifesto,
+          start: 'top 70%'
+        }
+      }))
+    },
+
+    // ── Services : items qui slident depuis la gauche ──────────────────
+    _animateServices () {
+      const items = this.$refs.servicesList.querySelectorAll('.AboutPage_services_item')
+      gsap.set(items, { x: -60, opacity: 0 })
+      gsap.set(this.$refs.services.querySelector('.AboutPage_services_head'), { opacity: 0, y: 20 })
+
+      this._track(gsap.to(this.$refs.services.querySelector('.AboutPage_services_head'), {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: this.$refs.services, start: 'top 75%' }
+      }))
+
+      this._track(gsap.to(items, {
+        x: 0,
+        opacity: 1,
+        stagger: 0.08,
+        duration: 0.7,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: this.$refs.servicesList, start: 'top 80%' }
+      }))
+
+      // Counter qui décompte 00 → 05
+      const counter = { val: 0 }
+      this._track(gsap.to(counter, {
+        val: this.serviceList.length,
+        duration: 1.2,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: this.$refs.services, start: 'top 75%' },
+        onUpdate: () => {
+          if (this.$refs.serviceCounter) {
+            this.$refs.serviceCounter.textContent = String(Math.round(counter.val)).padStart(2, '0')
+          }
+        }
+      }))
+    },
+
+    // ── Awards : reveal en cascade ─────────────────────────────────────
+    _animateAwards () {
+      const items = this.$refs.awardsList.querySelectorAll('.AboutPage_awards_item')
+      gsap.set(items, { y: 30, opacity: 0 })
+      gsap.set(this.$refs.awards.querySelector('.AboutPage_awards_head'), { opacity: 0 })
+
+      this._track(gsap.to(this.$refs.awards.querySelector('.AboutPage_awards_head'), {
+        opacity: 1,
+        duration: 0.6,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: this.$refs.awards, start: 'top 75%' }
+      }))
+
+      this._track(gsap.to(items, {
         y: 0,
         opacity: 1,
-        ease: "power4.out"
-      })
+        stagger: 0.08,
+        duration: 0.6,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: this.$refs.awardsList, start: 'top 85%' }
+      }))
+    },
 
-      this._tween.awardqAnimation = gsap.to(['.awardsTag', this.$refs.awardsList.querySelectorAll('li')], {
-        scrollTrigger: {
-          trigger: this.$refs.awardsList,
-          start: 'top 70%'
-        },
-        duration: 1,
-        stagger: 0.2,
-        y: 0,
+    // ── Visit : reveal du titre + placeholder du scan 3D ───────────────
+    _animateVisit () {
+      const titleSpans = this.$refs.visit.querySelectorAll('.AboutPage_visit_title span')
+      gsap.set(titleSpans, { yPercent: 100, opacity: 0 })
+      gsap.set(this.$refs.visitCanvas, { scale: 0.85, opacity: 0 })
+      gsap.set(this.$refs.visit.querySelector('.AboutPage_visit_address'), { opacity: 0, y: 20 })
+
+      this._track(gsap.to(titleSpans, {
+        yPercent: 0,
         opacity: 1,
-        ease: "power4.out"
-      })
+        stagger: 0.12,
+        duration: 0.8,
+        ease: 'power4.out',
+        scrollTrigger: { trigger: this.$refs.visit, start: 'top 70%' }
+      }))
 
-      this._tween.awardqAnimation = gsap.to(this.$refs.lastWorksButtonWrapper, {
-        scrollTrigger: {
-          trigger: this.$refs.awardsList,
-          start: 'top 70%'
-        },
-        duration: 2,
+      this._track(gsap.to(this.$refs.visitCanvas, {
         scale: 1,
-        ease: "elastic.out",
-      })
+        opacity: 1,
+        duration: 1,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: this.$refs.visitCanvas, start: 'top 80%' }
+      }))
+
+      this._track(gsap.to(this.$refs.visit.querySelector('.AboutPage_visit_address'), {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: this.$refs.visit.querySelector('.AboutPage_visit_address'), start: 'top 90%' }
+      }))
     }
   }
 }
 </script>
 
 <style lang="sass" scoped>
-.aboutPage
-  $heroBottomHeight: 65vh
-  $heroBottomHeightMobile: 55vh
+.AboutPage
+  position: relative
+  width: 100%
+  color: $white
+  overflow-x: hidden
 
+  &_bg
+    position: fixed
+    inset: 0
+    background: #ff8600
+    z-index: 0
+    pointer-events: none
+
+  > section
+    position: relative
+    z-index: 1
+
+  // ── HERO ─────────────────────────────────────────────────────────────
   &_hero
     position: relative
-    height: 100vh
-    background: $orange
+    min-height: 100vh
+    padding: 9rem 5vw 4rem
     display: flex
-    justify-content: center
-    align-items: center
-    padding-top: 12vh
-    overflow: hidden
+    flex-direction: column
+    justify-content: space-between
 
-    +breakpoint(mobile)
-      height: calc($heroBottomHeightMobile + 20vh)
-      overflow: initial
+    &_eyebrow
+      display: flex
+      align-items: center
+      gap: 0.8rem
+      font-family: $apfel
+      font-size: 0.75rem
+      letter-spacing: 0.18em
+      text-transform: uppercase
+      color: rgba(0, 0, 0, 0.5)
 
-    &::after
-      content: ''
-      position: absolute
-      top: 0
-      left: 0
-      height: $heroBottomHeight
-      width: 100%
-      background-color: $pink
-      transform: translateY(-100%)
-      transition: transform 1s ease
+      .dot
+        font-size: 0.5rem
+        opacity: 0.5
 
-      +breakpoint(mobile)
-        height: $heroBottomHeightMobile
-
-    .wave.reverse
-      top: $heroBottomHeight
-      width: 100.1%
-      z-index: 2
-      transform: rotate(180deg) translateY(calc($heroBottomHeight + $waveMargin + 3vh))
-      transition: transform 1s ease
-
-      +breakpoint(mobile)
-        top: $heroBottomHeightMobile
-        transform: rotate(180deg) translateY($heroBottomHeightMobile)
-
-    .Video
-      position: relative
-      width: 70%
-      z-index: 3
-      transform: translateY(100vh)
-      opacity: 0
-      transition: transform 1s ease, opacity 0.5s ease
-
-      +breakpoint(mobile)
-        width: 90%
-        transform: translateY(20vh)
-
-    &.animated
-      &::after
-        transform: translateY(0)
-      .wave.reverse
-        transform: translateY(0) rotate(180deg)
-
-      .Video
-        transform: translateY(0)
-        opacity: 1
-
-    &_star
-      position: absolute
-      z-index: 3
-      transform: scale(0)
-
-      > span
-        display: block
-
-      +breakpoint(mobile)
-        display: none
-
-      &.star1
-        bottom: 35%
-        left: 3%
-        font-size: 6rem
-        color: $black
-        transform: scale(0) rotate(45deg)
-
-        span
-          @include animateStar(5s, 0s)
-
-      &.star2
-        top: 5%
-        right: 15%
-        font-size: 4rem
-        color: $black
-        transform: scale(0)
-
-        span
-          @include animateStar(6s, 0.2s)
-
-      &.star3
-        top: 60%
-        right: 4%
-        font-size: 5rem
-        color: $white
-        transform: scale(0)
-
-        span
-          @include animateStar(4s, 0.1s)
-
-  &_columns
-    position: relative
-    display: flex
-    padding: 10rem 10rem 0
-    background: $orange
-
-    +breakpoint(mobile)
-      padding: 0rem 10% calc(7vh + $waveMargin)
-      flex-direction: column
-
-    > div
-      position: relative
-      width: 50%
-
-      +breakpoint(mobile)
-        width: 100%
-
-    &_right_star
-      position: absolute
-      right: 0
-      bottom: 0
-      font-size: 6rem
-      color: $white
-      display: block
-      @include animateStar(3s, 0.8s)
-
-  &_tagsWrappers
-    padding: 0 10rem calc(10rem + $waveMargin)
-    background: $orange
-    margin-top: -1px
-
-    +breakpoint(mobile)
-      padding: 0rem 10% calc(7vh + $waveMargin)
-      flex-direction: column
-
-  &_title
-    font-family: $briceBoldCondensed
-    color: $white
-    text-shadow: textShadow($typoPres, $typoDepth*2.5, $black, true)
-    font-size: 18rem
-    text-transform: uppercase
-    line-height: 0.9
-    margin-top: 3rem
-
-    +breakpoint(mobile)
-      font-size: 9rem
-      line-height: 1
-
-    > ::v-deep span
-      font-size: 12rem
-      display: block
-
-      +breakpoint(mobile)
-        font-size: 6rem
-
-    &_star
-      font-size: 5rem
-      color: $white
-      position: absolute
-      right: 5%
-      top: 5vh
-      @include animateStar(5s, 0.8s)
-
-      +breakpoint(mobile)
-        display: none
-
-  &_text
-    font-family: $kobe
-    font-size: 2rem
-    margin: 3rem 0
-    line-height: 1.5
-
-    ::v-deep .creativityTag
-      transform: rotate(-2.5deg)
-
-    ::v-deep .technicalTag
-      transform: rotate(3deg)
-
-  &_text2
-    color: $white
-    font-family: $kobe
-    font-size: 2rem
-    line-height: 1.5
-    margin-bottom: 5rem
-
-    +breakpoint(mobile)
+    &_title
+      font-family: $apfel
+      font-weight: 900
+      font-size: clamp(4rem, 12vw, 17rem)
+      line-height: 0.9
+      letter-spacing: -0.02em
+      text-transform: uppercase
+      color: $black
       margin: 0
 
-    > img
-      width: 3.5rem
-      height: auto
-      margin-right: 1rem
+      .line
+        display: block
+        overflow: hidden
+        position: relative
+        will-change: transform
+
+        &--italic
+          font-style: italic
+          font-weight: 400
+          font-size: clamp(2.5rem, 7vw, 9rem)
+          letter-spacing: -0.01em
+          color: rgba(0, 0, 0, 0.85)
+          text-transform: none
+
+        &--bold
+          font-weight: 900
 
       +breakpoint(mobile)
-        display: block
-        width: 5rem
-        margin: 0 0 1rem 0
+        font-size: clamp(3rem, 14vw, 6rem)
 
-  &_title ::v-deep div, &_text ::v-deep > div:not(.Tag), &_text2 ::v-deep > div:not(.Tag), ::v-deep .awardsTag, &_awardsList_item
-    opacity: 0
-    transform: translateY(5rem)
+    &_scroll
+      align-self: flex-end
+      display: flex
+      align-items: center
+      gap: 0.6rem
+      font-family: $apfel
+      font-size: 0.75rem
+      letter-spacing: 0.2em
+      text-transform: uppercase
+      color: rgba(0, 0, 0, 0.6)
 
-  .awardsTagWrapper
-    transform: rotate(-5deg)
-    margin-bottom: 5rem
-    margin-top: -5rem
+      svg
+        animation: bounce 2s ease-in-out infinite
+
+  // ── INTRO ────────────────────────────────────────────────────────────
+  &_intro
+    padding: 18vh 8vw 18vh
+    max-width: 1400px
+
     +breakpoint(mobile)
+      padding: 12vh 5vw
+
+    &_kicker
+      font-family: $apfel
+      font-size: 0.8rem
+      letter-spacing: 0.2em
+      text-transform: uppercase
+      color: rgba(0, 0, 0, 0.5)
       margin-bottom: 4rem
 
-  &_awardsList
-    display: flex
-    flex-wrap: wrap
+    &_text
+      font-family: $apfel
+      font-weight: 900
+      font-size: clamp(2.2rem, 4.5vw, 5.5rem)
+      line-height: 1.05
+      letter-spacing: -0.015em
+      color: $black
+      margin: 0 0 4rem
 
-    +breakpoint(mobile)
-      flex-direction: column
+      em
+        font-style: italic
+        font-weight: 400
+        color: rgba(0, 0, 0, 0.7)
 
-    &_item
-      margin: 4rem 0
-      width: 50%
+      ::v-deep .word
+        display: inline-block
 
       +breakpoint(mobile)
-        margin: 2rem 0
-        width: 100%
+        margin-bottom: 3rem
 
-      &_date
-        font-family: $kobeBold
-        font-size: 1.6rem
-        color: $white
+    &_sub
+      font-family: $apfel
+      font-weight: 400
+      font-size: clamp(1.1rem, 1.5vw, 1.5rem)
+      line-height: 1.5
+      color: rgba(0, 0, 0, 0.75)
+      max-width: 60ch
+      margin: 0
 
-      &_name
-        font-family: $briceBlackCondensed
-        font-size: 3.3rem
-        color: $white
-        text-transform: uppercase
-        margin: 1rem 0 0.2rem
-
-        +breakpoint(mobile)
-          font-size: 3rem
-
-
-      &:nth-child(odd)
-        .Tag_wrapper
-          transform: rotate(-3deg)
-
-      &:nth-child(even)
-        .Tag_wrapper
-          transform: rotate(2deg)
-
-      &_details
-        font-family: $kobeBold
-        font-size: 1.4rem
-        text-transform: uppercase
+      em
+        font-weight: 700
+        font-style: normal
         color: $black
-        margin-top: 1.5rem
 
-  .lastWorksButton
-    margin: 2rem 0
-    transform: rotate(-4deg)
+      ::v-deep .word
+        display: inline-block
 
-  .lastWorksButtonWrapper
-    transform: scale(0)
-    transform-origin: center
-    display: inline-block
+  // ── MANIFESTO ────────────────────────────────────────────────────────
+  &_manifesto
+    min-height: 80vh
+    padding: 14vh 6vw
+    display: flex
+    align-items: center
+    justify-content: center
+    text-align: center
 
-  .mascotte_ordi
-    display: block
-    width: 80%
-    height: auto
-    margin-left: 20%
+    &_text
+      font-family: $apfel
+      font-weight: 900
+      font-size: clamp(3rem, 8vw, 11rem)
+      line-height: 1
+      letter-spacing: -0.02em
+      text-transform: uppercase
+      color: $white
+      margin: 0
+      mix-blend-mode: difference
 
-    &.showOnMobile
-      display: none
+      ::v-deep .line
+        overflow: hidden
+
+  // ── SERVICES ─────────────────────────────────────────────────────────
+  &_services
+    padding: 18vh 5vw
+    max-width: 1600px
+    margin: 0 auto
 
     +breakpoint(mobile)
-      width: 100%
-      margin: 0 0 4rem 0
+      padding: 12vh 5vw
 
-      &.showOnMobile
+    &_head
+      display: flex
+      justify-content: space-between
+      align-items: baseline
+      margin-bottom: 6rem
+      padding-bottom: 1.2rem
+      border-bottom: 1px solid rgba(0, 0, 0, 0.15)
+
+    &_kicker
+      font-family: $apfel
+      font-size: 0.8rem
+      letter-spacing: 0.2em
+      text-transform: uppercase
+      color: rgba(0, 0, 0, 0.6)
+      margin: 0
+
+    &_count
+      font-family: $apfel
+      font-weight: 700
+      font-size: 0.8rem
+      letter-spacing: 0.1em
+      color: rgba(0, 0, 0, 0.6)
+      margin: 0
+
+      .total
+        opacity: 0.4
+
+    &_list
+      list-style: none
+      padding: 0
+      margin: 0
+
+    &_item
+      display: grid
+      grid-template-columns: 6rem 1fr 2fr
+      align-items: baseline
+      gap: 2rem
+      padding: 2rem 0
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12)
+      cursor: default
+      transition: padding-left 0.4s $easeOutQuart
+
+      &:hover
+        padding-left: 1.5rem
+
+        .label
+          color: $white
+
+      +breakpoint(mobile)
+        grid-template-columns: 3rem 1fr
+        gap: 1rem
+
+        .desc
+          grid-column: 2
+          padding-top: 0.5rem
+
+      .num
+        font-family: $apfel
+        font-weight: 400
+        font-size: 0.85rem
+        letter-spacing: 0.1em
+        color: rgba(0, 0, 0, 0.4)
+
+      .label
+        font-family: $apfel
+        font-weight: 900
+        font-size: clamp(2rem, 4vw, 4.5rem)
+        line-height: 1
+        text-transform: uppercase
+        color: $black
+        letter-spacing: -0.02em
+        transition: color 0.4s $easeOutQuart
+
+      .desc
+        font-family: $apfel
+        font-weight: 400
+        font-size: clamp(0.9rem, 1vw, 1.1rem)
+        color: rgba(0, 0, 0, 0.6)
+        font-style: italic
+
+  // ── AWARDS ───────────────────────────────────────────────────────────
+  &_awards
+    padding: 18vh 5vw
+    max-width: 1600px
+    margin: 0 auto
+
+    +breakpoint(mobile)
+      padding: 12vh 5vw
+
+    &_head
+      display: flex
+      justify-content: space-between
+      align-items: baseline
+      margin-bottom: 4rem
+      padding-bottom: 1.2rem
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15)
+
+    &_kicker
+      font-family: $apfel
+      font-size: 0.8rem
+      letter-spacing: 0.2em
+      text-transform: uppercase
+      color: rgba(255, 255, 255, 0.5)
+      margin: 0
+
+    &_total
+      font-family: $apfel
+      font-weight: 400
+      font-size: 0.8rem
+      letter-spacing: 0.1em
+      color: rgba(255, 255, 255, 0.5)
+      margin: 0
+
+      span
+        color: #ff8600
+        font-weight: 700
+
+    &_list
+      list-style: none
+      padding: 0
+      margin: 0
+
+    &_item
+      display: grid
+      grid-template-columns: 6rem 1fr 12rem
+      align-items: center
+      gap: 2rem
+      padding: 1.6rem 0
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08)
+
+      +breakpoint(mobile)
+        grid-template-columns: 4rem 1fr
+        gap: 1rem
+
+        .tag
+          grid-column: 2
+          padding-top: 0.3rem
+
+      .year
+        font-family: $apfel
+        font-weight: 400
+        font-size: 0.8rem
+        letter-spacing: 0.1em
+        color: rgba(255, 255, 255, 0.4)
+
+      .name
+        font-family: $apfel
+        font-weight: 900
+        font-size: clamp(1.4rem, 2.4vw, 2.6rem)
+        text-transform: uppercase
+        line-height: 1
+        color: $white
+        letter-spacing: -0.01em
+
+      .tag
+        font-family: $apfel
+        font-weight: 400
+        font-size: 0.75rem
+        letter-spacing: 0.15em
+        text-transform: uppercase
+        color: #ff8600
+        text-align: right
+
+        +breakpoint(mobile)
+          text-align: left
+
+  // ── VISIT (slot 3D) ──────────────────────────────────────────────────
+  &_visit
+    padding: 16vh 5vw 12vh
+    max-width: 1600px
+    margin: 0 auto
+    text-align: center
+
+    +breakpoint(mobile)
+      padding: 12vh 5vw
+
+    &_kicker
+      font-family: $apfel
+      font-size: 0.8rem
+      letter-spacing: 0.2em
+      text-transform: uppercase
+      color: rgba(0, 0, 0, 0.5)
+      margin: 0 0 3rem
+
+    &_title
+      font-family: $apfel
+      font-weight: 900
+      font-size: clamp(3rem, 8vw, 9rem)
+      line-height: 0.95
+      text-transform: uppercase
+      color: $black
+      letter-spacing: -0.02em
+      margin: 0 0 6rem
+
+      span
         display: block
+        overflow: hidden
 
-      &.hideOnMobile
-        display: none
+        &.italic
+          font-weight: 400
+          font-style: italic
 
+    &_canvas
+      position: relative
+      width: 100%
+      max-width: 1100px
+      margin: 0 auto 4rem
+      aspect-ratio: 16 / 10
+      background: rgba(0, 0, 0, 0.85)
+      border-radius: 6px
+      overflow: hidden
+      display: flex
+      align-items: center
+      justify-content: center
+
+      +breakpoint(mobile)
+        aspect-ratio: 4 / 3
+
+    &_placeholder
+      display: flex
+      flex-direction: column
+      align-items: center
+      gap: 0.8rem
+      color: rgba(255, 255, 255, 0.4)
+
+      .placeholderLine
+        font-family: $apfel
+        font-weight: 900
+        font-size: clamp(1.5rem, 3vw, 2.5rem)
+        text-transform: uppercase
+        letter-spacing: -0.01em
+
+      .placeholderSub
+        font-family: $apfel
+        font-weight: 400
+        font-size: 0.75rem
+        letter-spacing: 0.2em
+        text-transform: uppercase
+        color: rgba(255, 255, 255, 0.25)
+
+    &_address
+      a
+        display: inline-flex
+        align-items: center
+        gap: 0.6rem
+        font-family: $apfel
+        font-weight: 700
+        font-size: clamp(1rem, 1.4vw, 1.4rem)
+        color: $black
+        text-decoration: none
+        border-bottom: 1px solid rgba(0, 0, 0, 0.3)
+        padding-bottom: 0.3rem
+        transition: color 0.25s ease, border-color 0.25s ease
+
+        &:hover
+          color: $white
+          border-color: $white
+
+@keyframes bounce
+  0%, 100%
+    transform: translateY(0)
+  50%
+    transform: translateY(4px)
 </style>

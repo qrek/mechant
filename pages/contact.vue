@@ -86,14 +86,17 @@
       </transition>
     </div>
 
+    <SimpleFooter />
   </section>
 </template>
 
 <script>
 import { gsap } from '@/vendor/gsap'
+import SimpleFooter from '@/components/SimpleFooter'
 
 export default {
   name: 'ContactPage',
+  components: { SimpleFooter },
 
   head() {
     return {
