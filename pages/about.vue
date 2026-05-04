@@ -1,15 +1,8 @@
 <template>
-  <div class="AboutPage_root">
+  <section class="AboutPage" ref="root">
 
-    <!-- Fond fixé : DOIT être hors du smooth-content (sinon le transform de
-         ScrollSmoother piège le position:fixed et le bg ne suit plus) -->
+    <!-- Fond animé via ScrollTrigger (couleur change au scroll) -->
     <div class="AboutPage_bg" ref="bg" />
-
-    <!-- ScrollSmoother wrapper -->
-    <div id="smooth-wrapper" class="AboutPage_smoothWrapper">
-      <div id="smooth-content" class="AboutPage_smoothContent">
-
-        <section class="AboutPage" ref="root">
 
     <!-- ── HERO : catchphrase ───────────────────────────────────────────── -->
     <section class="AboutPage_hero" ref="hero">
@@ -182,26 +175,19 @@
       </div>
     </section>
 
-          <SimpleFooter />
-        </section>
-
-      </div>
-    </div>
-
-  </div>
+    <SimpleFooter />
+  </section>
 </template>
 
 <script>
 import { gsap } from '@/vendor/gsap'
 import { ScrollTrigger } from '@/vendor/gsap/ScrollTrigger'
 import { SplitText } from '@/vendor/gsap/SplitText'
-import ScrollSmoother from '@/vendor/gsap/ScrollSmoother'
 import SimpleFooter from '@/components/SimpleFooter'
 import aboutContent from '@/content/about'
 
 gsap.registerPlugin(ScrollTrigger)
 gsap.registerPlugin(SplitText)
-gsap.registerPlugin(ScrollSmoother)
 
 export default {
   name: 'About',
@@ -229,7 +215,7 @@ export default {
     this._splits = []
     this._triggers = []
     this.$nextTick(() => {
-      this._initSmoother()
+      this._initLenis()
       this._initAnimations()
     })
   },
@@ -239,25 +225,36 @@ export default {
     ;(this._triggers || []).forEach(t => t.kill && t.kill())
     this._splits = []
     this._triggers = []
-    if (this._smoother) {
-      this._smoother.kill()
-      this._smoother = null
+    if (this._lenis) {
+      gsap.ticker.remove(this._lenisRaf)
+      this._lenis.destroy()
+      this._lenis = null
+      this._lenisRaf = null
     }
   },
 
   methods: {
-    // Init ScrollSmoother — DOIT tourner avant les ScrollTriggers pour qu'ils
-    // s'enregistrent correctement auprès du smoother
-    _initSmoother () {
+    // Smooth scroll via Lenis — branche les ticks dans le ticker GSAP
+    // pour que ScrollTrigger reste en sync avec le scroll lerpé
+    async _initLenis () {
       if (typeof window === 'undefined') return
-      this._smoother = ScrollSmoother.create({
-        wrapper: '#smooth-wrapper',
-        content: '#smooth-content',
-        smooth: 1.2,        // durée du lerp en secondes (plus haut = plus doux)
-        effects: true,      // active data-speed/data-lag pour parallax custom
-        smoothTouch: 0.1,   // smoothing léger sur mobile (0 = désactivé)
-        normalizeScroll: true
+      const Lenis = (await import('lenis')).default
+
+      this._lenis = new Lenis({
+        duration: 1.2,        // durée du lerp en secondes
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // easeOutExpo
+        smoothWheel: true,
+        smoothTouch: false,   // mobile : scroll natif (plus naturel au doigt)
+        wheelMultiplier: 1
       })
+
+      // Sync ScrollTrigger avec Lenis
+      this._lenis.on('scroll', ScrollTrigger.update)
+
+      // Drive Lenis depuis le ticker GSAP (un seul RAF pour tout le monde)
+      this._lenisRaf = (time) => this._lenis.raf(time * 1000)
+      gsap.ticker.add(this._lenisRaf)
+      gsap.ticker.lagSmoothing(0)
     },
 
     _initAnimations () {
@@ -531,35 +528,18 @@ export default {
 </script>
 
 <style lang="sass" scoped>
-// Wrapper racine de la page — contient le bg fixé + smooth-wrapper
-.AboutPage_root
-  position: relative
-  width: 100%
-
-// Bg fixé : reste au niveau racine pour échapper au transform du smooth-content
-.AboutPage_bg
-  position: fixed
-  inset: 0
-  background: #ff8600
-  z-index: 0
-  pointer-events: none
-
-// Smooth wrapper (ScrollSmoother applique automatiquement les styles
-// position:fixed + overflow:hidden, on assure juste le z-index)
-.AboutPage_smoothWrapper
-  position: relative
-  z-index: 1
-  width: 100%
-
-.AboutPage_smoothContent
-  position: relative
-  width: 100%
-
 .AboutPage
   position: relative
   width: 100%
   color: $white
   overflow-x: hidden
+
+  &_bg
+    position: fixed
+    inset: 0
+    background: #ff8600
+    z-index: 0
+    pointer-events: none
 
   > section
     position: relative
