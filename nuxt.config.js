@@ -93,7 +93,10 @@ export default {
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
     babel: {
-      plugins: ['@babel/plugin-proposal-optional-chaining']
+      plugins: [
+        '@babel/plugin-proposal-optional-chaining',
+        '@babel/plugin-proposal-class-properties'
+      ]
     },
 
     plugins: [
@@ -114,7 +117,7 @@ export default {
       config.resolve.alias.vue = 'vue/dist/vue.common'
     },
 
-    transpile: ['three']
+    transpile: ['three', 'lenis']
   },
   pageTransition: {
     name: 'page',
