@@ -30,12 +30,34 @@
 
     <!-- ── INTRO : qui on est ─────────────────────────────────────────── -->
     <section class="AboutPage_intro" ref="intro">
-      <p class="AboutPage_intro_kicker" ref="introKicker">— The studio</p>
+      <div class="AboutPage_intro_meta" ref="introKicker">
+        <span class="kicker">— The studio</span>
+        <span class="meta">Paris / FR</span>
+      </div>
 
       <h2 class="AboutPage_intro_text" ref="introText">
-        We are a creative <em>post-production studio</em> based in Paris,
-        founded in <em>2019</em> by <em>Théo Bacholier</em> and <em>Ronan Fourreau</em>.
+        <span class="line">
+          <span class="word word--lead">We&nbsp;are</span>
+          <span class="word word--accent">creative.</span>
+        </span>
+        <span class="line line--small">
+          <span class="word">A&nbsp;post-production</span>
+          <span class="word word--italic">studio</span>
+          <span class="word">based&nbsp;in&nbsp;Paris,</span>
+        </span>
+        <span class="line line--small">
+          <span class="word">founded&nbsp;in</span>
+          <span class="word word--circle">2019</span>
+        </span>
+        <span class="line line--small">
+          <span class="word">by</span>
+          <span class="word word--name">Théo&nbsp;Bacholier</span>
+          <span class="word">&amp;</span>
+          <span class="word word--name">Ronan&nbsp;Fourreau.</span>
+        </span>
       </h2>
+
+      <div class="AboutPage_intro_divider" ref="introDivider"></div>
 
       <p class="AboutPage_intro_sub" ref="introSub">
         We dedicate our craft and technical obsession to <em>commercials</em>
@@ -74,10 +96,17 @@
 
     <!-- ── AWARDS ──────────────────────────────────────────────────────── -->
     <section class="AboutPage_awards" ref="awards">
-      <div class="AboutPage_awards_head">
-        <p class="AboutPage_awards_kicker">— Awards</p>
+
+      <div class="AboutPage_awards_intro" ref="awardsIntro">
+        <p class="AboutPage_awards_kicker">— Distinctions</p>
+        <h2 class="AboutPage_awards_title">
+          <span class="line">Recognized</span>
+          <span class="line italic">where it matters.</span>
+        </h2>
         <p class="AboutPage_awards_total">
-          <span>{{ awards.length }}</span> selected
+          <span class="num">{{ awards.length }}</span>
+          <span class="sep">/</span>
+          <span>Selected</span>
         </p>
       </div>
 
@@ -87,9 +116,17 @@
           :key="i"
           class="AboutPage_awards_item"
         >
+          <span class="index">{{ String(i + 1).padStart(2, '0') }}</span>
           <span class="year">{{ award.year }}</span>
           <span class="name">{{ award.name }}</span>
-          <span class="tag">{{ award.tag }}</span>
+          <span class="tag">
+            <span class="dot"></span>
+            {{ award.tag }}
+          </span>
+          <svg class="arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12,5 19,12 12,19"/>
+          </svg>
         </li>
       </ul>
     </section>
@@ -237,26 +274,48 @@ export default {
       }))
     },
 
-    // ── Background : transition de couleurs continue au scroll ─────────
+    // ── Background : palette enrichie au scroll ────────────────────────
     _animateBgColors () {
       const bg = this.$refs.bg
-
-      // Hero → Intro : orange Méchant
       gsap.set(bg, { backgroundColor: '#ff8600' })
 
-      // Manifesto → couleur plus chaude / coraille
+      // Hero → Intro : orange → orange clair
       this._track(gsap.to(bg, {
-        backgroundColor: '#ff5b14',
+        backgroundColor: '#ffa83d',
         ease: 'none',
         scrollTrigger: {
-          trigger: this.$refs.manifesto,
+          trigger: this.$refs.intro,
           start: 'top bottom',
           end: 'top top',
           scrub: 1
         }
       }))
 
-      // Manifesto → Services : pink
+      // Intro → Manifesto : coral chaud
+      this._track(gsap.to(bg, {
+        backgroundColor: '#ff4e2c',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: this.$refs.manifesto,
+          start: 'top bottom',
+          end: 'top center',
+          scrub: 1
+        }
+      }))
+
+      // Manifesto → milieu manifesto : magenta intense
+      this._track(gsap.to(bg, {
+        backgroundColor: '#d6266b',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: this.$refs.manifesto,
+          start: 'top center',
+          end: 'bottom top',
+          scrub: 1
+        }
+      }))
+
+      // Manifesto → Services : pink Méchant
       this._track(gsap.to(bg, {
         backgroundColor: '#fe82ae',
         ease: 'none',
@@ -268,7 +327,19 @@ export default {
         }
       }))
 
-      // Services → Awards : noir
+      // Services milieu → Awards : violet/mauve
+      this._track(gsap.to(bg, {
+        backgroundColor: '#7c4dff',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: this.$refs.services,
+          start: 'top center',
+          end: 'bottom top',
+          scrub: 1
+        }
+      }))
+
+      // Awards : noir
       this._track(gsap.to(bg, {
         backgroundColor: '#0a0a0a',
         ease: 'none',
@@ -280,27 +351,29 @@ export default {
         }
       }))
 
-      // Awards → Visit : retour orange
+      // Awards → Visit : retour orange Méchant
       this._track(gsap.to(bg, {
         backgroundColor: '#ff8600',
         ease: 'none',
         scrollTrigger: {
           trigger: this.$refs.visit,
           start: 'top bottom',
-          end: 'top center',
+          end: 'top 30%',
           scrub: 1
         }
       }))
     },
 
-    // ── Intro : reveal mot par mot ─────────────────────────────────────
+    // ── Intro : reveal en cascade ──────────────────────────────────────
     _animateIntro () {
-      const split1 = new SplitText(this.$refs.introText, { type: 'words,lines' })
-      const split2 = new SplitText(this.$refs.introSub, { type: 'words,lines' })
-      this._splits.push(split1, split2)
+      const introWords = this.$refs.introText.querySelectorAll('.word')
+      const subSplit = new SplitText(this.$refs.introSub, { type: 'words,lines' })
+      this._splits.push(subSplit)
 
-      gsap.set([split1.words, split2.words], { yPercent: 110, opacity: 0 })
+      gsap.set(introWords, { yPercent: 110, opacity: 0, rotate: 4 })
+      gsap.set(subSplit.words, { yPercent: 110, opacity: 0 })
       gsap.set(this.$refs.introKicker, { opacity: 0, x: -20 })
+      gsap.set(this.$refs.introDivider, { scaleX: 0, transformOrigin: 'left' })
 
       this._track(gsap.to(this.$refs.introKicker, {
         opacity: 1,
@@ -310,16 +383,24 @@ export default {
         scrollTrigger: { trigger: this.$refs.intro, start: 'top 75%' }
       }))
 
-      this._track(gsap.to(split1.words, {
+      this._track(gsap.to(introWords, {
         yPercent: 0,
         opacity: 1,
-        stagger: 0.025,
-        duration: 0.8,
-        ease: 'power3.out',
+        rotate: 0,
+        stagger: 0.05,
+        duration: 0.9,
+        ease: 'power4.out',
         scrollTrigger: { trigger: this.$refs.introText, start: 'top 80%' }
       }))
 
-      this._track(gsap.to(split2.words, {
+      this._track(gsap.to(this.$refs.introDivider, {
+        scaleX: 1,
+        duration: 0.9,
+        ease: 'power3.inOut',
+        scrollTrigger: { trigger: this.$refs.introDivider, start: 'top 90%' }
+      }))
+
+      this._track(gsap.to(subSplit.words, {
         yPercent: 0,
         opacity: 1,
         stagger: 0.015,
@@ -387,24 +468,47 @@ export default {
       }))
     },
 
-    // ── Awards : reveal en cascade ─────────────────────────────────────
+    // ── Awards : titre qui slide + items en cascade ────────────────────
     _animateAwards () {
       const items = this.$refs.awardsList.querySelectorAll('.AboutPage_awards_item')
-      gsap.set(items, { y: 30, opacity: 0 })
-      gsap.set(this.$refs.awards.querySelector('.AboutPage_awards_head'), { opacity: 0 })
+      const titleLines = this.$refs.awards.querySelectorAll('.AboutPage_awards_title .line')
+      const kicker = this.$refs.awards.querySelector('.AboutPage_awards_kicker')
+      const total = this.$refs.awards.querySelector('.AboutPage_awards_total')
 
-      this._track(gsap.to(this.$refs.awards.querySelector('.AboutPage_awards_head'), {
+      gsap.set(items, { y: 40, opacity: 0 })
+      gsap.set(titleLines, { yPercent: 110, opacity: 0 })
+      gsap.set([kicker, total], { opacity: 0, y: 20 })
+
+      this._track(gsap.to(kicker, {
         opacity: 1,
+        y: 0,
         duration: 0.6,
         ease: 'power2.out',
         scrollTrigger: { trigger: this.$refs.awards, start: 'top 75%' }
+      }))
+
+      this._track(gsap.to(titleLines, {
+        yPercent: 0,
+        opacity: 1,
+        stagger: 0.12,
+        duration: 0.9,
+        ease: 'power4.out',
+        scrollTrigger: { trigger: this.$refs.awardsIntro, start: 'top 80%' }
+      }))
+
+      this._track(gsap.to(total, {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: this.$refs.awardsIntro, start: 'top 75%' }
       }))
 
       this._track(gsap.to(items, {
         y: 0,
         opacity: 1,
         stagger: 0.08,
-        duration: 0.6,
+        duration: 0.7,
         ease: 'power3.out',
         scrollTrigger: { trigger: this.$refs.awardsList, start: 'top 85%' }
       }))
@@ -533,48 +637,107 @@ export default {
 
   // ── INTRO ────────────────────────────────────────────────────────────
   &_intro
-    padding: 18vh 8vw 18vh
-    max-width: 1400px
+    padding: 18vh 6vw 18vh
+    max-width: 1500px
 
     +breakpoint(mobile)
       padding: 12vh 5vw
 
-    &_kicker
-      font-family: $apfel
-      font-size: 0.8rem
-      letter-spacing: 0.2em
-      text-transform: uppercase
-      color: rgba(0, 0, 0, 0.5)
-      margin-bottom: 4rem
+    &_meta
+      display: flex
+      justify-content: space-between
+      align-items: center
+      margin-bottom: 5rem
+      padding-bottom: 1.2rem
+      border-bottom: 1px solid rgba(0, 0, 0, 0.18)
+
+      .kicker, .meta
+        font-family: $apfel
+        font-size: 0.8rem
+        letter-spacing: 0.2em
+        text-transform: uppercase
+        color: rgba(0, 0, 0, 0.55)
+
+      .meta
+        font-weight: 700
 
     &_text
       font-family: $apfel
       font-weight: 900
-      font-size: clamp(2.2rem, 4.5vw, 5.5rem)
-      line-height: 1.05
-      letter-spacing: -0.015em
       color: $black
       margin: 0 0 4rem
+      line-height: 0.95
+      letter-spacing: -0.02em
 
-      em
-        font-style: italic
-        font-weight: 400
-        color: rgba(0, 0, 0, 0.7)
+      .line
+        display: block
+        overflow: visible
 
-      ::v-deep .word
+        &--small
+          font-weight: 400
+          font-size: clamp(1.6rem, 3vw, 3.6rem)
+          line-height: 1.15
+          letter-spacing: -0.005em
+          color: rgba(0, 0, 0, 0.75)
+          margin-top: 0.4rem
+
+      .word
         display: inline-block
+        margin-right: 0.3em
+
+        &--lead
+          font-size: clamp(3.5rem, 9vw, 11rem)
+          font-weight: 900
+          text-transform: uppercase
+
+        &--accent
+          font-size: clamp(3.5rem, 9vw, 11rem)
+          font-weight: 400
+          font-style: italic
+          color: $white
+          text-transform: uppercase
+          background: $black
+          padding: 0 0.2em 0.05em
+          border-radius: 4px
+          margin-left: 0.15em
+          line-height: 0.9
+
+        &--italic
+          font-style: italic
+          font-weight: 400
+
+        &--circle
+          font-weight: 900
+          color: $white
+          background: $black
+          padding: 0 0.4em
+          border-radius: 999px
+          line-height: 1.1
+          display: inline-block
+
+        &--name
+          font-weight: 900
+          color: $black
+          font-style: normal
 
       +breakpoint(mobile)
         margin-bottom: 3rem
+
+    &_divider
+      height: 1px
+      background: rgba(0, 0, 0, 0.25)
+      margin: 4rem 0
+      width: 100%
 
     &_sub
       font-family: $apfel
       font-weight: 400
       font-size: clamp(1.1rem, 1.5vw, 1.5rem)
       line-height: 1.5
-      color: rgba(0, 0, 0, 0.75)
+      color: rgba(0, 0, 0, 0.78)
       max-width: 60ch
       margin: 0
+      margin-left: auto
 
       em
         font-weight: 700
@@ -698,40 +861,88 @@ export default {
 
   // ── AWARDS ───────────────────────────────────────────────────────────
   &_awards
-    padding: 18vh 5vw
-    max-width: 1600px
+    padding: 22vh 5vw 18vh
+    max-width: 1700px
     margin: 0 auto
 
     +breakpoint(mobile)
-      padding: 12vh 5vw
+      padding: 14vh 5vw
 
-    &_head
-      display: flex
-      justify-content: space-between
-      align-items: baseline
-      margin-bottom: 4rem
-      padding-bottom: 1.2rem
-      border-bottom: 1px solid rgba(255, 255, 255, 0.15)
+    &_intro
+      display: grid
+      grid-template-columns: 1fr auto
+      align-items: end
+      gap: 2rem
+      margin-bottom: 8rem
+      padding-bottom: 2rem
+      border-bottom: 2px solid rgba(255, 255, 255, 0.15)
+
+      +breakpoint(mobile)
+        grid-template-columns: 1fr
+        margin-bottom: 5rem
+        gap: 2rem
 
     &_kicker
+      grid-column: 1
+      grid-row: 1
       font-family: $apfel
       font-size: 0.8rem
       letter-spacing: 0.2em
       text-transform: uppercase
       color: rgba(255, 255, 255, 0.5)
+      margin: 0 0 2rem
+
+    &_title
+      grid-column: 1
+      grid-row: 2
+      font-family: $apfel
+      font-weight: 900
+      font-size: clamp(2.8rem, 7vw, 7.5rem)
+      line-height: 0.92
+      text-transform: uppercase
+      color: $white
+      letter-spacing: -0.02em
       margin: 0
+
+      .line
+        display: block
+        overflow: hidden
+        padding-bottom: 0.05em
+
+        &.italic
+          font-weight: 400
+          font-style: italic
+          color: #ff8600
 
     &_total
+      grid-column: 2
+      grid-row: 2
+      align-self: end
       font-family: $apfel
-      font-weight: 400
-      font-size: 0.8rem
-      letter-spacing: 0.1em
-      color: rgba(255, 255, 255, 0.5)
+      font-size: 0.85rem
+      letter-spacing: 0.18em
+      text-transform: uppercase
+      color: rgba(255, 255, 255, 0.4)
       margin: 0
+      display: flex
+      align-items: baseline
+      gap: 0.5rem
 
-      span
+      .num
+        font-family: $apfel
+        font-weight: 900
+        font-size: clamp(2rem, 3vw, 3rem)
         color: #ff8600
-        font-weight: 700
+        letter-spacing: -0.02em
+        line-height: 1
+
+      .sep
+        font-size: 1.5rem
+        color: rgba(255, 255, 255, 0.25)
+
+      +breakpoint(mobile)
+        grid-column: 1
+        grid-row: 3
 
     &_list
       list-style: none
@@ -739,48 +950,123 @@ export default {
       margin: 0
 
     &_item
+      position: relative
       display: grid
-      grid-template-columns: 6rem 1fr 12rem
+      grid-template-columns: 4rem 6rem 1fr auto 2.5rem
       align-items: center
-      gap: 2rem
-      padding: 1.6rem 0
+      gap: 2.5rem
+      padding: 2.4rem 1.5rem
       border-bottom: 1px solid rgba(255, 255, 255, 0.08)
+      transition: padding-left 0.5s $easeOutQuart, background 0.4s ease
 
-      +breakpoint(mobile)
-        grid-template-columns: 4rem 1fr
-        gap: 1rem
+      &::before
+        content: ''
+        position: absolute
+        left: 0
+        top: 0
+        height: 100%
+        width: 0
+        background: #ff8600
+        transition: width 0.5s $easeOutQuart
+        z-index: -1
+
+      &:hover
+        padding-left: 3rem
+
+        &::before
+          width: 100%
+
+        .index
+          color: $black
+
+        .year
+          color: $black
+          opacity: 0.7
+
+        .name
+          color: $black
 
         .tag
-          grid-column: 2
-          padding-top: 0.3rem
+          color: $black
 
-      .year
-        font-family: $apfel
-        font-weight: 400
-        font-size: 0.8rem
-        letter-spacing: 0.1em
-        color: rgba(255, 255, 255, 0.4)
+          .dot
+            background: $black
 
-      .name
-        font-family: $apfel
-        font-weight: 900
-        font-size: clamp(1.4rem, 2.4vw, 2.6rem)
-        text-transform: uppercase
-        line-height: 1
-        color: $white
-        letter-spacing: -0.01em
+        .arrow
+          transform: translateX(6px)
+          color: $black
 
-      .tag
+      +breakpoint(mobile)
+        grid-template-columns: 2.5rem 1fr auto
+        gap: 1rem
+        padding: 1.8rem 0.5rem
+
+        .year
+          grid-column: 2 / 3
+          grid-row: 1
+
+        .name
+          grid-column: 2 / 4
+          grid-row: 2
+          margin-top: 0.3rem
+
+        .tag
+          grid-column: 2 / 4
+          grid-row: 3
+          margin-top: 0.5rem
+
+        .arrow
+          display: none
+
+      .index
         font-family: $apfel
         font-weight: 400
         font-size: 0.75rem
         letter-spacing: 0.15em
+        color: rgba(255, 255, 255, 0.3)
+        transition: color 0.4s ease
+
+      .year
+        font-family: $apfel
+        font-weight: 700
+        font-size: 1rem
+        letter-spacing: 0.05em
+        color: rgba(255, 255, 255, 0.55)
+        transition: color 0.4s ease
+
+      .name
+        font-family: $apfel
+        font-weight: 900
+        font-size: clamp(1.8rem, 3.8vw, 4.2rem)
+        text-transform: uppercase
+        line-height: 0.95
+        color: $white
+        letter-spacing: -0.015em
+        transition: color 0.4s ease
+
+      .tag
+        display: inline-flex
+        align-items: center
+        gap: 0.6rem
+        font-family: $apfel
+        font-weight: 700
+        font-size: 0.8rem
+        letter-spacing: 0.18em
         text-transform: uppercase
         color: #ff8600
-        text-align: right
+        white-space: nowrap
+        transition: color 0.4s ease
 
-        +breakpoint(mobile)
-          text-align: left
+        .dot
+          width: 0.5rem
+          height: 0.5rem
+          border-radius: 50%
+          background: #ff8600
+          transition: background 0.4s ease
+
+      .arrow
+        color: rgba(255, 255, 255, 0.3)
+        transition: transform 0.5s $easeOutQuart, color 0.4s ease
 
   // ── VISIT (slot 3D) ──────────────────────────────────────────────────
   &_visit
