@@ -50,7 +50,8 @@ export default {
     '~/assets/scss/reset.scss',
     '~/assets/scss/fonts.scss',
     '~/assets/scss/global.scss',
-    '~/assets/scss/icons.scss'
+    '~/assets/scss/icons.scss',
+    'lenis/dist/lenis.css'
   ],
   styleResources: {
     sass: [

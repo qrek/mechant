@@ -26,6 +26,17 @@ html.lock_scroll {
   overflow: hidden;
 }
 
+// Lenis (smooth scroll) ajoute la classe .lenis sur <html>.
+// On libère les hauteurs forcées uniquement à ce moment-là pour permettre
+// au body de grandir à la hauteur du contenu et ainsi avoir un scroll naturel.
+html.lenis,
+html.lenis body,
+html.lenis #__nuxt,
+html.lenis #__layout {
+  height: auto !important;
+  min-height: 100%;
+}
+
 /* Avoid Chrome to see Safari hack */
 @supports (-webkit-touch-callout: none) {
   body {
