@@ -59,68 +59,105 @@
       <p class="AboutPage_intro_sub" ref="introSub" v-html="content.intro.sub"></p>
     </section>
 
-    <!-- ── MANIFESTO : grande phrase qui se révèle ligne par ligne ────── -->
+    <!-- ── MANIFESTO : sweep horizontal au scroll ──────────────────────── -->
     <section class="AboutPage_manifesto" ref="manifesto">
-      <h2 class="AboutPage_manifesto_text" ref="manifestoText" v-html="manifestoHtml"></h2>
+      <div
+        v-for="(line, i) in content.manifesto"
+        :key="i"
+        class="AboutPage_manifesto_line"
+        :class="{ 'AboutPage_manifesto_line--right': i % 2 === 1 }"
+        :ref="`manifestoLine${i}`"
+      >
+        <span class="text">
+          <span v-for="n in 4" :key="n" class="text_unit">{{ line }}<span class="dot">●</span></span>
+        </span>
+      </div>
     </section>
 
-    <!-- ── SERVICES ────────────────────────────────────────────────────── -->
-    <section class="AboutPage_services" ref="services">
-      <div class="AboutPage_services_head">
-        <p class="AboutPage_services_kicker">{{ content.services.kicker }}</p>
-        <p class="AboutPage_services_count">
-          <span ref="serviceCounter">{{ String(content.services.list.length).padStart(2, '0') }}</span><span class="total">/{{ String(content.services.list.length).padStart(2, '0') }}</span>
-        </p>
+    <!-- ── COMBO : Services + Awards dans une section pinned ──────────── -->
+    <!-- Au scroll vertical, on translate horizontalement entre les 2 panneaux -->
+    <section class="AboutPage_combo" ref="combo">
+      <!-- Indicateur de panneau actif -->
+      <div class="AboutPage_combo_indicator" ref="comboIndicator">
+        <div class="AboutPage_combo_indicator_item is-active">
+          <span class="num">01</span>
+          <span class="label">What we do</span>
+        </div>
+        <div class="AboutPage_combo_indicator_track">
+          <div class="bar" ref="comboBar"></div>
+        </div>
+        <div class="AboutPage_combo_indicator_item">
+          <span class="num">02</span>
+          <span class="label">Awards</span>
+        </div>
       </div>
 
-      <ul class="AboutPage_services_list" ref="servicesList">
-        <li v-for="(s, i) in content.services.list" :key="s.label" class="AboutPage_services_item">
-          <span class="num">{{ String(i + 1).padStart(2, '0') }}</span>
-          <span class="label">{{ s.label }}</span>
-          <span class="desc">{{ s.desc }}</span>
-        </li>
-      </ul>
-    </section>
+      <!-- Track horizontal : 200% de large, contient les 2 panneaux -->
+      <div class="AboutPage_combo_track" ref="comboTrack">
 
-    <!-- ── AWARDS ──────────────────────────────────────────────────────── -->
-    <section class="AboutPage_awards" ref="awards">
+        <!-- PANNEAU SERVICES -->
+        <div class="AboutPage_combo_panel AboutPage_combo_panel--services" ref="services">
+          <div class="AboutPage_combo_panel_inner">
+            <div class="AboutPage_services_head">
+              <p class="AboutPage_services_kicker">{{ content.services.kicker }}</p>
+              <p class="AboutPage_services_count">
+                <span ref="serviceCounter">{{ String(content.services.list.length).padStart(2, '0') }}</span><span class="total">/{{ String(content.services.list.length).padStart(2, '0') }}</span>
+              </p>
+            </div>
 
-      <div class="AboutPage_awards_intro" ref="awardsIntro">
-        <p class="AboutPage_awards_kicker">{{ content.awards.kicker }}</p>
-        <h2 class="AboutPage_awards_title">
-          <span
-            v-for="(line, i) in content.awards.titleLines"
-            :key="i"
-            class="line"
-            :class="{ italic: line.italic }"
-          >{{ line.text }}</span>
-        </h2>
-        <p class="AboutPage_awards_total">
-          <span class="num">{{ content.awards.list.length }}</span>
-          <span class="sep">/</span>
-          <span>{{ content.awards.totalLabel }}</span>
-        </p>
+            <ul class="AboutPage_services_list" ref="servicesList">
+              <li v-for="(s, i) in content.services.list" :key="s.label" class="AboutPage_services_item">
+                <span class="num">{{ String(i + 1).padStart(2, '0') }}</span>
+                <span class="label">{{ s.label }}</span>
+                <span class="desc">{{ s.desc }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- PANNEAU AWARDS -->
+        <div class="AboutPage_combo_panel AboutPage_combo_panel--awards" ref="awards">
+          <div class="AboutPage_combo_panel_inner">
+            <div class="AboutPage_awards_intro" ref="awardsIntro">
+              <p class="AboutPage_awards_kicker">{{ content.awards.kicker }}</p>
+              <h2 class="AboutPage_awards_title">
+                <span
+                  v-for="(line, i) in content.awards.titleLines"
+                  :key="i"
+                  class="line"
+                  :class="{ italic: line.italic }"
+                >{{ line.text }}</span>
+              </h2>
+              <p class="AboutPage_awards_total">
+                <span class="num">{{ content.awards.list.length }}</span>
+                <span class="sep">/</span>
+                <span>{{ content.awards.totalLabel }}</span>
+              </p>
+            </div>
+
+            <ul class="AboutPage_awards_list" ref="awardsList">
+              <li
+                v-for="(award, i) in content.awards.list"
+                :key="i"
+                class="AboutPage_awards_item"
+              >
+                <span class="index">{{ String(i + 1).padStart(2, '0') }}</span>
+                <span class="year">{{ award.year }}</span>
+                <span class="name">{{ award.name }}</span>
+                <span class="tag">
+                  <span class="dot"></span>
+                  {{ award.tag }}
+                </span>
+                <svg class="arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12,5 19,12 12,19"/>
+                </svg>
+              </li>
+            </ul>
+          </div>
+        </div>
+
       </div>
-
-      <ul class="AboutPage_awards_list" ref="awardsList">
-        <li
-          v-for="(award, i) in content.awards.list"
-          :key="i"
-          class="AboutPage_awards_item"
-        >
-          <span class="index">{{ String(i + 1).padStart(2, '0') }}</span>
-          <span class="year">{{ award.year }}</span>
-          <span class="name">{{ award.name }}</span>
-          <span class="tag">
-            <span class="dot"></span>
-            {{ award.tag }}
-          </span>
-          <svg class="arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <line x1="5" y1="12" x2="19" y2="12"/>
-            <polyline points="12,5 19,12 12,19"/>
-          </svg>
-        </li>
-      </ul>
     </section>
 
     <!-- ── VISIT US (slot pour scan 3D) ────────────────────────────────── -->
@@ -193,12 +230,6 @@ export default {
     }
   },
 
-  computed: {
-    manifestoHtml () {
-      return this.content.manifesto.join('<br/>')
-    }
-  },
-
   mounted () {
     this._splits = []
     this._triggers = []
@@ -218,8 +249,7 @@ export default {
       this._animateBgColors()
       this._animateIntro()
       this._animateManifesto()
-      this._animateServices()
-      this._animateAwards()
+      this._animateCombo()
       this._animateVisit()
     },
 
@@ -272,9 +302,8 @@ export default {
       const stops = [
         { trigger: this.$refs.intro,     enter: c.intro,     back: c.hero      },
         { trigger: this.$refs.manifesto, enter: c.manifesto, back: c.intro     },
-        { trigger: this.$refs.services,  enter: c.services,  back: c.manifesto },
-        { trigger: this.$refs.awards,    enter: c.awards,    back: c.services  },
-        { trigger: this.$refs.visit,     enter: c.visit,     back: c.awards    }
+        { trigger: this.$refs.combo,     enter: c.combo,     back: c.manifesto },
+        { trigger: this.$refs.visit,     enter: c.visit,     back: c.combo     }
       ]
 
       stops.forEach(({ trigger, enter, back }) => {
@@ -345,107 +374,168 @@ export default {
       }))
     },
 
-    // ── Manifesto : pinned, lignes apparaissent au scroll ──────────────
+    // ── Manifesto : sweep horizontal — chaque ligne traverse l'écran ───
     _animateManifesto () {
-      const split = new SplitText(this.$refs.manifestoText, { type: 'lines' })
-      this._splits.push(split)
+      const lines = this.content.manifesto.map((_, i) => this.$refs[`manifestoLine${i}`])
+        .map(ref => Array.isArray(ref) ? ref[0] : ref)
+        .filter(Boolean)
 
-      gsap.set(split.lines, { yPercent: 100, opacity: 0 })
+      lines.forEach((line, i) => {
+        const text = line.querySelector('.text')
+        if (!text) return
 
-      this._track(gsap.to(split.lines, {
-        yPercent: 0,
-        opacity: 1,
-        stagger: 0.18,
-        duration: 0.8,
-        ease: 'power4.out',
-        scrollTrigger: {
-          trigger: this.$refs.manifesto,
-          start: 'top 70%'
-        }
-      }))
+        // Direction alternée : ligne 0 = vers la gauche, ligne 1 = vers la droite, etc.
+        const goesLeft = i % 2 === 0
+        const fromX = goesLeft ? '15%' : '-65%'
+        const toX   = goesLeft ? '-65%' : '15%'
+
+        gsap.set(text, { x: fromX })
+
+        this._track(gsap.to(text, {
+          x: toX,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: this.$refs.manifesto,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1.2
+          }
+        }))
+      })
     },
 
-    // ── Services : items qui slident depuis la gauche ──────────────────
-    _animateServices () {
-      const items = this.$refs.servicesList.querySelectorAll('.AboutPage_services_item')
-      gsap.set(items, { x: -60, opacity: 0 })
-      gsap.set(this.$refs.services.querySelector('.AboutPage_services_head'), { opacity: 0, y: 20 })
+    // ── Combo : pin + scroll horizontal entre Services et Awards ──────
+    _animateCombo () {
+      const combo = this.$refs.combo
+      const track = this.$refs.comboTrack
+      if (!combo || !track) return
 
-      this._track(gsap.to(this.$refs.services.querySelector('.AboutPage_services_head'), {
-        opacity: 1,
-        y: 0,
-        duration: 0.6,
-        ease: 'power2.out',
-        scrollTrigger: { trigger: this.$refs.services, start: 'top 75%' }
+      const isMobile = window.matchMedia('(max-width: 768px)').matches
+
+      // Mobile : pas de pin, panneaux empilés verticalement (CSS handle ça)
+      // On lance juste les anims internes des deux panneaux à l'entrée.
+      if (isMobile) {
+        this._animateComboReveals('top 75%', 'top 75%')
+        return
+      }
+
+      // Desktop : pin la section, translate le track horizontalement
+      const horizontalTween = gsap.to(track, {
+        xPercent: -50, // 200% wide → translate de -100vw = -50% du track
+        ease: 'none',
+        scrollTrigger: {
+          trigger: combo,
+          start: 'top top',
+          end: '+=130%',
+          pin: true,
+          scrub: 1,
+          anticipatePin: 1,
+          invalidateOnRefresh: true
+        }
+      })
+      this._triggers.push(horizontalTween.scrollTrigger)
+
+      // Indicateur : barre de progression qui bouge entre les 2 labels
+      // + bascule de la classe is-active
+      const items = this.$refs.comboIndicator.querySelectorAll('.AboutPage_combo_indicator_item')
+      const bar = this.$refs.comboBar
+      gsap.set(bar, { xPercent: 0 })
+
+      const barTween = gsap.to(bar, {
+        xPercent: 100,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: combo,
+          start: 'top top',
+          end: '+=130%',
+          scrub: 0.5,
+          onUpdate: (self) => {
+            const isAwards = self.progress > 0.5
+            items[0].classList.toggle('is-active', !isAwards)
+            items[1].classList.toggle('is-active', isAwards)
+          }
+        }
+      })
+      this._triggers.push(barTween.scrollTrigger)
+
+      // Reveals desktop : services au début du pin, awards quand le panneau arrive
+      this._animateComboReveals(
+        { trigger: combo, start: 'top 80%' },                    // services (au moment du pin)
+        { trigger: combo, start: 'top top-=40%', end: '+=20%' }  // awards (vers la moitié du scroll horizontal)
+      )
+    },
+
+    // Helper : reveals internes des deux panneaux
+    _animateComboReveals (servicesST, awardsST) {
+      // ── SERVICES PANEL ─────────────────────────────────────────────
+      const servicesItems = this.$refs.servicesList.querySelectorAll('.AboutPage_services_item')
+      const servicesHead  = this.$refs.services.querySelector('.AboutPage_services_head')
+
+      gsap.set(servicesItems, { x: -60, opacity: 0 })
+      gsap.set(servicesHead, { opacity: 0, y: 20 })
+
+      this._track(gsap.to(servicesHead, {
+        opacity: 1, y: 0, duration: 0.6, ease: 'power2.out',
+        scrollTrigger: typeof servicesST === 'string'
+          ? { trigger: this.$refs.services, start: servicesST }
+          : servicesST
       }))
 
-      this._track(gsap.to(items, {
-        x: 0,
-        opacity: 1,
-        stagger: 0.08,
-        duration: 0.7,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: this.$refs.servicesList, start: 'top 80%' }
+      this._track(gsap.to(servicesItems, {
+        x: 0, opacity: 1, stagger: 0.08, duration: 0.7, ease: 'power3.out',
+        scrollTrigger: typeof servicesST === 'string'
+          ? { trigger: this.$refs.servicesList, start: servicesST }
+          : { ...servicesST, start: typeof servicesST === 'string' ? servicesST : (servicesST.start || 'top 80%') }
       }))
 
-      // Counter qui décompte 00 → 05
+      // Counter 00 → length
       const counter = { val: 0 }
       this._track(gsap.to(counter, {
-        val: this.serviceList.length,
+        val: this.content.services.list.length,
         duration: 1.2,
         ease: 'power2.out',
-        scrollTrigger: { trigger: this.$refs.services, start: 'top 75%' },
+        scrollTrigger: typeof servicesST === 'string'
+          ? { trigger: this.$refs.services, start: servicesST }
+          : servicesST,
         onUpdate: () => {
           if (this.$refs.serviceCounter) {
             this.$refs.serviceCounter.textContent = String(Math.round(counter.val)).padStart(2, '0')
           }
         }
       }))
-    },
 
-    // ── Awards : titre qui slide + items en cascade ────────────────────
-    _animateAwards () {
-      const items = this.$refs.awardsList.querySelectorAll('.AboutPage_awards_item')
+      // ── AWARDS PANEL ───────────────────────────────────────────────
+      const awardsItems = this.$refs.awardsList.querySelectorAll('.AboutPage_awards_item')
       const titleLines = this.$refs.awards.querySelectorAll('.AboutPage_awards_title .line')
-      const kicker = this.$refs.awards.querySelector('.AboutPage_awards_kicker')
-      const total = this.$refs.awards.querySelector('.AboutPage_awards_total')
+      const awardsKicker = this.$refs.awards.querySelector('.AboutPage_awards_kicker')
+      const awardsTotal = this.$refs.awards.querySelector('.AboutPage_awards_total')
 
-      gsap.set(items, { y: 40, opacity: 0 })
+      gsap.set(awardsItems, { y: 40, opacity: 0 })
       gsap.set(titleLines, { yPercent: 110, opacity: 0 })
-      gsap.set([kicker, total], { opacity: 0, y: 20 })
+      gsap.set([awardsKicker, awardsTotal], { opacity: 0, y: 20 })
 
-      this._track(gsap.to(kicker, {
-        opacity: 1,
-        y: 0,
-        duration: 0.6,
-        ease: 'power2.out',
-        scrollTrigger: { trigger: this.$refs.awards, start: 'top 75%' }
+      const awardsBaseST = typeof awardsST === 'string'
+        ? { trigger: this.$refs.awards, start: awardsST }
+        : awardsST
+
+      this._track(gsap.to(awardsKicker, {
+        opacity: 1, y: 0, duration: 0.6, ease: 'power2.out',
+        scrollTrigger: awardsBaseST
       }))
 
       this._track(gsap.to(titleLines, {
-        yPercent: 0,
-        opacity: 1,
-        stagger: 0.12,
-        duration: 0.9,
-        ease: 'power4.out',
-        scrollTrigger: { trigger: this.$refs.awardsIntro, start: 'top 80%' }
+        yPercent: 0, opacity: 1, stagger: 0.12, duration: 0.9, ease: 'power4.out',
+        scrollTrigger: awardsBaseST
       }))
 
-      this._track(gsap.to(total, {
-        opacity: 1,
-        y: 0,
-        duration: 0.6,
-        ease: 'power2.out',
-        scrollTrigger: { trigger: this.$refs.awardsIntro, start: 'top 75%' }
+      this._track(gsap.to(awardsTotal, {
+        opacity: 1, y: 0, duration: 0.6, ease: 'power2.out',
+        scrollTrigger: awardsBaseST
       }))
 
-      this._track(gsap.to(items, {
-        y: 0,
-        opacity: 1,
-        stagger: 0.08,
-        duration: 0.7,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: this.$refs.awardsList, start: 'top 85%' }
+      this._track(gsap.to(awardsItems, {
+        y: 0, opacity: 1, stagger: 0.08, duration: 0.7, ease: 'power3.out',
+        scrollTrigger: awardsBaseST
       }))
     },
 
@@ -685,35 +775,151 @@ export default {
 
   // ── MANIFESTO ────────────────────────────────────────────────────────
   &_manifesto
-    min-height: 80vh
-    padding: 14vh 6vw
+    position: relative
+    min-height: 110vh
+    padding: 14vh 0
     display: flex
-    align-items: center
+    flex-direction: column
     justify-content: center
-    text-align: center
-
-    &_text
-      font-family: $apfel
-      font-weight: 900
-      font-size: clamp(3rem, 8vw, 11rem)
-      line-height: 1
-      letter-spacing: -0.02em
-      text-transform: uppercase
-      color: $white
-      margin: 0
-      mix-blend-mode: difference
-
-      ::v-deep .line
-        overflow: hidden
-
-  // ── SERVICES ─────────────────────────────────────────────────────────
-  &_services
-    padding: 18vh 5vw
-    max-width: 1600px
-    margin: 0 auto
+    overflow: hidden
 
     +breakpoint(mobile)
-      padding: 12vh 5vw
+      min-height: 80vh
+      padding: 10vh 0
+
+    &_line
+      width: 100%
+      overflow: hidden
+      pointer-events: none
+      margin: 1vh 0
+      mix-blend-mode: difference
+
+      .text
+        display: inline-flex
+        align-items: center
+        white-space: nowrap
+        font-family: $apfel
+        font-weight: 900
+        font-size: clamp(7rem, 18vw, 22rem)
+        line-height: 0.9
+        letter-spacing: -0.03em
+        text-transform: uppercase
+        color: $white
+        will-change: transform
+
+        +breakpoint(mobile)
+          font-size: clamp(4rem, 14vw, 8rem)
+
+      .text_unit
+        display: inline-flex
+        align-items: center
+        margin-right: 0.4em
+
+      .dot
+        display: inline-block
+        width: 0.3em
+        height: 0.3em
+        border-radius: 50%
+        background: $white
+        margin: 0 0.4em 0 0.4em
+
+  // ── COMBO (Services + Awards pinned, scroll horizontal) ──────────────
+  &_combo
+    position: relative
+    width: 100%
+    height: 100vh
+    overflow: hidden
+
+    +breakpoint(mobile)
+      height: auto
+      overflow: visible
+
+    &_indicator
+      position: absolute
+      top: 8rem
+      left: 50%
+      transform: translateX(-50%)
+      z-index: 5
+      display: flex
+      align-items: center
+      gap: 1.4rem
+      pointer-events: none
+
+      +breakpoint(mobile)
+        display: none
+
+      &_item
+        display: flex
+        align-items: baseline
+        gap: 0.5rem
+        font-family: $apfel
+        font-size: 0.8rem
+        letter-spacing: 0.18em
+        text-transform: uppercase
+        color: rgba(255, 255, 255, 0.4)
+        transition: color 0.4s ease
+
+        .num
+          font-weight: 900
+          font-size: 0.7rem
+          opacity: 0.6
+
+        &.is-active
+          color: $white
+
+      &_track
+        position: relative
+        width: 5rem
+        height: 1px
+        background: rgba(255, 255, 255, 0.3)
+
+        .bar
+          position: absolute
+          inset: 0 auto 0 0
+          width: 1.2rem
+          background: $white
+          will-change: transform
+
+    &_track
+      display: flex
+      width: 200%
+      height: 100%
+      will-change: transform
+
+      +breakpoint(mobile)
+        flex-direction: column
+        width: 100%
+        height: auto
+
+    &_panel
+      flex: 0 0 50%
+      width: 50%
+      height: 100%
+      display: flex
+      align-items: center
+      overflow-y: auto
+
+      +breakpoint(mobile)
+        flex: 0 0 auto
+        width: 100%
+        height: auto
+        padding: 12vh 0
+
+      &--awards
+        background: #0a0a0a
+
+      &_inner
+        width: 100%
+        max-width: 1500px
+        margin: 0 auto
+        padding: 6rem 5vw
+
+        +breakpoint(mobile)
+          padding: 0 5vw
+
+  // ── SERVICES (panneau gauche dans le combo) ──────────────────────────
+  &_services
+    width: 100%
 
     &_head
       display: flex
@@ -795,14 +1001,9 @@ export default {
         color: rgba(0, 0, 0, 0.6)
         font-style: italic
 
-  // ── AWARDS ───────────────────────────────────────────────────────────
+  // ── AWARDS (panneau droit dans le combo) ─────────────────────────────
   &_awards
-    padding: 22vh 5vw 18vh
-    max-width: 1700px
-    margin: 0 auto
-
-    +breakpoint(mobile)
-      padding: 14vh 5vw
+    width: 100%
 
     &_intro
       display: grid

@@ -106,12 +106,13 @@ export default {
 
   // Palette du fond — une couleur par section, transition douce à l'entrée
   // 4 couleurs de marque : orange / bleu clair / vert / dark
+  // Note : le panneau "awards" a son propre fond dark dans le CSS,
+  //        ce qui rend la palette globale plus simple.
   bgColors: {
     hero:      '#ff4500', // orange Méchant
     intro:     '#b5daff', // bleu clair (transition orange → bleu)
     manifesto: '#14914f', // vert profond
-    services:  '#14914f', // vert (reste pareil — pas de transition)
-    awards:    '#2a2a2a', // dark
+    combo:     '#14914f', // vert (services + awards dans la même section)
     visit:     '#ff4500'  // retour orange
   }
 }
