@@ -95,7 +95,11 @@ export default {
     babel: {
       plugins: [
         '@babel/plugin-proposal-optional-chaining',
-        '@babel/plugin-proposal-class-properties'
+        // Les 3 plugins doivent partager le même mode 'loose' (Babel l'exige
+        // car ils dépendent les uns des autres pour gérer les class fields).
+        ['@babel/plugin-proposal-class-properties', { loose: true }],
+        ['@babel/plugin-proposal-private-methods', { loose: true }],
+        ['@babel/plugin-proposal-private-property-in-object', { loose: true }]
       ]
     },
 
