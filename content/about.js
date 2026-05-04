@@ -105,14 +105,15 @@ export default {
   },
 
   // Palette du fond, jouée dans l'ordre au scroll (un stop par couleur)
+  // 4 couleurs de marque : orange / bleu clair / vert / dark
   bgColors: [
-    '#ff8600', // hero
-    '#ffa83d', // intro
-    '#ff4e2c', // manifesto
-    '#d6266b', // manifesto deep
-    '#fe82ae', // services
-    '#7c4dff', // services deep
-    '#0a0a0a', // awards
-    '#ff8600'  // visit
+    '#ff4500', // [0] hero          → orange Méchant
+    '#b5daff', // [1] intro         → bleu clair (changement net entre hero et intro)
+    '#b5daff', // [2] manifesto top → reste sur le bleu
+    '#14914f', // [3] manifesto deep→ vert profond
+    '#14914f', // [4] services      → vert
+    '#2a2a2a', // [5] services deep → transition vers dark
+    '#2a2a2a', // [6] awards        → dark
+    '#ff4500'  // [7] visit         → retour orange
   ]
 }

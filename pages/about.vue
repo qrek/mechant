@@ -4,67 +4,58 @@
     <!-- Fond animé via ScrollTrigger (couleur change au scroll) -->
     <div class="AboutPage_bg" ref="bg" />
 
-    <!-- ── STAGE : hero + "we are creative" stackés, transition au scroll  -->
-    <section class="AboutPage_stage" ref="stage">
-      <div class="AboutPage_stage_inner">
+    <!-- ── HERO : catchphrase ───────────────────────────────────────────── -->
+    <section class="AboutPage_hero" ref="hero">
+      <div class="AboutPage_hero_eyebrow" ref="eyebrow">
+        <template v-for="(part, i) in content.hero.eyebrow">
+          <span :key="`eb-${i}`">{{ part }}</span>
+          <span v-if="i < content.hero.eyebrow.length - 1" :key="`dot-${i}`" class="dot">●</span>
+        </template>
+      </div>
 
-        <!-- Slide 1 : catchphrase -->
-        <div class="AboutPage_hero" ref="hero">
-          <div class="AboutPage_hero_eyebrow" ref="eyebrow">
-            <template v-for="(part, i) in content.hero.eyebrow">
-              <span :key="`eb-${i}`">{{ part }}</span>
-              <span v-if="i < content.hero.eyebrow.length - 1" :key="`dot-${i}`" class="dot">●</span>
-            </template>
-          </div>
+      <h1 class="AboutPage_hero_title" ref="heroTitle">
+        <span
+          v-for="(line, i) in content.hero.lines"
+          :key="i"
+          class="line"
+          :class="`line--${line.variant}`"
+        >{{ line.text }}</span>
+      </h1>
 
-          <h1 class="AboutPage_hero_title" ref="heroTitle">
-            <span
-              v-for="(line, i) in content.hero.lines"
-              :key="i"
-              class="line"
-              :class="`line--${line.variant}`"
-            >{{ line.text }}</span>
-          </h1>
-
-          <div class="AboutPage_hero_scroll" ref="scrollHint">
-            <span>{{ content.hero.scrollLabel }}</span>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <polyline points="5,12 12,19 19,12"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Slide 2 : "We are creative." -->
-        <div class="AboutPage_introHero" ref="introHero">
-          <div class="AboutPage_intro_meta" ref="introKicker">
-            <span class="kicker">{{ content.intro.kicker }}</span>
-            <span class="meta">{{ content.intro.meta }}</span>
-          </div>
-
-          <h2 class="AboutPage_intro_text" ref="introText">
-            <span
-              v-for="(line, li) in content.intro.lines"
-              :key="li"
-              class="line"
-              :class="{ 'line--small': li > 0 }"
-            >
-              <span
-                v-for="(w, wi) in line"
-                :key="wi"
-                class="word"
-                :class="w.variant ? `word--${w.variant}` : ''"
-              >{{ w.text }}</span>
-            </span>
-          </h2>
-        </div>
-
+      <div class="AboutPage_hero_scroll" ref="scrollHint">
+        <span>{{ content.hero.scrollLabel }}</span>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <polyline points="5,12 12,19 19,12"/>
+        </svg>
       </div>
     </section>
 
-    <!-- ── INTRO BODY : suite de l'intro, en flow normal ──────────────── -->
-    <section class="AboutPage_introBody" ref="intro">
+    <!-- ── INTRO : "We are creative" + sub ─────────────────────────────── -->
+    <section class="AboutPage_intro" ref="intro">
+      <div class="AboutPage_intro_meta" ref="introKicker">
+        <span class="kicker">{{ content.intro.kicker }}</span>
+        <span class="meta">{{ content.intro.meta }}</span>
+      </div>
+
+      <h2 class="AboutPage_intro_text" ref="introText">
+        <span
+          v-for="(line, li) in content.intro.lines"
+          :key="li"
+          class="line"
+          :class="{ 'line--small': li > 0 }"
+        >
+          <span
+            v-for="(w, wi) in line"
+            :key="wi"
+            class="word"
+            :class="w.variant ? `word--${w.variant}` : ''"
+          >{{ w.text }}</span>
+        </span>
+      </h2>
+
       <div class="AboutPage_intro_divider" ref="introDivider"></div>
+
       <p class="AboutPage_intro_sub" ref="introSub" v-html="content.intro.sub"></p>
     </section>
 
@@ -223,10 +214,9 @@ export default {
 
   methods: {
     _initAnimations () {
-      this._animateHeroIntro()
-      this._animateStageTransition()
+      this._animateHero()
       this._animateBgColors()
-      this._animateIntroBody()
+      this._animateIntro()
       this._animateManifesto()
       this._animateServices()
       this._animateAwards()
@@ -239,8 +229,8 @@ export default {
       return st
     },
 
-    // ── Hero : reveal au load (avant que le scroll ne prenne la main) ──
-    _animateHeroIntro () {
+    // ── Hero : reveal au load + parallaxe à la sortie ──────────────────
+    _animateHero () {
       const lines = this.$refs.heroTitle.querySelectorAll('.line')
       gsap.set(lines, { yPercent: 110, opacity: 0 })
       gsap.set([this.$refs.eyebrow, this.$refs.scrollHint], { opacity: 0, y: 20 })
@@ -255,64 +245,18 @@ export default {
         ease: 'power4.out'
       }, 0.2)
       tl.to(this.$refs.scrollHint, { opacity: 1, y: 0, duration: 0.5 }, 0.9)
-    },
 
-    // ── Stage : crossfade hero ↔ "we are creative" pendant le pin ──────
-    _animateStageTransition () {
-      // États initiaux du slide 2 (caché sous le hero)
-      const introWords = this.$refs.introText.querySelectorAll('.word')
-      gsap.set(this.$refs.introHero, { opacity: 0, yPercent: 35 })
-      gsap.set(this.$refs.introKicker, { opacity: 0, y: 20 })
-      gsap.set(introWords, { yPercent: 100, opacity: 0, rotate: 5 })
-
-      const heroLines = this.$refs.heroTitle.querySelectorAll('.line')
-
-      const tl = gsap.timeline({
+      // Parallax sortie hero
+      this._track(gsap.to(this.$refs.heroTitle, {
+        yPercent: -25,
+        ease: 'none',
         scrollTrigger: {
-          trigger: this.$refs.stage,
+          trigger: this.$refs.hero,
           start: 'top top',
-          end: '+=130%',          // pin sur 1.3 viewport de scroll
-          pin: true,
-          scrub: 1,
-          anticipatePin: 1
+          end: 'bottom top',
+          scrub: 0.8
         }
-      })
-
-      // Hero quitte la scène (translate up + fade)
-      tl.to(this.$refs.heroTitle, {
-        yPercent: -30,
-        ease: 'power2.in'
-      }, 0)
-      tl.to(heroLines, {
-        opacity: 0,
-        stagger: 0.05,
-        ease: 'power2.in'
-      }, 0)
-      tl.to([this.$refs.eyebrow, this.$refs.scrollHint], {
-        opacity: 0,
-        ease: 'power1.in'
-      }, 0)
-
-      // Slide 2 entre en scène
-      tl.to(this.$refs.introHero, {
-        opacity: 1,
-        yPercent: 0,
-        ease: 'power2.out'
-      }, 0.35)
-      tl.to(this.$refs.introKicker, {
-        opacity: 1,
-        y: 0,
-        ease: 'power2.out'
-      }, 0.4)
-      tl.to(introWords, {
-        yPercent: 0,
-        opacity: 1,
-        rotate: 0,
-        stagger: 0.04,
-        ease: 'power3.out'
-      }, 0.45)
-
-      this._triggers.push(tl.scrollTrigger)
+      }))
     },
 
     // ── Background : palette enrichie au scroll ────────────────────────
@@ -343,13 +287,34 @@ export default {
       })
     },
 
-    // ── Intro body : divider + sous-paragraphe (après le pin) ──────────
-    _animateIntroBody () {
+    // ── Intro : kicker + mots + divider + sub ──────────────────────────
+    _animateIntro () {
+      const introWords = this.$refs.introText.querySelectorAll('.word')
       const subSplit = new SplitText(this.$refs.introSub, { type: 'words,lines' })
       this._splits.push(subSplit)
 
+      gsap.set(introWords, { yPercent: 110, opacity: 0, rotate: 4 })
       gsap.set(subSplit.words, { yPercent: 110, opacity: 0 })
+      gsap.set(this.$refs.introKicker, { opacity: 0, x: -20 })
       gsap.set(this.$refs.introDivider, { scaleX: 0, transformOrigin: 'left' })
+
+      this._track(gsap.to(this.$refs.introKicker, {
+        opacity: 1,
+        x: 0,
+        duration: 0.6,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: this.$refs.intro, start: 'top 75%' }
+      }))
+
+      this._track(gsap.to(introWords, {
+        yPercent: 0,
+        opacity: 1,
+        rotate: 0,
+        stagger: 0.05,
+        duration: 0.9,
+        ease: 'power4.out',
+        scrollTrigger: { trigger: this.$refs.introText, start: 'top 80%' }
+      }))
 
       this._track(gsap.to(this.$refs.introDivider, {
         scaleX: 1,
@@ -526,27 +491,14 @@ export default {
     position: relative
     z-index: 1
 
-  // ── STAGE (hero + introHero stackés, pin au scroll) ──────────────────
-  &_stage
-    position: relative
-    width: 100%
-    height: 100vh
-    overflow: hidden
-
-    &_inner
-      position: relative
-      width: 100%
-      height: 100%
-
   // ── HERO ─────────────────────────────────────────────────────────────
   &_hero
-    position: absolute
-    inset: 0
+    position: relative
+    min-height: 100vh
     padding: 9rem 5vw 4rem
     display: flex
     flex-direction: column
     justify-content: space-between
-    will-change: transform
 
     &_eyebrow
       display: flex
@@ -606,34 +558,14 @@ export default {
       svg
         animation: bounce 2s ease-in-out infinite
 
-  // ── INTRO HERO (slide 2 dans le stage pinné) ──────────────────────────
-  &_introHero
-    position: absolute
-    inset: 0
-    padding: 9rem 6vw 4rem
-    display: flex
-    flex-direction: column
-    justify-content: center
-    will-change: transform, opacity
-    opacity: 0    // GSAP révèle au scroll, évite le flash au load
-
-    > *
-      max-width: 1500px
-      width: 100%
-
-    +breakpoint(mobile)
-      padding: 8rem 5vw 4rem
-
-  // ── INTRO BODY (divider + sub, en flow normal après le pin) ──────────
-  &_introBody
-    padding: 10vh 6vw 14vh
+  // ── INTRO ────────────────────────────────────────────────────────────
+  &_intro
+    padding: 18vh 6vw 18vh
     max-width: 1500px
 
     +breakpoint(mobile)
-      padding: 8vh 5vw 10vh
+      padding: 12vh 5vw
 
-  // ── INTRO (styles partagés meta/text/divider/sub) ────────────────────
-  &_intro
     &_meta
       display: flex
       justify-content: space-between
