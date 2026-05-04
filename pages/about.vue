@@ -7,20 +7,23 @@
     <!-- ── HERO : catchphrase ───────────────────────────────────────────── -->
     <section class="AboutPage_hero" ref="hero">
       <div class="AboutPage_hero_eyebrow" ref="eyebrow">
-        <span>Paris</span>
-        <span class="dot">●</span>
-        <span>Est. 2019</span>
+        <template v-for="(part, i) in content.hero.eyebrow">
+          <span :key="`eb-${i}`">{{ part }}</span>
+          <span v-if="i < content.hero.eyebrow.length - 1" :key="`dot-${i}`" class="dot">●</span>
+        </template>
       </div>
 
       <h1 class="AboutPage_hero_title" ref="heroTitle">
-        <span class="line line--italic">Once upon</span>
-        <span class="line line--italic">a frame,</span>
-        <span class="line line--bold">MÉCHANT</span>
-        <span class="line line--bold">was born.</span>
+        <span
+          v-for="(line, i) in content.hero.lines"
+          :key="i"
+          class="line"
+          :class="`line--${line.variant}`"
+        >{{ line.text }}</span>
       </h1>
 
       <div class="AboutPage_hero_scroll" ref="scrollHint">
-        <span>Scroll</span>
+        <span>{{ content.hero.scrollLabel }}</span>
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <line x1="12" y1="5" x2="12" y2="19"/>
           <polyline points="5,12 12,19 19,12"/>
@@ -31,62 +34,47 @@
     <!-- ── INTRO : qui on est ─────────────────────────────────────────── -->
     <section class="AboutPage_intro" ref="intro">
       <div class="AboutPage_intro_meta" ref="introKicker">
-        <span class="kicker">— The studio</span>
-        <span class="meta">Paris / FR</span>
+        <span class="kicker">{{ content.intro.kicker }}</span>
+        <span class="meta">{{ content.intro.meta }}</span>
       </div>
 
       <h2 class="AboutPage_intro_text" ref="introText">
-        <span class="line">
-          <span class="word word--lead">We&nbsp;are</span>
-          <span class="word word--accent">creative.</span>
-        </span>
-        <span class="line line--small">
-          <span class="word">A&nbsp;post-production</span>
-          <span class="word word--italic">studio</span>
-          <span class="word">based&nbsp;in&nbsp;Paris,</span>
-        </span>
-        <span class="line line--small">
-          <span class="word">founded&nbsp;in</span>
-          <span class="word word--circle">2019</span>
-        </span>
-        <span class="line line--small">
-          <span class="word">by</span>
-          <span class="word word--name">Théo&nbsp;Bacholier</span>
-          <span class="word">&amp;</span>
-          <span class="word word--name">Ronan&nbsp;Fourreau.</span>
+        <span
+          v-for="(line, li) in content.intro.lines"
+          :key="li"
+          class="line"
+          :class="{ 'line--small': li > 0 }"
+        >
+          <span
+            v-for="(w, wi) in line"
+            :key="wi"
+            class="word"
+            :class="w.variant ? `word--${w.variant}` : ''"
+          >{{ w.text }}</span>
         </span>
       </h2>
 
       <div class="AboutPage_intro_divider" ref="introDivider"></div>
 
-      <p class="AboutPage_intro_sub" ref="introSub">
-        We dedicate our craft and technical obsession to <em>commercials</em>
-        and <em>music videos</em> — bringing an aesthetic vision that's a little
-        rough around the edges. Méchant, on purpose.
-      </p>
+      <p class="AboutPage_intro_sub" ref="introSub" v-html="content.intro.sub"></p>
     </section>
 
-    <!-- ── MANIFESTO : grande phrase qui se révèle mot par mot ────────── -->
+    <!-- ── MANIFESTO : grande phrase qui se révèle ligne par ligne ────── -->
     <section class="AboutPage_manifesto" ref="manifesto">
-      <h2 class="AboutPage_manifesto_text" ref="manifestoText">
-        Pretty pictures.<br/>
-        Bad influence.<br/>
-        Clean cuts.<br/>
-        Dirty habits.
-      </h2>
+      <h2 class="AboutPage_manifesto_text" ref="manifestoText" v-html="manifestoHtml"></h2>
     </section>
 
     <!-- ── SERVICES ────────────────────────────────────────────────────── -->
     <section class="AboutPage_services" ref="services">
       <div class="AboutPage_services_head">
-        <p class="AboutPage_services_kicker">— What we do</p>
+        <p class="AboutPage_services_kicker">{{ content.services.kicker }}</p>
         <p class="AboutPage_services_count">
-          <span ref="serviceCounter">05</span><span class="total">/05</span>
+          <span ref="serviceCounter">{{ String(content.services.list.length).padStart(2, '0') }}</span><span class="total">/{{ String(content.services.list.length).padStart(2, '0') }}</span>
         </p>
       </div>
 
       <ul class="AboutPage_services_list" ref="servicesList">
-        <li v-for="(s, i) in serviceList" :key="s.label" class="AboutPage_services_item">
+        <li v-for="(s, i) in content.services.list" :key="s.label" class="AboutPage_services_item">
           <span class="num">{{ String(i + 1).padStart(2, '0') }}</span>
           <span class="label">{{ s.label }}</span>
           <span class="desc">{{ s.desc }}</span>
@@ -98,21 +86,25 @@
     <section class="AboutPage_awards" ref="awards">
 
       <div class="AboutPage_awards_intro" ref="awardsIntro">
-        <p class="AboutPage_awards_kicker">— Distinctions</p>
+        <p class="AboutPage_awards_kicker">{{ content.awards.kicker }}</p>
         <h2 class="AboutPage_awards_title">
-          <span class="line">Recognized</span>
-          <span class="line italic">where it matters.</span>
+          <span
+            v-for="(line, i) in content.awards.titleLines"
+            :key="i"
+            class="line"
+            :class="{ italic: line.italic }"
+          >{{ line.text }}</span>
         </h2>
         <p class="AboutPage_awards_total">
-          <span class="num">{{ awards.length }}</span>
+          <span class="num">{{ content.awards.list.length }}</span>
           <span class="sep">/</span>
-          <span>Selected</span>
+          <span>{{ content.awards.totalLabel }}</span>
         </p>
       </div>
 
       <ul class="AboutPage_awards_list" ref="awardsList">
         <li
-          v-for="(award, i) in awards"
+          v-for="(award, i) in content.awards.list"
           :key="i"
           class="AboutPage_awards_item"
         >
@@ -133,32 +125,30 @@
 
     <!-- ── VISIT US (slot pour scan 3D) ────────────────────────────────── -->
     <section class="AboutPage_visit" ref="visit">
-      <p class="AboutPage_visit_kicker">— Come say hi</p>
+      <p class="AboutPage_visit_kicker">{{ content.visit.kicker }}</p>
 
       <h2 class="AboutPage_visit_title">
-        <span>The studio</span>
-        <span class="italic">is open.</span>
+        <span
+          v-for="(line, i) in content.visit.titleLines"
+          :key="i"
+          :class="{ italic: line.italic }"
+        >{{ line.text }}</span>
       </h2>
 
       <!--
         Slot 3D scan : remplacer ce placeholder par un canvas Three.js
         avec GLTFLoader quand le scan sera prêt (export GLB optimisé).
-        Référence d'intégration : voir SimpleFooter / Three.js.
       -->
       <div class="AboutPage_visit_canvas" ref="visitCanvas">
         <div class="AboutPage_visit_placeholder">
-          <span class="placeholderLine">3D studio scan</span>
-          <span class="placeholderSub">Coming soon</span>
+          <span class="placeholderLine">{{ content.visit.placeholderLine }}</span>
+          <span class="placeholderSub">{{ content.visit.placeholderSub }}</span>
         </div>
       </div>
 
       <div class="AboutPage_visit_address">
-        <a
-          href="https://www.google.fr/maps/place/27+Rue+des+Cascades,+75020+Paris"
-          target="_blank"
-          rel="noopener"
-        >
-          27 rue des Cascades — 75020 Paris
+        <a :href="content.visit.mapsUrl" target="_blank" rel="noopener">
+          {{ content.visit.address }}
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <line x1="7" y1="17" x2="17" y2="7"/>
             <polyline points="7,7 17,7 17,17"/>
@@ -176,6 +166,7 @@ import { gsap } from '@/vendor/gsap'
 import { ScrollTrigger } from '@/vendor/gsap/ScrollTrigger'
 import { SplitText } from '@/vendor/gsap/SplitText'
 import SimpleFooter from '@/components/SimpleFooter'
+import aboutContent from '@/content/about'
 
 gsap.registerPlugin(ScrollTrigger)
 gsap.registerPlugin(SplitText)
@@ -187,30 +178,24 @@ export default {
 
   head () {
     return {
-      title: 'About — MÉCHANT',
+      title: this.content.meta.title,
       meta: [{
         hid: 'description',
         name: 'description',
-        content: 'Méchant is a creative post-production studio in Paris, founded in 2019 by Théo Bacholier and Ronan Fourreau.'
+        content: this.content.meta.description
       }]
     }
   },
 
   data () {
     return {
-      serviceList: [
-        { label: 'Editing',        desc: 'Story-driven cuts.' },
-        { label: 'VFX',            desc: 'Invisible to spectacular.' },
-        { label: '3D / 2D Animation', desc: 'Frame by frame, pixel by pixel.' },
-        { label: 'Motion Design',  desc: 'Make graphics move.' },
-        { label: 'Art Direction',  desc: 'Set the visual rules.' }
-      ],
-      awards: [
-        { year: '2024', name: 'Cannes Lions', tag: 'Shortlist' },
-        { year: '2023', name: 'Ciclope Festival', tag: 'Bronze' },
-        { year: '2023', name: 'Young Directors Award', tag: 'Selection' },
-        { year: '2022', name: 'AICP Awards', tag: 'Honor' }
-      ]
+      content: aboutContent
+    }
+  },
+
+  computed: {
+    manifestoHtml () {
+      return this.content.manifesto.join('<br/>')
     }
   },
 
@@ -275,93 +260,31 @@ export default {
     },
 
     // ── Background : palette enrichie au scroll ────────────────────────
+    // Couleurs définies dans content/about.js → content.bgColors
+    // [hero, intro, manifesto, manifesto-deep, services, services-deep, awards, visit]
     _animateBgColors () {
       const bg = this.$refs.bg
-      gsap.set(bg, { backgroundColor: '#ff8600' })
+      const colors = this.content.bgColors
+      gsap.set(bg, { backgroundColor: colors[0] })
 
-      // Hero → Intro : orange → orange clair
-      this._track(gsap.to(bg, {
-        backgroundColor: '#ffa83d',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: this.$refs.intro,
-          start: 'top bottom',
-          end: 'top top',
-          scrub: 1
-        }
-      }))
+      const stops = [
+        { color: colors[1], trigger: this.$refs.intro,     start: 'top bottom', end: 'top top' },
+        { color: colors[2], trigger: this.$refs.manifesto, start: 'top bottom', end: 'top center' },
+        { color: colors[3], trigger: this.$refs.manifesto, start: 'top center', end: 'bottom top' },
+        { color: colors[4], trigger: this.$refs.services,  start: 'top bottom', end: 'top center' },
+        { color: colors[5], trigger: this.$refs.services,  start: 'top center', end: 'bottom top' },
+        { color: colors[6], trigger: this.$refs.awards,    start: 'top bottom', end: 'top center' },
+        { color: colors[7], trigger: this.$refs.visit,     start: 'top bottom', end: 'top 30%' }
+      ]
 
-      // Intro → Manifesto : coral chaud
-      this._track(gsap.to(bg, {
-        backgroundColor: '#ff4e2c',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: this.$refs.manifesto,
-          start: 'top bottom',
-          end: 'top center',
-          scrub: 1
-        }
-      }))
-
-      // Manifesto → milieu manifesto : magenta intense
-      this._track(gsap.to(bg, {
-        backgroundColor: '#d6266b',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: this.$refs.manifesto,
-          start: 'top center',
-          end: 'bottom top',
-          scrub: 1
-        }
-      }))
-
-      // Manifesto → Services : pink Méchant
-      this._track(gsap.to(bg, {
-        backgroundColor: '#fe82ae',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: this.$refs.services,
-          start: 'top bottom',
-          end: 'top center',
-          scrub: 1
-        }
-      }))
-
-      // Services milieu → Awards : violet/mauve
-      this._track(gsap.to(bg, {
-        backgroundColor: '#7c4dff',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: this.$refs.services,
-          start: 'top center',
-          end: 'bottom top',
-          scrub: 1
-        }
-      }))
-
-      // Awards : noir
-      this._track(gsap.to(bg, {
-        backgroundColor: '#0a0a0a',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: this.$refs.awards,
-          start: 'top bottom',
-          end: 'top center',
-          scrub: 1
-        }
-      }))
-
-      // Awards → Visit : retour orange Méchant
-      this._track(gsap.to(bg, {
-        backgroundColor: '#ff8600',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: this.$refs.visit,
-          start: 'top bottom',
-          end: 'top 30%',
-          scrub: 1
-        }
-      }))
+      stops.forEach(({ color, trigger, start, end }) => {
+        if (!color || !trigger) return
+        this._track(gsap.to(bg, {
+          backgroundColor: color,
+          ease: 'none',
+          scrollTrigger: { trigger, start, end, scrub: 1 }
+        }))
+      })
     },
 
     // ── Intro : reveal en cascade ──────────────────────────────────────
@@ -719,6 +642,7 @@ export default {
           font-weight: 900
           color: $black
           font-style: normal
+          white-space: nowrap
 
       +breakpoint(mobile)
         margin-bottom: 3rem
