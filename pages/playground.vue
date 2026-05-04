@@ -26,15 +26,6 @@
         </svg>
         {{ lightsOn ? 'Lights off' : 'Lights on' }}
       </button>
-      <button class="Playground_btn" :class="{ 'is-active': cameraView === 'iso' }" @click="setView('iso')">
-        ISO view
-      </button>
-      <button class="Playground_btn" :class="{ 'is-active': cameraView === 'side' }" @click="setView('side')">
-        Side view
-      </button>
-      <button class="Playground_btn" :class="{ 'is-active': cameraView === 'top' }" @click="setView('top')">
-        Top view
-      </button>
     </div>
 
     <footer class="Playground_hud Playground_hud--bottom">
@@ -66,7 +57,6 @@ export default {
     return {
       loading: true,
       lightsOn: true,
-      cameraView: 'iso',
       comingSoon: 'Characters coming soon — Théo & Ronan in 3D',
       stats: { tris: 0 }
     }
@@ -83,7 +73,6 @@ export default {
   methods: {
     async _initThree () {
       const THREE = await import('three')
-      const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js')
       this._THREE = THREE
 
       const container = this.$refs.canvas
@@ -96,9 +85,10 @@ export default {
       scene.fog = new THREE.FogExp2(0x000000, 0.045)
       this._scene = scene
 
-      // ── Camera ───────────────────────────────────────────────────────
-      const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100)
-      camera.position.set(8, 5, 10)
+      // ── Camera : fixe, face au stage, légèrement surélevée ─────────
+      const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100)
+      camera.position.set(0, 3, 11)
+      camera.lookAt(0, 1.2, 0)
       this._camera = camera
 
       // ── Renderer ─────────────────────────────────────────────────────
@@ -120,16 +110,7 @@ export default {
       // ── Lumières ─────────────────────────────────────────────────────
       this._buildLights()
 
-      // ── Controls ─────────────────────────────────────────────────────
-      const controls = new OrbitControls(camera, renderer.domElement)
-      controls.enableDamping = true
-      controls.dampingFactor = 0.08
-      controls.target.set(0, 1, 0)
-      controls.minDistance = 4
-      controls.maxDistance = 16
-      controls.maxPolarAngle = Math.PI * 0.49 // ne descend pas sous le sol
-      controls.minPolarAngle = Math.PI * 0.05
-      this._controls = controls
+      // ── Pas de controls : la caméra est fixe (seuls les persos bougeront) ──
 
       // ── Resize ───────────────────────────────────────────────────────
       this._onResize = () => {
@@ -163,7 +144,6 @@ export default {
           this._dust.geometry.attributes.position.needsUpdate = true
         }
 
-        controls.update()
         renderer.render(scene, camera)
         this._raf = requestAnimationFrame(this._tick)
       }
@@ -173,16 +153,16 @@ export default {
       setTimeout(() => { this.loading = false }, 400)
     },
 
-    // Construction de la box / arène
+    // Construction du stage : sol + mur fond + 2 murs latéraux (ouvert vers la caméra)
     _buildArena () {
       const THREE = this._THREE
       const scene = this._scene
 
-      const ROOM = { w: 22, h: 9, d: 22 }
+      const STAGE = { w: 14, h: 8, d: 12 }   // largeur, hauteur murs, profondeur
       let triCount = 0
 
       // ── Sol ────────────────────────────────────────────────────────
-      const floorGeo = new THREE.PlaneGeometry(ROOM.w, ROOM.d, 1, 1)
+      const floorGeo = new THREE.PlaneGeometry(STAGE.w, STAGE.d, 1, 1)
       const floorMat = new THREE.MeshStandardMaterial({
         color: 0x0a0a0a,
         roughness: 0.85,
@@ -190,17 +170,19 @@ export default {
       })
       const floor = new THREE.Mesh(floorGeo, floorMat)
       floor.rotation.x = -Math.PI / 2
+      // Décale le sol vers l'arrière (z négatif) pour que la caméra soit "hors stage"
+      floor.position.z = -STAGE.d / 2 + 1
       floor.receiveShadow = true
       scene.add(floor)
       triCount += 2
 
       // ── Grille au sol (style training stage) ──────────────────────
-      const grid = new THREE.GridHelper(ROOM.w, 22, 0x222222, 0x111111)
-      grid.position.y = 0.01
+      const grid = new THREE.GridHelper(STAGE.w, 14, 0x222222, 0x111111)
+      grid.position.set(0, 0.01, -STAGE.d / 2 + 1)
       scene.add(grid)
       this._grid = grid
 
-      // ── Murs (intérieur visible : plane facing inward) ─────────────
+      // ── Murs : fond + gauche + droite (pas de plafond, pas de mur devant) ─
       const wallMat = new THREE.MeshStandardMaterial({
         color: 0x141414,
         roughness: 0.95,
@@ -218,51 +200,39 @@ export default {
         return wall
       }
 
-      makeWall(ROOM.w, ROOM.h, [0, ROOM.h / 2, -ROOM.d / 2], [0, 0, 0])               // back
-      makeWall(ROOM.w, ROOM.h, [0, ROOM.h / 2, ROOM.d / 2],  [0, Math.PI, 0])         // front
-      makeWall(ROOM.d, ROOM.h, [-ROOM.w / 2, ROOM.h / 2, 0], [0, Math.PI / 2, 0])     // left
-      makeWall(ROOM.d, ROOM.h, [ROOM.w / 2, ROOM.h / 2, 0],  [0, -Math.PI / 2, 0])    // right
-
-      // ── Plafond ────────────────────────────────────────────────────
-      const ceilGeo = new THREE.PlaneGeometry(ROOM.w, ROOM.d)
-      const ceilMat = new THREE.MeshStandardMaterial({
-        color: 0x080808,
-        roughness: 1.0,
-        metalness: 0.0
-      })
-      const ceil = new THREE.Mesh(ceilGeo, ceilMat)
-      ceil.rotation.x = Math.PI / 2
-      ceil.position.y = ROOM.h
-      scene.add(ceil)
-      triCount += 2
+      const zBack = -STAGE.d + 1
+      makeWall(STAGE.w, STAGE.h, [0, STAGE.h / 2, zBack], [0, 0, 0])                       // back
+      makeWall(STAGE.d, STAGE.h, [-STAGE.w / 2, STAGE.h / 2, -STAGE.d / 2 + 1], [0, Math.PI / 2, 0])  // left
+      makeWall(STAGE.d, STAGE.h, [STAGE.w / 2, STAGE.h / 2, -STAGE.d / 2 + 1],  [0, -Math.PI / 2, 0]) // right
 
       // ── Stage central : plateforme circulaire ──────────────────────
-      const stageGeo = new THREE.CylinderGeometry(3.2, 3.4, 0.25, 64, 1)
+      const stageGeo = new THREE.CylinderGeometry(3.0, 3.2, 0.25, 64, 1)
       const stageMat = new THREE.MeshStandardMaterial({
         color: 0x1a1a1a,
         roughness: 0.4,
         metalness: 0.7
       })
       const stage = new THREE.Mesh(stageGeo, stageMat)
-      stage.position.y = 0.125
+      stage.position.set(0, 0.125, -STAGE.d / 2 + 1)
       stage.receiveShadow = true
       stage.castShadow = true
       scene.add(stage)
       triCount += 128
 
       // Anneau lumineux orange autour du stage
-      const ringGeo = new THREE.TorusGeometry(3.3, 0.04, 8, 100)
+      const ringGeo = new THREE.TorusGeometry(3.1, 0.035, 8, 100)
       const ringMat = new THREE.MeshBasicMaterial({ color: 0xff4500 })
       const ring = new THREE.Mesh(ringGeo, ringMat)
       ring.rotation.x = Math.PI / 2
-      ring.position.y = 0.27
+      ring.position.set(0, 0.27, -STAGE.d / 2 + 1)
       scene.add(ring)
       triCount += 800
 
       // ── Néons orange sur les arêtes hautes (rim light visuel) ──────
+      // Sur les 3 murs présents : back, left, right
       const stripMat = new THREE.MeshBasicMaterial({ color: 0xff4500 })
-      const stripThickness = 0.05
-      const stripDepth = 0.05
+      const stripThickness = 0.04
+      const stripDepth = 0.04
       const makeStrip = (length, pos, rot) => {
         const geo = new THREE.BoxGeometry(length, stripThickness, stripDepth)
         const mesh = new THREE.Mesh(geo, stripMat)
@@ -271,66 +241,19 @@ export default {
         scene.add(mesh)
         triCount += 12
       }
-      // 4 arêtes du plafond
-      const yTop = ROOM.h - 0.1
-      makeStrip(ROOM.w, [0, yTop, -ROOM.d / 2 + 0.1], [0, 0, 0])
-      makeStrip(ROOM.w, [0, yTop, ROOM.d / 2 - 0.1],  [0, 0, 0])
-      makeStrip(ROOM.d, [-ROOM.w / 2 + 0.1, yTop, 0], [0, Math.PI / 2, 0])
-      makeStrip(ROOM.d, [ROOM.w / 2 - 0.1, yTop, 0],  [0, Math.PI / 2, 0])
+      const yTop = STAGE.h - 0.1
+      makeStrip(STAGE.w, [0, yTop, zBack + 0.05], [0, 0, 0])                                            // back top
+      makeStrip(STAGE.d, [-STAGE.w / 2 + 0.05, yTop, -STAGE.d / 2 + 1], [0, Math.PI / 2, 0])            // left top
+      makeStrip(STAGE.d, [STAGE.w / 2 - 0.05, yTop, -STAGE.d / 2 + 1], [0, Math.PI / 2, 0])             // right top
 
-      // ── Logo discret sur le mur du fond ────────────────────────────
-      // Texte "MÉCHANT" en geometry simple via Sprite (texte rastérisé via canvas)
-      const canvas = document.createElement('canvas')
-      canvas.width = 1024
-      canvas.height = 256
-      const ctx = canvas.getContext('2d')
-      ctx.fillStyle = 'rgba(255, 69, 0, 0.85)'
-      ctx.font = '900 180px ApfelGrotezk, Arial Black, sans-serif'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText('MÉCHANT', 512, 128)
-
-      const logoTex = new THREE.CanvasTexture(canvas)
-      logoTex.encoding = THREE.sRGBEncoding
-      const logoMat = new THREE.MeshBasicMaterial({
-        map: logoTex,
-        transparent: true,
-        depthWrite: false
-      })
-      const logoGeo = new THREE.PlaneGeometry(8, 2)
-      const logo = new THREE.Mesh(logoGeo, logoMat)
-      logo.position.set(0, ROOM.h * 0.55, -ROOM.d / 2 + 0.05)
-      scene.add(logo)
-      triCount += 2
-
-      // ── Quelques caisses dans les coins (props) ────────────────────
-      const crateMat = new THREE.MeshStandardMaterial({
-        color: 0x222222,
-        roughness: 0.9,
-        metalness: 0.1
-      })
-      const makeCrate = (size, pos) => {
-        const geo = new THREE.BoxGeometry(size, size, size)
-        const mesh = new THREE.Mesh(geo, crateMat)
-        mesh.position.set(pos[0], size / 2, pos[2])
-        mesh.castShadow = true
-        mesh.receiveShadow = true
-        scene.add(mesh)
-        triCount += 12
-      }
-      makeCrate(1.4, [-7.5, 0, -7])
-      makeCrate(1.0, [-6.5, 0, -8.2])
-      makeCrate(1.2, [7.8, 0, 7.5])
-      makeCrate(0.8, [6.8, 0, 8.5])
-
-      // ── Particules de poussière dans l'air ─────────────────────────
-      const dustCount = 200
+      // ── Particules de poussière dans l'air (volume du stage) ──────
+      const dustCount = 150
       const dustGeo = new THREE.BufferGeometry()
       const dustPos = new Float32Array(dustCount * 3)
       for (let i = 0; i < dustCount; i++) {
-        dustPos[i * 3]     = (Math.random() - 0.5) * ROOM.w * 0.9
-        dustPos[i * 3 + 1] = Math.random() * ROOM.h
-        dustPos[i * 3 + 2] = (Math.random() - 0.5) * ROOM.d * 0.9
+        dustPos[i * 3]     = (Math.random() - 0.5) * STAGE.w * 0.85
+        dustPos[i * 3 + 1] = Math.random() * STAGE.h
+        dustPos[i * 3 + 2] = -STAGE.d / 2 + 1 + (Math.random() - 0.5) * STAGE.d * 0.85
       }
       dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3))
       const dustMat = new THREE.PointsMaterial({
@@ -354,15 +277,18 @@ export default {
       const scene = this._scene
       const lights = []
 
+      // Le centre du stage est à (0, 0, -5) — toutes les lumières gravitent autour
+      const STAGE_CENTER = { x: 0, y: 0, z: -5 }
+
       // Ambient très doux
       const hemi = new THREE.HemisphereLight(0x202030, 0x0a0a0a, 0.4)
       scene.add(hemi)
       lights.push(hemi)
 
-      // Spot principal au-dessus du stage
+      // Spot principal au-dessus du stage, pointe vers les persos
       const spot = new THREE.SpotLight(0xffffff, 4.0, 20, Math.PI / 5, 0.4, 1)
-      spot.position.set(0, 8, 0)
-      spot.target.position.set(0, 0, 0)
+      spot.position.set(STAGE_CENTER.x, 7, STAGE_CENTER.z)
+      spot.target.position.set(STAGE_CENTER.x, 0, STAGE_CENTER.z)
       spot.castShadow = true
       spot.shadow.mapSize.set(1024, 1024)
       spot.shadow.bias = -0.0005
@@ -370,21 +296,21 @@ export default {
       scene.add(spot.target)
       lights.push(spot)
 
-      // Rim light orange front-left
-      const rim1 = new THREE.PointLight(0xff4500, 1.8, 18, 1.5)
-      rim1.position.set(-9, 3, 9)
+      // Rim light orange front-left (vient de la caméra côté gauche)
+      const rim1 = new THREE.PointLight(0xff4500, 1.8, 16, 1.5)
+      rim1.position.set(-5, 3, -2)
       scene.add(rim1)
       lights.push(rim1)
 
       // Rim light orange front-right
-      const rim2 = new THREE.PointLight(0xff4500, 1.8, 18, 1.5)
-      rim2.position.set(9, 3, 9)
+      const rim2 = new THREE.PointLight(0xff4500, 1.8, 16, 1.5)
+      rim2.position.set(5, 3, -2)
       scene.add(rim2)
       lights.push(rim2)
 
-      // Cool blue accent depuis l'arrière pour séparer les persos du fond
-      const back = new THREE.PointLight(0x4080ff, 0.6, 20, 1.5)
-      back.position.set(0, 4, -10)
+      // Cool blue accent depuis l'arrière pour décoller les persos du mur du fond
+      const back = new THREE.PointLight(0x4080ff, 0.7, 16, 1.5)
+      back.position.set(0, 4, -9)
       scene.add(back)
       lights.push(back)
 
@@ -407,40 +333,10 @@ export default {
       }
     },
 
-    setView (view) {
-      this.cameraView = view
-      const presets = {
-        iso:  { pos: [8, 5, 10],  target: [0, 1, 0] },
-        side: { pos: [13, 2, 0],  target: [0, 1, 0] },
-        top:  { pos: [0.1, 14, 0.1], target: [0, 0, 0] }
-      }
-      const p = presets[view]
-      if (!p) return
-
-      const startPos = this._camera.position.clone()
-      const startTarget = this._controls.target.clone()
-      const endPos = new this._THREE.Vector3(...p.pos)
-      const endTarget = new this._THREE.Vector3(...p.target)
-      const duration = 700
-      const t0 = performance.now()
-      const ease = (t) => 1 - Math.pow(1 - t, 3)
-
-      const animate = () => {
-        const elapsed = performance.now() - t0
-        const t = Math.min(elapsed / duration, 1)
-        const e = ease(t)
-        this._camera.position.lerpVectors(startPos, endPos, e)
-        this._controls.target.lerpVectors(startTarget, endTarget, e)
-        if (t < 1) requestAnimationFrame(animate)
-      }
-      animate()
-    },
-
     _destroyThree () {
       cancelAnimationFrame(this._raf)
       window.removeEventListener('resize', this._onResize)
 
-      if (this._controls) this._controls.dispose()
       if (this._scene) {
         this._scene.traverse((obj) => {
           if (obj.isMesh || obj.isPoints) {
@@ -468,7 +364,6 @@ export default {
       this._scene = null
       this._camera = null
       this._renderer = null
-      this._controls = null
       this._lights = null
       this._rimLights = null
       this._dust = null
