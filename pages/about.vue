@@ -43,7 +43,7 @@
           v-for="(line, li) in content.intro.lines"
           :key="li"
           class="line"
-          :class="{ 'line--small': li > 0 }"
+          :class="{ 'line--small': li > 0, 'line--lead': li === 0 }"
         >
           <span
             v-for="(w, wi) in line"
@@ -74,90 +74,71 @@
       </div>
     </section>
 
-    <!-- ── COMBO : Services + Awards dans une section pinned ──────────── -->
-    <!-- Au scroll vertical, on translate horizontalement entre les 2 panneaux -->
-    <section class="AboutPage_combo" ref="combo">
-      <!-- Indicateur de panneau actif -->
-      <div class="AboutPage_combo_indicator" ref="comboIndicator">
-        <div class="AboutPage_combo_indicator_item is-active">
-          <span class="num">01</span>
-          <span class="label">What we do</span>
-        </div>
-        <div class="AboutPage_combo_indicator_track">
-          <div class="bar" ref="comboBar"></div>
-        </div>
-        <div class="AboutPage_combo_indicator_item">
-          <span class="num">02</span>
-          <span class="label">Awards</span>
-        </div>
+    <!-- ── SERVICES : grandes lignes éditoriales avec numéros XL ───────── -->
+    <section class="AboutPage_services" ref="services">
+      <div class="AboutPage_services_head">
+        <p class="AboutPage_services_kicker">{{ content.services.kicker }}</p>
+        <h2 class="AboutPage_services_title" ref="servicesTitle">
+          <span class="line">What</span>
+          <span class="line italic">we do.</span>
+        </h2>
+        <p class="AboutPage_services_count">
+          <span ref="serviceCounter">{{ String(content.services.list.length).padStart(2, '0') }}</span><span class="total">/{{ String(content.services.list.length).padStart(2, '0') }}</span>
+        </p>
       </div>
 
-      <!-- Track horizontal : 200% de large, contient les 2 panneaux -->
-      <div class="AboutPage_combo_track" ref="comboTrack">
+      <ul class="AboutPage_services_list" ref="servicesList">
+        <li
+          v-for="(s, i) in content.services.list"
+          :key="s.label"
+          class="AboutPage_services_item"
+        >
+          <span class="num">{{ String(i + 1).padStart(2, '0') }}.</span>
+          <span class="label">{{ s.label }}</span>
+          <span class="desc">{{ s.desc }}</span>
+        </li>
+      </ul>
+    </section>
 
-        <!-- PANNEAU SERVICES -->
-        <div class="AboutPage_combo_panel AboutPage_combo_panel--services" ref="services">
-          <div class="AboutPage_combo_panel_inner">
-            <div class="AboutPage_services_head">
-              <p class="AboutPage_services_kicker">{{ content.services.kicker }}</p>
-              <p class="AboutPage_services_count">
-                <span ref="serviceCounter">{{ String(content.services.list.length).padStart(2, '0') }}</span><span class="total">/{{ String(content.services.list.length).padStart(2, '0') }}</span>
-              </p>
-            </div>
+    <!-- ── AWARDS : section autonome, fond dark, typo éditoriale ──────── -->
+    <section class="AboutPage_awards" ref="awards">
 
-            <ul class="AboutPage_services_list" ref="servicesList">
-              <li v-for="(s, i) in content.services.list" :key="s.label" class="AboutPage_services_item">
-                <span class="num">{{ String(i + 1).padStart(2, '0') }}</span>
-                <span class="label">{{ s.label }}</span>
-                <span class="desc">{{ s.desc }}</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- PANNEAU AWARDS -->
-        <div class="AboutPage_combo_panel AboutPage_combo_panel--awards" ref="awards">
-          <div class="AboutPage_combo_panel_inner">
-            <div class="AboutPage_awards_intro" ref="awardsIntro">
-              <p class="AboutPage_awards_kicker">{{ content.awards.kicker }}</p>
-              <h2 class="AboutPage_awards_title">
-                <span
-                  v-for="(line, i) in content.awards.titleLines"
-                  :key="i"
-                  class="line"
-                  :class="{ italic: line.italic }"
-                >{{ line.text }}</span>
-              </h2>
-              <p class="AboutPage_awards_total">
-                <span class="num">{{ content.awards.list.length }}</span>
-                <span class="sep">/</span>
-                <span>{{ content.awards.totalLabel }}</span>
-              </p>
-            </div>
-
-            <ul class="AboutPage_awards_list" ref="awardsList">
-              <li
-                v-for="(award, i) in content.awards.list"
-                :key="i"
-                class="AboutPage_awards_item"
-              >
-                <span class="index">{{ String(i + 1).padStart(2, '0') }}</span>
-                <span class="year">{{ award.year }}</span>
-                <span class="name">{{ award.name }}</span>
-                <span class="tag">
-                  <span class="dot"></span>
-                  {{ award.tag }}
-                </span>
-                <svg class="arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                  <polyline points="12,5 19,12 12,19"/>
-                </svg>
-              </li>
-            </ul>
-          </div>
-        </div>
-
+      <div class="AboutPage_awards_intro" ref="awardsIntro">
+        <p class="AboutPage_awards_kicker">{{ content.awards.kicker }}</p>
+        <h2 class="AboutPage_awards_title">
+          <span
+            v-for="(line, i) in content.awards.titleLines"
+            :key="i"
+            class="line"
+            :class="{ italic: line.italic }"
+          >{{ line.text }}</span>
+        </h2>
+        <p class="AboutPage_awards_total">
+          <span class="num">{{ content.awards.list.length }}</span>
+          <span class="sep">/</span>
+          <span>{{ content.awards.totalLabel }}</span>
+        </p>
       </div>
+
+      <ul class="AboutPage_awards_list" ref="awardsList">
+        <li
+          v-for="(award, i) in content.awards.list"
+          :key="i"
+          class="AboutPage_awards_item"
+        >
+          <span class="index">{{ String(i + 1).padStart(2, '0') }}</span>
+          <span class="year">{{ award.year }}</span>
+          <span class="name">{{ award.name }}</span>
+          <span class="tag">
+            <span class="dot"></span>
+            {{ award.tag }}
+          </span>
+          <svg class="arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12,5 19,12 12,19"/>
+          </svg>
+        </li>
+      </ul>
     </section>
 
     <!-- ── VISIT US (slot pour scan 3D) ────────────────────────────────── -->
@@ -249,7 +230,8 @@ export default {
       this._animateBgColors()
       this._animateIntro()
       this._animateManifesto()
-      this._animateCombo()
+      this._animateServices()
+      this._animateAwards()
       this._animateVisit()
     },
 
@@ -302,8 +284,9 @@ export default {
       const stops = [
         { trigger: this.$refs.intro,     enter: c.intro,     back: c.hero      },
         { trigger: this.$refs.manifesto, enter: c.manifesto, back: c.intro     },
-        { trigger: this.$refs.combo,     enter: c.combo,     back: c.manifesto },
-        { trigger: this.$refs.visit,     enter: c.visit,     back: c.combo     }
+        { trigger: this.$refs.services,  enter: c.services,  back: c.manifesto },
+        { trigger: this.$refs.awards,    enter: c.awards,    back: c.services  },
+        { trigger: this.$refs.visit,     enter: c.visit,     back: c.awards    }
       ]
 
       stops.forEach(({ trigger, enter, back }) => {
@@ -404,88 +387,29 @@ export default {
       })
     },
 
-    // ── Combo : pin + scroll horizontal entre Services et Awards ──────
-    _animateCombo () {
-      const combo = this.$refs.combo
-      const track = this.$refs.comboTrack
-      if (!combo || !track) return
+    // ── Services : titre éditorial + items qui slident ─────────────────
+    _animateServices () {
+      const items = this.$refs.servicesList.querySelectorAll('.AboutPage_services_item')
+      const head = this.$refs.services.querySelector('.AboutPage_services_head')
+      const titleLines = this.$refs.servicesTitle.querySelectorAll('.line')
 
-      const isMobile = window.matchMedia('(max-width: 768px)').matches
+      gsap.set(items, { x: -80, opacity: 0 })
+      gsap.set(head, { opacity: 0 })
+      gsap.set(titleLines, { yPercent: 110, opacity: 0 })
 
-      // Mobile : pas de pin, panneaux empilés verticalement (CSS handle ça)
-      // On lance juste les anims internes des deux panneaux à l'entrée.
-      if (isMobile) {
-        this._animateComboReveals('top 75%', 'top 75%')
-        return
-      }
-
-      // Desktop : pin la section, translate le track horizontalement
-      const horizontalTween = gsap.to(track, {
-        xPercent: -50, // 200% wide → translate de -100vw = -50% du track
-        ease: 'none',
-        scrollTrigger: {
-          trigger: combo,
-          start: 'top top',
-          end: '+=130%',
-          pin: true,
-          scrub: 1,
-          anticipatePin: 1,
-          invalidateOnRefresh: true
-        }
-      })
-      this._triggers.push(horizontalTween.scrollTrigger)
-
-      // Indicateur : barre de progression qui bouge entre les 2 labels
-      // + bascule de la classe is-active
-      const items = this.$refs.comboIndicator.querySelectorAll('.AboutPage_combo_indicator_item')
-      const bar = this.$refs.comboBar
-      gsap.set(bar, { xPercent: 0 })
-
-      const barTween = gsap.to(bar, {
-        xPercent: 100,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: combo,
-          start: 'top top',
-          end: '+=130%',
-          scrub: 0.5,
-          onUpdate: (self) => {
-            const isAwards = self.progress > 0.5
-            items[0].classList.toggle('is-active', !isAwards)
-            items[1].classList.toggle('is-active', isAwards)
-          }
-        }
-      })
-      this._triggers.push(barTween.scrollTrigger)
-
-      // Reveals desktop : services au début du pin, awards quand le panneau arrive
-      this._animateComboReveals(
-        { trigger: combo, start: 'top 80%' },                    // services (au moment du pin)
-        { trigger: combo, start: 'top top-=40%', end: '+=20%' }  // awards (vers la moitié du scroll horizontal)
-      )
-    },
-
-    // Helper : reveals internes des deux panneaux
-    _animateComboReveals (servicesST, awardsST) {
-      // ── SERVICES PANEL ─────────────────────────────────────────────
-      const servicesItems = this.$refs.servicesList.querySelectorAll('.AboutPage_services_item')
-      const servicesHead  = this.$refs.services.querySelector('.AboutPage_services_head')
-
-      gsap.set(servicesItems, { x: -60, opacity: 0 })
-      gsap.set(servicesHead, { opacity: 0, y: 20 })
-
-      this._track(gsap.to(servicesHead, {
-        opacity: 1, y: 0, duration: 0.6, ease: 'power2.out',
-        scrollTrigger: typeof servicesST === 'string'
-          ? { trigger: this.$refs.services, start: servicesST }
-          : servicesST
+      this._track(gsap.to(head, {
+        opacity: 1, duration: 0.6, ease: 'power2.out',
+        scrollTrigger: { trigger: this.$refs.services, start: 'top 75%' }
       }))
 
-      this._track(gsap.to(servicesItems, {
+      this._track(gsap.to(titleLines, {
+        yPercent: 0, opacity: 1, stagger: 0.12, duration: 0.9, ease: 'power4.out',
+        scrollTrigger: { trigger: this.$refs.servicesTitle, start: 'top 80%' }
+      }))
+
+      this._track(gsap.to(items, {
         x: 0, opacity: 1, stagger: 0.08, duration: 0.7, ease: 'power3.out',
-        scrollTrigger: typeof servicesST === 'string'
-          ? { trigger: this.$refs.servicesList, start: servicesST }
-          : { ...servicesST, start: typeof servicesST === 'string' ? servicesST : (servicesST.start || 'top 80%') }
+        scrollTrigger: { trigger: this.$refs.servicesList, start: 'top 80%' }
       }))
 
       // Counter 00 → length
@@ -494,48 +418,44 @@ export default {
         val: this.content.services.list.length,
         duration: 1.2,
         ease: 'power2.out',
-        scrollTrigger: typeof servicesST === 'string'
-          ? { trigger: this.$refs.services, start: servicesST }
-          : servicesST,
+        scrollTrigger: { trigger: this.$refs.services, start: 'top 75%' },
         onUpdate: () => {
           if (this.$refs.serviceCounter) {
             this.$refs.serviceCounter.textContent = String(Math.round(counter.val)).padStart(2, '0')
           }
         }
       }))
+    },
 
-      // ── AWARDS PANEL ───────────────────────────────────────────────
-      const awardsItems = this.$refs.awardsList.querySelectorAll('.AboutPage_awards_item')
+    // ── Awards : titre + items en cascade ──────────────────────────────
+    _animateAwards () {
+      const items = this.$refs.awardsList.querySelectorAll('.AboutPage_awards_item')
       const titleLines = this.$refs.awards.querySelectorAll('.AboutPage_awards_title .line')
-      const awardsKicker = this.$refs.awards.querySelector('.AboutPage_awards_kicker')
-      const awardsTotal = this.$refs.awards.querySelector('.AboutPage_awards_total')
+      const kicker = this.$refs.awards.querySelector('.AboutPage_awards_kicker')
+      const total = this.$refs.awards.querySelector('.AboutPage_awards_total')
 
-      gsap.set(awardsItems, { y: 40, opacity: 0 })
+      gsap.set(items, { y: 40, opacity: 0 })
       gsap.set(titleLines, { yPercent: 110, opacity: 0 })
-      gsap.set([awardsKicker, awardsTotal], { opacity: 0, y: 20 })
+      gsap.set([kicker, total], { opacity: 0, y: 20 })
 
-      const awardsBaseST = typeof awardsST === 'string'
-        ? { trigger: this.$refs.awards, start: awardsST }
-        : awardsST
-
-      this._track(gsap.to(awardsKicker, {
+      this._track(gsap.to(kicker, {
         opacity: 1, y: 0, duration: 0.6, ease: 'power2.out',
-        scrollTrigger: awardsBaseST
+        scrollTrigger: { trigger: this.$refs.awards, start: 'top 75%' }
       }))
 
       this._track(gsap.to(titleLines, {
         yPercent: 0, opacity: 1, stagger: 0.12, duration: 0.9, ease: 'power4.out',
-        scrollTrigger: awardsBaseST
+        scrollTrigger: { trigger: this.$refs.awardsIntro, start: 'top 80%' }
       }))
 
-      this._track(gsap.to(awardsTotal, {
+      this._track(gsap.to(total, {
         opacity: 1, y: 0, duration: 0.6, ease: 'power2.out',
-        scrollTrigger: awardsBaseST
+        scrollTrigger: { trigger: this.$refs.awardsIntro, start: 'top 75%' }
       }))
 
-      this._track(gsap.to(awardsItems, {
+      this._track(gsap.to(items, {
         y: 0, opacity: 1, stagger: 0.08, duration: 0.7, ease: 'power3.out',
-        scrollTrigger: awardsBaseST
+        scrollTrigger: { trigger: this.$refs.awardsList, start: 'top 85%' }
       }))
     },
 
@@ -698,6 +618,10 @@ export default {
         display: block
         overflow: visible
 
+        &--lead
+          white-space: nowrap
+          line-height: 1.05
+
         &--small
           font-weight: 400
           font-size: clamp(1.6rem, 3vw, 3.6rem)
@@ -711,12 +635,12 @@ export default {
         margin-right: 0.3em
 
         &--lead
-          font-size: clamp(3.5rem, 9vw, 11rem)
+          font-size: clamp(2.8rem, 8vw, 9rem)
           font-weight: 900
           text-transform: uppercase
 
         &--accent
-          font-size: clamp(3.5rem, 9vw, 11rem)
+          font-size: clamp(2.8rem, 8vw, 9rem)
           font-weight: 400
           font-style: italic
           color: $white
@@ -823,130 +747,89 @@ export default {
         background: $white
         margin: 0 0.4em 0 0.4em
 
-  // ── COMBO (Services + Awards pinned, scroll horizontal) ──────────────
-  &_combo
-    position: relative
-    width: 100%
-    height: 100vh
-    overflow: hidden
+  // ── SERVICES (section éditoriale standalone) ─────────────────────────
+  &_services
+    padding: 18vh 5vw
+    max-width: 1700px
+    margin: 0 auto
 
     +breakpoint(mobile)
-      height: auto
-      overflow: visible
-
-    &_indicator
-      position: absolute
-      top: 8rem
-      left: 50%
-      transform: translateX(-50%)
-      z-index: 5
-      display: flex
-      align-items: center
-      gap: 1.4rem
-      pointer-events: none
-
-      +breakpoint(mobile)
-        display: none
-
-      &_item
-        display: flex
-        align-items: baseline
-        gap: 0.5rem
-        font-family: $apfel
-        font-size: 0.8rem
-        letter-spacing: 0.18em
-        text-transform: uppercase
-        color: rgba(255, 255, 255, 0.4)
-        transition: color 0.4s ease
-
-        .num
-          font-weight: 900
-          font-size: 0.7rem
-          opacity: 0.6
-
-        &.is-active
-          color: $white
-
-      &_track
-        position: relative
-        width: 5rem
-        height: 1px
-        background: rgba(255, 255, 255, 0.3)
-
-        .bar
-          position: absolute
-          inset: 0 auto 0 0
-          width: 1.2rem
-          background: $white
-          will-change: transform
-
-    &_track
-      display: flex
-      width: 200%
-      height: 100%
-      will-change: transform
-
-      +breakpoint(mobile)
-        flex-direction: column
-        width: 100%
-        height: auto
-
-    &_panel
-      flex: 0 0 50%
-      width: 50%
-      height: 100%
-      display: flex
-      align-items: center
-      overflow-y: auto
-
-      +breakpoint(mobile)
-        flex: 0 0 auto
-        width: 100%
-        height: auto
-        padding: 12vh 0
-
-      &--awards
-        background: #0a0a0a
-
-      &_inner
-        width: 100%
-        max-width: 1500px
-        margin: 0 auto
-        padding: 6rem 5vw
-
-        +breakpoint(mobile)
-          padding: 0 5vw
-
-  // ── SERVICES (panneau gauche dans le combo) ──────────────────────────
-  &_services
-    width: 100%
+      padding: 12vh 5vw
 
     &_head
-      display: flex
-      justify-content: space-between
-      align-items: baseline
+      display: grid
+      grid-template-columns: 1fr auto
+      align-items: end
+      gap: 2rem
       margin-bottom: 6rem
-      padding-bottom: 1.2rem
-      border-bottom: 1px solid rgba(0, 0, 0, 0.15)
+      padding-bottom: 2rem
+      border-bottom: 2px solid rgba(0, 0, 0, 0.18)
+
+      +breakpoint(mobile)
+        grid-template-columns: 1fr
+        margin-bottom: 4rem
 
     &_kicker
+      grid-column: 1
+      grid-row: 1
       font-family: $apfel
       font-size: 0.8rem
       letter-spacing: 0.2em
       text-transform: uppercase
       color: rgba(0, 0, 0, 0.6)
+      margin: 0 0 2rem
+
+    &_title
+      grid-column: 1
+      grid-row: 2
+      font-family: $apfel
+      font-weight: 900
+      font-size: clamp(2.8rem, 7vw, 7.5rem)
+      line-height: 0.92
+      text-transform: uppercase
+      color: $black
+      letter-spacing: -0.02em
       margin: 0
 
+      .line
+        display: block
+        overflow: hidden
+        padding-bottom: 0.05em
+
+        &.italic
+          font-weight: 400
+          font-style: italic
+          color: $white
+
     &_count
+      grid-column: 2
+      grid-row: 2
+      align-self: end
       font-family: $apfel
       font-weight: 700
-      font-size: 0.8rem
-      letter-spacing: 0.1em
+      font-size: 0.85rem
+      letter-spacing: 0.18em
       color: rgba(0, 0, 0, 0.6)
       margin: 0
+      display: flex
+      align-items: baseline
+      gap: 0.3rem
+
+      > span:first-child
+        font-family: $apfel
+        font-weight: 900
+        font-size: clamp(2rem, 3vw, 3rem)
+        color: $black
+        letter-spacing: -0.02em
+        line-height: 1
 
       .total
         opacity: 0.4
+
+      +breakpoint(mobile)
+        grid-column: 1
+        grid-row: 3
+        margin-top: 1rem
 
     &_list
       list-style: none
@@ -1001,9 +884,14 @@ export default {
         color: rgba(0, 0, 0, 0.6)
         font-style: italic
 
-  // ── AWARDS (panneau droit dans le combo) ─────────────────────────────
+  // ── AWARDS (section autonome sur fond dark) ──────────────────────────
   &_awards
-    width: 100%
+    padding: 22vh 5vw 18vh
+    max-width: 1700px
+    margin: 0 auto
+
+    +breakpoint(mobile)
+      padding: 14vh 5vw
 
     &_intro
       display: grid
