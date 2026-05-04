@@ -72,10 +72,12 @@ import { mapGetters, mapActions } from 'vuex'
 import { gsap } from '@/vendor/gsap'
 import { supabase } from '@/utils/supabase'
 import SimpleFooter from '@/components/SimpleFooter'
+import smoothScroll from '@/mixins/smoothScroll'
 
 export default {
   name: 'WorksAll',
   components: { SimpleFooter },
+  mixins: [smoothScroll],
 
   head() {
     return {

@@ -185,6 +185,7 @@ import { ScrollTrigger } from '@/vendor/gsap/ScrollTrigger'
 import { SplitText } from '@/vendor/gsap/SplitText'
 import SimpleFooter from '@/components/SimpleFooter'
 import aboutContent from '@/content/about'
+import smoothScroll from '@/mixins/smoothScroll'
 
 gsap.registerPlugin(ScrollTrigger)
 gsap.registerPlugin(SplitText)
@@ -193,6 +194,7 @@ export default {
   name: 'About',
 
   components: { SimpleFooter },
+  mixins: [smoothScroll],
 
   head () {
     return {
@@ -214,10 +216,7 @@ export default {
   mounted () {
     this._splits = []
     this._triggers = []
-    this.$nextTick(() => {
-      this._initLenis()
-      this._initAnimations()
-    })
+    this.$nextTick(() => this._initAnimations())
   },
 
   beforeDestroy () {
@@ -225,38 +224,10 @@ export default {
     ;(this._triggers || []).forEach(t => t.kill && t.kill())
     this._splits = []
     this._triggers = []
-    if (this._lenis) {
-      gsap.ticker.remove(this._lenisRaf)
-      this._lenis.destroy()
-      this._lenis = null
-      this._lenisRaf = null
-    }
+    // Lenis cleanup est géré par le mixin smoothScroll
   },
 
   methods: {
-    // Smooth scroll via Lenis — branche les ticks dans le ticker GSAP
-    // pour que ScrollTrigger reste en sync avec le scroll lerpé
-    async _initLenis () {
-      if (typeof window === 'undefined') return
-      const Lenis = (await import('lenis')).default
-
-      this._lenis = new Lenis({
-        duration: 1.2,        // durée du lerp en secondes
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // easeOutExpo
-        smoothWheel: true,
-        smoothTouch: false,   // mobile : scroll natif (plus naturel au doigt)
-        wheelMultiplier: 1
-      })
-
-      // Sync ScrollTrigger avec Lenis
-      this._lenis.on('scroll', ScrollTrigger.update)
-
-      // Drive Lenis depuis le ticker GSAP (un seul RAF pour tout le monde)
-      this._lenisRaf = (time) => this._lenis.raf(time * 1000)
-      gsap.ticker.add(this._lenisRaf)
-      gsap.ticker.lagSmoothing(0)
-    },
-
     _initAnimations () {
       this._animateHero()
       this._animateBgColors()
