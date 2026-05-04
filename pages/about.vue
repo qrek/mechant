@@ -259,31 +259,43 @@ export default {
       }))
     },
 
-    // ── Background : palette enrichie au scroll ────────────────────────
-    // Couleurs définies dans content/about.js → content.bgColors
-    // [hero, intro, manifesto, manifesto-deep, services, services-deep, awards, visit]
+    // ── Background : transition douce à l'entrée de chaque section ────
+    // Chaque section déclenche un fade vers sa couleur (durée 0.8s).
+    // Pas de scrub : pas de saut, pas de chevauchement, pas de trou.
     _animateBgColors () {
       const bg = this.$refs.bg
-      const colors = this.content.bgColors
-      gsap.set(bg, { backgroundColor: colors[0] })
+      const c = this.content.bgColors
+      gsap.set(bg, { backgroundColor: c.hero })
 
+      // Liste ordonnée des transitions : section déclencheur + couleur cible
+      // + couleur de retour si on remonte au-dessus
       const stops = [
-        { color: colors[1], trigger: this.$refs.intro,     start: 'top bottom', end: 'top top' },
-        { color: colors[2], trigger: this.$refs.manifesto, start: 'top bottom', end: 'top center' },
-        { color: colors[3], trigger: this.$refs.manifesto, start: 'top center', end: 'bottom top' },
-        { color: colors[4], trigger: this.$refs.services,  start: 'top bottom', end: 'top center' },
-        { color: colors[5], trigger: this.$refs.services,  start: 'top center', end: 'bottom top' },
-        { color: colors[6], trigger: this.$refs.awards,    start: 'top bottom', end: 'top center' },
-        { color: colors[7], trigger: this.$refs.visit,     start: 'top bottom', end: 'top 30%' }
+        { trigger: this.$refs.intro,     enter: c.intro,     back: c.hero      },
+        { trigger: this.$refs.manifesto, enter: c.manifesto, back: c.intro     },
+        { trigger: this.$refs.services,  enter: c.services,  back: c.manifesto },
+        { trigger: this.$refs.awards,    enter: c.awards,    back: c.services  },
+        { trigger: this.$refs.visit,     enter: c.visit,     back: c.awards    }
       ]
 
-      stops.forEach(({ color, trigger, start, end }) => {
-        if (!color || !trigger) return
-        this._track(gsap.to(bg, {
-          backgroundColor: color,
-          ease: 'none',
-          scrollTrigger: { trigger, start, end, scrub: 1 }
-        }))
+      stops.forEach(({ trigger, enter, back }) => {
+        if (!trigger || !enter) return
+        const st = ScrollTrigger.create({
+          trigger,
+          start: 'top 60%',           // déclenche quand la section atteint 60% du viewport
+          onEnter: () => gsap.to(bg, {
+            backgroundColor: enter,
+            duration: 0.9,
+            ease: 'power2.inOut',
+            overwrite: true
+          }),
+          onLeaveBack: () => gsap.to(bg, {
+            backgroundColor: back,
+            duration: 0.9,
+            ease: 'power2.inOut',
+            overwrite: true
+          })
+        })
+        this._triggers.push(st)
       })
     },
 

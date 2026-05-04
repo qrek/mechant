@@ -104,16 +104,14 @@ export default {
     mapsUrl: 'https://www.google.fr/maps/place/27+Rue+des+Cascades,+75020+Paris'
   },
 
-  // Palette du fond, jouée dans l'ordre au scroll (un stop par couleur)
+  // Palette du fond — une couleur par section, transition douce à l'entrée
   // 4 couleurs de marque : orange / bleu clair / vert / dark
-  bgColors: [
-    '#ff4500', // [0] hero          → orange Méchant
-    '#b5daff', // [1] intro         → bleu clair (changement net entre hero et intro)
-    '#b5daff', // [2] manifesto top → reste sur le bleu
-    '#14914f', // [3] manifesto deep→ vert profond
-    '#14914f', // [4] services      → vert
-    '#2a2a2a', // [5] services deep → transition vers dark
-    '#2a2a2a', // [6] awards        → dark
-    '#ff4500'  // [7] visit         → retour orange
-  ]
+  bgColors: {
+    hero:      '#ff4500', // orange Méchant
+    intro:     '#b5daff', // bleu clair (transition orange → bleu)
+    manifesto: '#14914f', // vert profond
+    services:  '#14914f', // vert (reste pareil — pas de transition)
+    awards:    '#2a2a2a', // dark
+    visit:     '#ff4500'  // retour orange
+  }
 }
