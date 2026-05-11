@@ -4,7 +4,7 @@
     <div class="WorksPage_bg" ref="bg" />
 
     <div class="WorksPage_float" ref="float">
-      <video ref="floatVideo" muted loop playsinline class="WorksPage_float_video" />
+      <video ref="floatVideo" muted loop playsinline preload="none" class="WorksPage_float_video" />
     </div>
 
     <div class="WorksPage_main">
@@ -63,7 +63,6 @@ export default {
     // Propriétés d'instance non-réactives (ne pas mettre dans data() avec _ préfixe)
     this._hideTimer = null
     this._currentSrc = null
-    this._preloadCache = {}
     this._splits = []
     this._itemParallax = []
     this._floatQuickX = null
@@ -77,7 +76,8 @@ export default {
     } catch (_) {}
 
     await this.$nextTick()
-    this._preloadVideos()
+    // NOTE: pas de preload des vidéos — on charge à la demande au hover
+    // (chaque preview pèse jusqu'à 10 Mo, le preload massacrait la bande passante)
     this._setupParallax()
     this._animateIn()
   },
@@ -85,9 +85,7 @@ export default {
   beforeDestroy () {
     clearTimeout(this._hideTimer)
     const video = this.$refs.floatVideo
-    if (video) { video.pause(); video.src = '' }
-    Object.values(this._preloadCache || {}).forEach(v => { v.src = ''; v.load() })
-    this._preloadCache = {}
+    if (video) { video.pause(); video.removeAttribute('src'); video.load() }
     ;(this._splits || []).forEach(st => st.revert())
     this._splits = []
     const float = this.$refs.float
@@ -195,19 +193,6 @@ export default {
       })
     },
 
-    _preloadVideos () {
-      this.featuredProjects.forEach(project => {
-        const url = project.preview_video || project.video_home
-        if (!url || this._preloadCache[project.id]) return
-        const v = document.createElement('video')
-        v.src = url
-        v.muted = true
-        v.preload = 'metadata'
-        v.load()
-        this._preloadCache[project.id] = v
-      })
-    },
-
     _setupParallax () {
       // Float video — lag lent, suit le curseur en retard
       const float = this.$refs.float
@@ -267,8 +252,15 @@ export default {
       if (!float) return
       float.classList.remove('is-visible')
       this._hideTimer = setTimeout(() => {
-        if (this.$refs.floatVideo) this.$refs.floatVideo.pause()
-      }, 300)
+        const video = this.$refs.floatVideo
+        if (video) {
+          video.pause()
+          // Libère la connexion pour ne pas continuer à streamer en arrière-plan
+          video.removeAttribute('src')
+          video.load()
+          this._currentSrc = null
+        }
+      }, 400)
     },
 
     openProject (project) {

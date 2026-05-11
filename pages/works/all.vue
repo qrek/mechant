@@ -43,14 +43,9 @@
             alt=""
             class="AllWork_row_thumb"
           />
-          <video
-            :data-src="project.preview_video || project.video_home || ''"
-            muted
-            loop
-            playsinline
-            preload="none"
-            class="AllWork_row_video"
-          />
+          <!-- Vidéo de row supprimée pour économiser la bande passante :
+               on n'affiche QUE la bg fullscreen au hover (plus impactante)
+               au lieu de charger 2 streams en parallèle (20 Mo/hover) -->
         </div>
 
         <span class="AllWork_row_cat">{{ getCategoryLabel(project) }}</span>
@@ -145,29 +140,12 @@ export default {
       return types.join(' / ')
     },
 
-    onHover(project, e) {
+    onHover(project) {
       this.hoveredId = project.id
       this.setId(project.id)
       clearTimeout(this.__bgTimer)
 
-      // Vidéo par ligne
-      const rowVideo = e.currentTarget.querySelector('.AllWork_row_video')
-      if (rowVideo) {
-        const src = rowVideo.dataset.src
-        if (src) {
-          if (this.__currentVideo && this.__currentVideo !== rowVideo) {
-            this.__currentVideo.pause()
-            this.__currentVideo.classList.remove('is-active')
-          }
-          if (!rowVideo.src) rowVideo.src = src
-          rowVideo.currentTime = 0
-          rowVideo.play().catch(() => {})
-          rowVideo.classList.add('is-active')
-          this.__currentVideo = rowVideo
-        }
-      }
-
-      // Vidéo fond plein écran
+      // Vidéo fond plein écran (seule vidéo qu'on charge maintenant)
       const url = project.preview_video || project.video_home || null
       const bgVideo = this.$refs.bgVideo
       if (bgVideo && url) {
@@ -180,17 +158,18 @@ export default {
       }
     },
 
-    onLeave(e) {
+    onLeave() {
       this.hoveredId = null
-      const rowVideo = e.currentTarget.querySelector('.AllWork_row_video')
-      if (rowVideo) {
-        rowVideo.pause()
-        rowVideo.classList.remove('is-active')
-      }
-      this.__currentVideo = null
       this.__bgTimer = setTimeout(() => {
-        if (this.$refs.bgVideo) this.$refs.bgVideo.pause()
-      }, 400)
+        const bgVideo = this.$refs.bgVideo
+        if (bgVideo) {
+          bgVideo.pause()
+          // Libère le stream pour ne pas continuer à télécharger en arrière-plan
+          bgVideo.removeAttribute('src')
+          bgVideo.load()
+          this.__bgSrc = null
+        }
+      }, 500)
     },
 
     openProject(project) {
