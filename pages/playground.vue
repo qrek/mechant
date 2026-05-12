@@ -23,7 +23,7 @@
     <transition name="fade">
       <div v-if="loading" class="Playground_loader">
         <div class="Playground_loader_inner">
-          <div class="Playground_loader_label">Loading scene</div>
+          <div class="Playground_loader_label">Loading character</div>
           <div v-if="progress > 0" class="Playground_loader_track">
             <div class="Playground_loader_bar" :style="{ width: progress + '%' }"></div>
           </div>
@@ -47,7 +47,8 @@ export default {
 
   data () {
     return {
-      sceneUrl: '/playground/scene.glb',
+      // GLB du perso (placé dans la box blanche, face caméra)
+      characterUrl: '/playground/scene.glb',
       loading: true,
       progress: 0,
       comingSoon: 'Théo & Ronan dropping in soon',
@@ -73,16 +74,16 @@ export default {
       const width = container.clientWidth
       const height = container.clientHeight
 
-      // ── Scene : fond blanc cassé, fog blanc pour adoucir la profondeur ──
+      // ── Scene : blanc cassé, fog blanc subtil pour adoucir les profondeurs ──
       const scene = new THREE.Scene()
-      scene.background = new THREE.Color(0xf5f5f5)
-      scene.fog = new THREE.Fog(0xf5f5f5, 8, 30)
+      scene.background = new THREE.Color(0xf2f2f0)
+      scene.fog = new THREE.Fog(0xf2f2f0, 10, 35)
       this._scene = scene
 
-      // ── Camera : fixe, de face, rotation Y = 0 ─────────────────────
+      // ── Camera : fixe, hauteur d'œil, regard horizontal pur ──────
       const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100)
-      camera.position.set(0, 1.6, 5)
-      camera.lookAt(0, 1.4, 0)
+      camera.position.set(0, 1.6, 4.5)
+      camera.lookAt(0, 1.4, 0)        // rotation Y = 0, légère plongée
       this._camera = camera
 
       // ── Renderer ─────────────────────────────────────────────────
@@ -91,46 +92,31 @@ export default {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
       renderer.outputEncoding = THREE.sRGBEncoding
       renderer.toneMapping = THREE.ACESFilmicToneMapping
-      renderer.toneMappingExposure = 1.05
+      renderer.toneMappingExposure = 0.95     // un poil sous-exposé = tamisé
       renderer.shadowMap.enabled = true
       renderer.shadowMap.type = THREE.PCFSoftShadowMap
       renderer.physicallyCorrectLights = true
       container.appendChild(renderer.domElement)
       this._renderer = renderer
 
-      // ── Lumières : éclairage studio clean ─────────────────────────
+      // ── Box blanche (sol + 3 murs) ───────────────────────────────
+      this._buildBox()
+
+      // ── Lighting tamisée ─────────────────────────────────────────
       this._buildLights()
 
-      // ── Charge la scène GLB ──────────────────────────────────────
+      // ── Charge le perso ──────────────────────────────────────────
       try {
-        const head = await fetch(this.sceneUrl, { method: 'HEAD' })
+        const head = await fetch(this.characterUrl, { method: 'HEAD' })
         const bytes = parseInt(head.headers.get('content-length') || '0', 10)
         if (bytes) this.stats.fileSize = this._formatBytes(bytes)
       } catch (_) {}
 
       const loader = new GLTFLoader()
       loader.load(
-        this.sceneUrl,
+        this.characterUrl,
         (gltf) => {
-          const model = gltf.scene
-          this._sceneModel = model
-          scene.add(model)
-
-          // Active les ombres sur tous les meshes
-          let tris = 0
-          model.traverse((obj) => {
-            if (obj.isMesh) {
-              obj.castShadow = true
-              obj.receiveShadow = true
-              const geo = obj.geometry
-              if (geo.index) tris += geo.index.count / 3
-              else if (geo.attributes.position) tris += geo.attributes.position.count / 3
-            }
-          })
-          this.stats.tris = Math.round(tris / 1000)
-
-          // Auto-frame : recentre la scène et ajuste la caméra selon la bbox
-          this._frameScene()
+          this._placeCharacter(gltf.scene)
           this.loading = false
         },
         (xhr) => {
@@ -139,7 +125,7 @@ export default {
           }
         },
         (err) => {
-          console.error('Scene load error:', err)
+          console.error('Character load error:', err)
           this.loading = false
         }
       )
@@ -162,68 +148,124 @@ export default {
       this._tick()
     },
 
-    _frameScene () {
-      if (!this._sceneModel || !this._THREE) return
+    // ── Box blanche : sol + mur fond + 2 murs latéraux ─────────────
+    _buildBox () {
       const THREE = this._THREE
+      const scene = this._scene
 
-      const box = new THREE.Box3().setFromObject(this._sceneModel)
-      const size = box.getSize(new THREE.Vector3())
-      const center = box.getCenter(new THREE.Vector3())
+      const BOX = {
+        w: 20,     // largeur (x)
+        h: 10,     // hauteur murs (y)
+        d: 20,     // profondeur (z)
+        zFront: 4, // bord avant (derrière la caméra)
+        zBack: -16 // bord arrière (mur du fond)
+      }
+      const zMid = (BOX.zFront + BOX.zBack) / 2
 
-      // Repositionne la scène : pieds au sol (y=0), centrée sur X/Z
-      this._sceneModel.position.set(
-        -center.x,
-        -box.min.y,
-        -center.z
+      // Sol — légèrement gris pour pas être 100% blanc plat (donne du contraste à l'ombre)
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(BOX.w, BOX.d),
+        new THREE.MeshStandardMaterial({
+          color: 0xeeeeec,
+          roughness: 0.9,
+          metalness: 0.0
+        })
       )
+      floor.rotation.x = -Math.PI / 2
+      floor.position.z = zMid
+      floor.receiveShadow = true
+      scene.add(floor)
 
-      // Recalcule la bbox après repositionnement pour cadrer la caméra
-      const newBox = new THREE.Box3().setFromObject(this._sceneModel)
-      const newSize = newBox.getSize(new THREE.Vector3())
-
-      // Place la caméra à distance suffisante pour voir toute la profondeur
-      // tout en gardant rotation Y = 0 (regard horizontal vers -Z)
-      const maxHorizontal = Math.max(newSize.x, newSize.z)
-      const distance = maxHorizontal * 0.8
-      const eyeHeight = Math.min(1.7, newSize.y * 0.55)
-
-      this._camera.position.set(0, eyeHeight, distance)
-      this._camera.lookAt(0, eyeHeight, 0)
-      this._camera.updateProjectionMatrix()
+      // Murs — encore plus clairs que le sol
+      const wallMat = new THREE.MeshStandardMaterial({
+        color: 0xf5f5f3,
+        roughness: 0.95,
+        metalness: 0.0,
+        side: THREE.DoubleSide
+      })
+      const makeWall = (w, h, pos, rot) => {
+        const wall = new THREE.Mesh(new THREE.PlaneGeometry(w, h), wallMat)
+        wall.position.set(...pos)
+        wall.rotation.set(...rot)
+        wall.receiveShadow = true
+        scene.add(wall)
+      }
+      makeWall(BOX.w, BOX.h, [0, BOX.h / 2, BOX.zBack], [0, 0, 0])                        // back
+      makeWall(BOX.d, BOX.h, [-BOX.w / 2, BOX.h / 2, zMid], [0, Math.PI / 2, 0])          // left
+      makeWall(BOX.d, BOX.h, [BOX.w / 2, BOX.h / 2, zMid],  [0, -Math.PI / 2, 0])         // right
     },
 
+    // ── Lighting : tamisée, légèrement chaude, ombres douces ───────
     _buildLights () {
       const THREE = this._THREE
       const scene = this._scene
 
-      // Hemisphere : ciel blanc / sol légèrement teinté pour pas être plat
-      const hemi = new THREE.HemisphereLight(0xffffff, 0xe0e0e6, 0.85)
+      // Hemisphere : doux et froid légèrement (ciel/sol)
+      const hemi = new THREE.HemisphereLight(0xffffff, 0xe8e8e6, 0.55)
       scene.add(hemi)
 
-      // Key light : directionnelle douce depuis le haut-avant droit
-      const key = new THREE.DirectionalLight(0xffffff, 1.2)
-      key.position.set(4, 8, 6)
+      // Key light : depuis le haut-avant, légèrement chaude (tamisée)
+      const key = new THREE.DirectionalLight(0xfff6e8, 1.0)
+      key.position.set(3, 6, 4)
       key.castShadow = true
       key.shadow.mapSize.set(2048, 2048)
       key.shadow.camera.near = 0.5
-      key.shadow.camera.far = 30
-      key.shadow.camera.left = -8
-      key.shadow.camera.right = 8
-      key.shadow.camera.top = 8
-      key.shadow.camera.bottom = -8
+      key.shadow.camera.far = 20
+      key.shadow.camera.left = -5
+      key.shadow.camera.right = 5
+      key.shadow.camera.top = 6
+      key.shadow.camera.bottom = -2
       key.shadow.bias = -0.0005
       key.shadow.normalBias = 0.02
+      key.shadow.radius = 4         // ombres très douces
       scene.add(key)
 
-      // Fill light : douce depuis l'autre côté pour adoucir les ombres
-      const fill = new THREE.DirectionalLight(0xffffff, 0.4)
-      fill.position.set(-5, 4, 4)
+      // Fill light : depuis le côté opposé, plus froide
+      const fill = new THREE.DirectionalLight(0xf0f4ff, 0.25)
+      fill.position.set(-4, 3, 3)
       scene.add(fill)
+    },
 
-      // Rim subtle pour décoller du fond (chaud léger, comme une lumière naturelle)
-      const rim = new THREE.DirectionalLight(0xfff4e6, 0.3)
-      rim.position.set(0, 3, -6)
-      scene.add(rim)
+    // ── Place le perso au centre de la box, échelle normalisée ─────
+    _placeCharacter (model) {
+      const THREE = this._THREE
+      this._character = model
+
+      // Active les ombres sur tous les meshes
+      let tris = 0
+      model.traverse((obj) => {
+        if (obj.isMesh) {
+          obj.castShadow = true
+          obj.receiveShadow = true
+          const geo = obj.geometry
+          if (geo.index) tris += geo.index.count / 3
+          else if (geo.attributes.position) tris += geo.attributes.position.count / 3
+        }
+      })
+      this.stats.tris = Math.round(tris / 1000)
+
+      // Mesure le perso pour le normaliser à ~1.7 unités (hauteur humaine)
+      const box = new THREE.Box3().setFromObject(model)
+      const size = box.getSize(new THREE.Vector3())
+      const center = box.getCenter(new THREE.Vector3())
+
+      const TARGET_HEIGHT = 1.7
+      const currentHeight = size.y || 1
+      const scale = TARGET_HEIGHT / currentHeight
+      model.scale.setScalar(scale)
+
+      // Recalcule la bbox après scale pour bien le poser au sol
+      const scaledBox = new THREE.Box3().setFromObject(model)
+      const scaledCenter = scaledBox.getCenter(new THREE.Vector3())
+      // Recentre sur X/Z et pose les pieds à y=0
+      model.position.x -= scaledCenter.x
+      model.position.z -= scaledCenter.z
+      model.position.y -= scaledBox.min.y
+
+      // Place le perso légèrement en arrière de la caméra (au centre de la box)
+      model.position.z = -2
+
+      this._scene.add(model)
     },
 
     _formatBytes (bytes) {
@@ -263,7 +305,7 @@ export default {
       this._scene = null
       this._camera = null
       this._renderer = null
-      this._sceneModel = null
+      this._character = null
       this._THREE = null
     }
   }
@@ -274,7 +316,7 @@ export default {
 .Playground
   position: fixed
   inset: 0
-  background: #f5f5f5
+  background: #f2f2f0
   overflow: hidden
   z-index: 1
 
@@ -346,7 +388,7 @@ export default {
       border-radius: 50%
       background: #ff4500
       animation: pulse 2s ease-in-out infinite
-      box-shadow: 0 0 12px rgba(255, 69, 0, 0.4)
+      box-shadow: 0 0 10px rgba(255, 69, 0, 0.4)
 
   &_meta
     font-size: 0.7rem
@@ -362,7 +404,7 @@ export default {
     display: flex
     align-items: center
     justify-content: center
-    background: #f5f5f5
+    background: #f2f2f0
 
     &_inner
       display: flex
