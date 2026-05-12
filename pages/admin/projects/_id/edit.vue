@@ -77,7 +77,8 @@
         <h2>Preview Vidéo (WebGL)</h2>
         <p class="field-hint" style="margin-bottom: 0.25rem">Courte vidéo MP4 affichée au survol de la carte dans la grille des projets.</p>
         <p class="field-hint" style="margin-bottom: 0.25rem; color: #ff8600;">
-          ⚠️ Max <strong>{{ MAX_PREVIEW_MB }} Mo</strong> — vidéos plus lourdes : compresse via ffmpeg avant upload (commande dans l'erreur si tu dépasses).
+          ⚠️ Max <strong>{{ MAX_PREVIEW_MB }} Mo</strong> — stockage sur Cloudflare R2 (egress gratuite).
+          Vidéos plus lourdes : compresse via ffmpeg avant upload (commande dans l'erreur si tu dépasses).
         </p>
 
         <div v-if="form.preview_video" class="preview-video-row">
@@ -339,23 +340,48 @@ export default {
       this.uploadingVideo = true
       this.uploadProgress = 0
 
-      const ext = file.name.split('.').pop()
-      const filename = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+      try {
+        const presignRes = await fetch('/api/r2/presign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type || 'video/mp4',
+            size: file.size
+          })
+        })
 
-      const { error } = await supabase.storage
-        .from('preview-videos')
-        .upload(filename, file, { contentType: file.type, upsert: false })
+        if (!presignRes.ok) {
+          const errData = await presignRes.json().catch(() => ({}))
+          throw new Error(errData.error || `Presign failed (HTTP ${presignRes.status})`)
+        }
 
-      if (error) {
-        this.uploadError = 'Erreur upload : ' + error.message
+        const { uploadUrl, publicUrl } = await presignRes.json()
+
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('PUT', uploadUrl, true)
+          xhr.setRequestHeader('Content-Type', file.type || 'video/mp4')
+          xhr.upload.onprogress = (ev) => {
+            if (ev.lengthComputable) {
+              this.uploadProgress = Math.round((ev.loaded / ev.total) * 100)
+            }
+          }
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) resolve()
+            else reject(new Error(`Upload R2 failed (HTTP ${xhr.status})`))
+          }
+          xhr.onerror = () => reject(new Error('Upload R2 network error'))
+          xhr.send(file)
+        })
+
+        this.form.preview_video = publicUrl
+        this.uploadProgress = 100
+      } catch (err) {
+        this.uploadError = 'Erreur upload : ' + err.message
+      } finally {
         this.uploadingVideo = false
-        return
       }
-
-      const { publicURL } = supabase.storage.from('preview-videos').getPublicUrl(filename)
-      this.form.preview_video = publicURL
-      this.uploadProgress = 100
-      this.uploadingVideo = false
     },
     removePreviewVideo() {
       this.form.preview_video = ''

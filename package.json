@@ -6,12 +6,16 @@
     "dev": "NODE_OPTIONS=--openssl-legacy-provider nuxt",
     "build": "NODE_OPTIONS=--openssl-legacy-provider nuxt build",
     "start": "nuxt start",
-    "generate": "NODE_OPTIONS=--openssl-legacy-provider nuxt generate"
+    "generate": "NODE_OPTIONS=--openssl-legacy-provider nuxt generate",
+    "migrate:r2:dry": "node scripts/migrate-videos-to-r2.js",
+    "migrate:r2:apply": "node scripts/migrate-videos-to-r2.js --apply"
   },
   "engines": {
     "node": ">=16.0.0"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1045.0",
+    "@aws-sdk/s3-request-presigner": "^3.1045.0",
     "@supabase/supabase-js": "^1.35.7",
     "bidello": "^1.0.1",
     "core-js": "^3.25.3",
@@ -27,6 +31,7 @@
   },
   "devDependencies": {
     "@nuxtjs/style-resources": "^1.0.0",
+    "dotenv": "^17.4.2",
     "glslify-loader": "^2.0.0",
     "raw-loader": "^4.0.2",
     "sass": "^1.56.1",

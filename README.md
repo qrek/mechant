@@ -72,3 +72,69 @@ More information about the usage of this directory in [the documentation](https:
 
 # Node
 v16.11.0
+
+---
+
+## Storage des preview videos — Cloudflare R2
+
+Les vidéos de preview (hover sur les pages works) sont stockées sur **Cloudflare R2**
+(et plus sur Supabase Storage) pour profiter de l'egress gratuite.
+
+### Architecture
+
+- **Upload (admin)** : le browser appelle `/api/r2/presign` → reçoit une URL signée
+  → upload direct vers R2. Aucune bande passante consommée côté Vercel.
+- **Lecture (public)** : les URLs `https://pub-xxx.r2.dev/previews/*.mp4` sont servies
+  directement par Cloudflare, gratuitement.
+- **DB** : la table `projects` stocke ces URLs publiques dans `preview_video`.
+
+### Variables d'environnement requises
+
+Dans `.env` (local) et Vercel (production) — voir `.env.sample` :
+
+```
+R2_ACCOUNT_ID
+R2_ACCESS_KEY_ID
+R2_SECRET_ACCESS_KEY
+R2_ENDPOINT
+R2_PUBLIC_URL
+R2_BUCKET_NAME
+```
+
+### Migration des vidéos existantes (Supabase → R2)
+
+Script one-shot pour migrer les vieilles vidéos qui sont encore sur Supabase Storage :
+
+```bash
+# Dry-run : montre ce qui serait fait, sans toucher à rien
+yarn migrate:r2:dry
+
+# Exécute la migration : download Supabase, upload R2, update DB
+yarn migrate:r2:apply
+```
+
+Le script skip automatiquement les projets dont `preview_video` est déjà une URL R2.
+Idempotent : tu peux le relancer plusieurs fois sans risque.
+
+### Compression des vidéos avant upload
+
+L'admin refuse tout fichier > **5 Mo**. Pour compresser un fichier trop lourd
+sans perte visuelle (CRF 22, 1080p, 5s) :
+
+```bash
+ffmpeg -i input.mp4 -t 5 -vf "scale='min(1920,iw)':-2" \
+  -c:v libx264 -crf 22 -preset veryslow -profile:v high \
+  -pix_fmt yuv420p -an -movflags +faststart output.mp4
+```
+
+Pour batch un dossier entier (macOS/Linux) :
+
+```bash
+mkdir -p compressed
+for f in *.mp4 *.mov; do
+  [ -f "$f" ] || continue
+  ffmpeg -i "$f" -t 5 -vf "scale='min(1920,iw)':-2" \
+    -c:v libx264 -crf 22 -preset veryslow -profile:v high \
+    -pix_fmt yuv420p -an -movflags +faststart "compressed/${f%.*}.mp4"
+done
+```

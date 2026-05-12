@@ -87,7 +87,8 @@ export default {
   },
 
   serverMiddleware: [
-    '~/middleware/server/auth.js'
+    '~/middleware/server/auth.js',
+    { path: '/api/r2/presign', handler: '~/middleware/server/r2-presign.js' }
   ],
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
