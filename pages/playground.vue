@@ -7,26 +7,13 @@
     <header class="Playground_hud Playground_hud--top">
       <div class="Playground_label">
         <span class="dot"></span>
-        Training arena
+        Playground
       </div>
       <div class="Playground_meta">
-        <span>{{ stats.tris }}k tris</span>
-        <span>· 60fps</span>
+        <span v-if="stats.tris">{{ stats.tris }}k tris</span>
+        <span v-if="stats.fileSize">· {{ stats.fileSize }}</span>
       </div>
     </header>
-
-    <div class="Playground_hud Playground_hud--right">
-      <button class="Playground_btn" :class="{ 'is-active': lightsOn }" @click="toggleLights">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <circle cx="12" cy="12" r="4"/>
-          <line x1="12" y1="2" x2="12" y2="4"/>
-          <line x1="12" y1="20" x2="12" y2="22"/>
-          <line x1="2" y1="12" x2="4" y2="12"/>
-          <line x1="20" y1="12" x2="22" y2="12"/>
-        </svg>
-        {{ lightsOn ? 'Lights off' : 'Lights on' }}
-      </button>
-    </div>
 
     <footer class="Playground_hud Playground_hud--bottom">
       <span>{{ comingSoon }}</span>
@@ -35,7 +22,12 @@
     <!-- Loader -->
     <transition name="fade">
       <div v-if="loading" class="Playground_loader">
-        <div class="Playground_loader_label">Booting arena</div>
+        <div class="Playground_loader_inner">
+          <div class="Playground_loader_label">Loading scene</div>
+          <div v-if="progress > 0" class="Playground_loader_track">
+            <div class="Playground_loader_bar" :style="{ width: progress + '%' }"></div>
+          </div>
+        </div>
       </div>
     </transition>
 
@@ -49,16 +41,17 @@ export default {
   head () {
     return {
       title: 'Playground — MÉCHANT',
-      meta: [{ hid: 'description', name: 'description', content: 'Training arena — soon home to our 3D characters.' }]
+      meta: [{ hid: 'description', name: 'description', content: 'Studio playground — soon home to our 3D characters.' }]
     }
   },
 
   data () {
     return {
+      sceneUrl: '/playground/scene.glb',
       loading: true,
-      lightsOn: true,
-      comingSoon: 'Characters coming soon — Théo & Ronan in 3D',
-      stats: { tris: 0 }
+      progress: 0,
+      comingSoon: 'Théo & Ronan dropping in soon',
+      stats: { tris: 0, fileSize: '' }
     }
   },
 
@@ -73,46 +66,85 @@ export default {
   methods: {
     async _initThree () {
       const THREE = await import('three')
+      const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js')
       this._THREE = THREE
 
       const container = this.$refs.canvas
       const width = container.clientWidth
       const height = container.clientHeight
 
-      // ── Scene ────────────────────────────────────────────────────────
+      // ── Scene : fond blanc cassé, fog blanc pour adoucir la profondeur ──
       const scene = new THREE.Scene()
-      scene.background = new THREE.Color(0x050505)
-      scene.fog = new THREE.FogExp2(0x000000, 0.045)
+      scene.background = new THREE.Color(0xf5f5f5)
+      scene.fog = new THREE.Fog(0xf5f5f5, 8, 30)
       this._scene = scene
 
-      // ── Camera : fixe, parfaitement de face (rotation Y = 0, pas de tilt) ─
-      const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100)
-      camera.position.set(0, 2, 4)
-      camera.lookAt(0, 2, 0)        // regard horizontal pur, no pitch
+      // ── Camera : fixe, de face, rotation Y = 0 ─────────────────────
+      const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100)
+      camera.position.set(0, 1.6, 5)
+      camera.lookAt(0, 1.4, 0)
       this._camera = camera
 
-      // ── Renderer ─────────────────────────────────────────────────────
+      // ── Renderer ─────────────────────────────────────────────────
       const renderer = new THREE.WebGLRenderer({ antialias: true })
       renderer.setSize(width, height)
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
       renderer.outputEncoding = THREE.sRGBEncoding
       renderer.toneMapping = THREE.ACESFilmicToneMapping
-      renderer.toneMappingExposure = 1.0
+      renderer.toneMappingExposure = 1.05
       renderer.shadowMap.enabled = true
       renderer.shadowMap.type = THREE.PCFSoftShadowMap
       renderer.physicallyCorrectLights = true
       container.appendChild(renderer.domElement)
       this._renderer = renderer
 
-      // ── Construction de la box ───────────────────────────────────────
-      this._buildArena()
-
-      // ── Lumières ─────────────────────────────────────────────────────
+      // ── Lumières : éclairage studio clean ─────────────────────────
       this._buildLights()
 
-      // ── Pas de controls : la caméra est fixe (seuls les persos bougeront) ──
+      // ── Charge la scène GLB ──────────────────────────────────────
+      try {
+        const head = await fetch(this.sceneUrl, { method: 'HEAD' })
+        const bytes = parseInt(head.headers.get('content-length') || '0', 10)
+        if (bytes) this.stats.fileSize = this._formatBytes(bytes)
+      } catch (_) {}
 
-      // ── Resize ───────────────────────────────────────────────────────
+      const loader = new GLTFLoader()
+      loader.load(
+        this.sceneUrl,
+        (gltf) => {
+          const model = gltf.scene
+          this._sceneModel = model
+          scene.add(model)
+
+          // Active les ombres sur tous les meshes
+          let tris = 0
+          model.traverse((obj) => {
+            if (obj.isMesh) {
+              obj.castShadow = true
+              obj.receiveShadow = true
+              const geo = obj.geometry
+              if (geo.index) tris += geo.index.count / 3
+              else if (geo.attributes.position) tris += geo.attributes.position.count / 3
+            }
+          })
+          this.stats.tris = Math.round(tris / 1000)
+
+          // Auto-frame : recentre la scène et ajuste la caméra selon la bbox
+          this._frameScene()
+          this.loading = false
+        },
+        (xhr) => {
+          if (xhr.lengthComputable) {
+            this.progress = Math.round((xhr.loaded / xhr.total) * 100)
+          }
+        },
+        (err) => {
+          console.error('Scene load error:', err)
+          this.loading = false
+        }
+      )
+
+      // ── Resize ───────────────────────────────────────────────────
       this._onResize = () => {
         const w = container.clientWidth
         const h = container.clientHeight
@@ -122,199 +154,82 @@ export default {
       }
       window.addEventListener('resize', this._onResize)
 
-      // ── Animation loop ───────────────────────────────────────────────
-      const clock = new THREE.Clock()
+      // ── Animation loop ───────────────────────────────────────────
       this._tick = () => {
-        const elapsed = clock.getElapsedTime()
-
-        // Subtle pulse sur les LEDs orange
-        if (this._rimLights) {
-          this._rimLights.forEach((light, i) => {
-            light.intensity = 1.6 + Math.sin(elapsed * 1.5 + i) * 0.2
-          })
-        }
-
-        // Particules de poussière qui descendent doucement
-        if (this._dust) {
-          const positions = this._dust.geometry.attributes.position.array
-          for (let i = 0; i < positions.length; i += 3) {
-            positions[i + 1] -= 0.005
-            if (positions[i + 1] < 0) positions[i + 1] = 8
-          }
-          this._dust.geometry.attributes.position.needsUpdate = true
-        }
-
         renderer.render(scene, camera)
         this._raf = requestAnimationFrame(this._tick)
       }
       this._tick()
-
-      // Fade out du loader
-      setTimeout(() => { this.loading = false }, 400)
     },
 
-    // Stage : sol + mur fond + 2 murs latéraux (ouvert vers la caméra)
-    // Dimensionné pour que les murs remplissent tout le cadre depuis la caméra
-    _buildArena () {
+    _frameScene () {
+      if (!this._sceneModel || !this._THREE) return
       const THREE = this._THREE
-      const scene = this._scene
 
-      // Stage assez large/haut pour que la caméra (à z=4, y=2, FOV 42°) ne voit
-      // que le sol et les 3 murs, jamais le vide au-dessus ou sur les côtés.
-      const STAGE = {
-        w: 20,        // largeur (x)
-        h: 10,        // hauteur murs (y)
-        d: 20,        // profondeur (z) — du fond à devant la caméra
-        zFront: 5,    // bord avant du sol (devant la caméra)
-        zBack: -15    // bord arrière où se trouve le mur du fond
-      }
-      let triCount = 0
+      const box = new THREE.Box3().setFromObject(this._sceneModel)
+      const size = box.getSize(new THREE.Vector3())
+      const center = box.getCenter(new THREE.Vector3())
 
-      // ── Sol ────────────────────────────────────────────────────────
-      const floorGeo = new THREE.PlaneGeometry(STAGE.w, STAGE.d, 1, 1)
-      const floorMat = new THREE.MeshStandardMaterial({
-        color: 0x0a0a0a,
-        roughness: 0.85,
-        metalness: 0.15
-      })
-      const floor = new THREE.Mesh(floorGeo, floorMat)
-      floor.rotation.x = -Math.PI / 2
-      floor.position.z = (STAGE.zFront + STAGE.zBack) / 2  // centre du sol
-      floor.receiveShadow = true
-      scene.add(floor)
-      triCount += 2
+      // Repositionne la scène : pieds au sol (y=0), centrée sur X/Z
+      this._sceneModel.position.set(
+        -center.x,
+        -box.min.y,
+        -center.z
+      )
 
-      // ── Grille au sol (style training stage) ──────────────────────
-      const grid = new THREE.GridHelper(STAGE.w, 20, 0x222222, 0x111111)
-      grid.position.set(0, 0.01, (STAGE.zFront + STAGE.zBack) / 2)
-      scene.add(grid)
-      this._grid = grid
+      // Recalcule la bbox après repositionnement pour cadrer la caméra
+      const newBox = new THREE.Box3().setFromObject(this._sceneModel)
+      const newSize = newBox.getSize(new THREE.Vector3())
 
-      // ── Murs : fond + gauche + droite ──────────────────────────────
-      const wallMat = new THREE.MeshStandardMaterial({
-        color: 0x141414,
-        roughness: 0.95,
-        metalness: 0.05,
-        side: THREE.DoubleSide
-      })
+      // Place la caméra à distance suffisante pour voir toute la profondeur
+      // tout en gardant rotation Y = 0 (regard horizontal vers -Z)
+      const maxHorizontal = Math.max(newSize.x, newSize.z)
+      const distance = maxHorizontal * 0.8
+      const eyeHeight = Math.min(1.7, newSize.y * 0.55)
 
-      const makeWall = (w, h, pos, rot) => {
-        const wall = new THREE.Mesh(new THREE.PlaneGeometry(w, h), wallMat)
-        wall.position.set(...pos)
-        wall.rotation.set(...rot)
-        wall.receiveShadow = true
-        scene.add(wall)
-        triCount += 2
-        return wall
-      }
-
-      const zMid = (STAGE.zFront + STAGE.zBack) / 2
-      makeWall(STAGE.w, STAGE.h, [0, STAGE.h / 2, STAGE.zBack], [0, 0, 0])                       // back
-      makeWall(STAGE.d, STAGE.h, [-STAGE.w / 2, STAGE.h / 2, zMid], [0, Math.PI / 2, 0])         // left
-      makeWall(STAGE.d, STAGE.h, [STAGE.w / 2, STAGE.h / 2, zMid],  [0, -Math.PI / 2, 0])        // right
-
-      // ── Néons orange sur les arêtes hautes (rim light visuel) ──────
-      const stripMat = new THREE.MeshBasicMaterial({ color: 0xff4500 })
-      const stripThickness = 0.04
-      const stripDepth = 0.04
-      const makeStrip = (length, pos, rot) => {
-        const geo = new THREE.BoxGeometry(length, stripThickness, stripDepth)
-        const mesh = new THREE.Mesh(geo, stripMat)
-        mesh.position.set(...pos)
-        mesh.rotation.set(...rot)
-        scene.add(mesh)
-        triCount += 12
-      }
-      const yTop = STAGE.h - 0.1
-      makeStrip(STAGE.w, [0, yTop, STAGE.zBack + 0.05], [0, 0, 0])                              // back top
-      makeStrip(STAGE.d, [-STAGE.w / 2 + 0.05, yTop, zMid], [0, Math.PI / 2, 0])                // left top
-      makeStrip(STAGE.d, [STAGE.w / 2 - 0.05, yTop, zMid], [0, Math.PI / 2, 0])                 // right top
-
-      // ── Particules de poussière dans l'air (volume du stage) ──────
-      const dustCount = 200
-      const dustGeo = new THREE.BufferGeometry()
-      const dustPos = new Float32Array(dustCount * 3)
-      for (let i = 0; i < dustCount; i++) {
-        dustPos[i * 3]     = (Math.random() - 0.5) * STAGE.w * 0.85
-        dustPos[i * 3 + 1] = Math.random() * STAGE.h
-        dustPos[i * 3 + 2] = zMid + (Math.random() - 0.5) * STAGE.d * 0.85
-      }
-      dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3))
-      const dustMat = new THREE.PointsMaterial({
-        color: 0xffaa66,
-        size: 0.04,
-        transparent: true,
-        opacity: 0.5,
-        sizeAttenuation: true,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-      })
-      const dust = new THREE.Points(dustGeo, dustMat)
-      scene.add(dust)
-      this._dust = dust
-
-      this.stats.tris = Math.round(triCount / 1000) || 1
+      this._camera.position.set(0, eyeHeight, distance)
+      this._camera.lookAt(0, eyeHeight, 0)
+      this._camera.updateProjectionMatrix()
     },
 
     _buildLights () {
       const THREE = this._THREE
       const scene = this._scene
-      const lights = []
 
-      // Le centre du stage est à (0, 0, -5) — toutes les lumières gravitent autour
-      const SC = { x: 0, y: 0, z: -5 }
-
-      // Ambient très doux
-      const hemi = new THREE.HemisphereLight(0x202030, 0x0a0a0a, 0.4)
+      // Hemisphere : ciel blanc / sol légèrement teinté pour pas être plat
+      const hemi = new THREE.HemisphereLight(0xffffff, 0xe0e0e6, 0.85)
       scene.add(hemi)
-      lights.push(hemi)
 
-      // Spot principal au-dessus du stage, pointe vers les persos
-      const spot = new THREE.SpotLight(0xffffff, 4.0, 25, Math.PI / 4.5, 0.4, 1)
-      spot.position.set(SC.x, 9, SC.z)
-      spot.target.position.set(SC.x, 0, SC.z)
-      spot.castShadow = true
-      spot.shadow.mapSize.set(1024, 1024)
-      spot.shadow.bias = -0.0005
-      scene.add(spot)
-      scene.add(spot.target)
-      lights.push(spot)
+      // Key light : directionnelle douce depuis le haut-avant droit
+      const key = new THREE.DirectionalLight(0xffffff, 1.2)
+      key.position.set(4, 8, 6)
+      key.castShadow = true
+      key.shadow.mapSize.set(2048, 2048)
+      key.shadow.camera.near = 0.5
+      key.shadow.camera.far = 30
+      key.shadow.camera.left = -8
+      key.shadow.camera.right = 8
+      key.shadow.camera.top = 8
+      key.shadow.camera.bottom = -8
+      key.shadow.bias = -0.0005
+      key.shadow.normalBias = 0.02
+      scene.add(key)
 
-      // Rim light orange front-left (vient du côté caméra)
-      const rim1 = new THREE.PointLight(0xff4500, 2.2, 22, 1.5)
-      rim1.position.set(-7, 3, 1)
-      scene.add(rim1)
-      lights.push(rim1)
+      // Fill light : douce depuis l'autre côté pour adoucir les ombres
+      const fill = new THREE.DirectionalLight(0xffffff, 0.4)
+      fill.position.set(-5, 4, 4)
+      scene.add(fill)
 
-      // Rim light orange front-right
-      const rim2 = new THREE.PointLight(0xff4500, 2.2, 22, 1.5)
-      rim2.position.set(7, 3, 1)
-      scene.add(rim2)
-      lights.push(rim2)
-
-      // Cool blue accent depuis l'arrière pour décoller les persos du mur du fond
-      const back = new THREE.PointLight(0x4080ff, 0.9, 20, 1.5)
-      back.position.set(0, 5, -13)
-      scene.add(back)
-      lights.push(back)
-
-      this._lights = lights
-      this._rimLights = [rim1, rim2]
+      // Rim subtle pour décoller du fond (chaud léger, comme une lumière naturelle)
+      const rim = new THREE.DirectionalLight(0xfff4e6, 0.3)
+      rim.position.set(0, 3, -6)
+      scene.add(rim)
     },
 
-    toggleLights () {
-      this.lightsOn = !this.lightsOn
-      if (!this._lights) return
-      this._lights.forEach((l) => {
-        l.visible = this.lightsOn
-      })
-      // Garde un minimum d'ambient même éteint pour pas être dans le noir total
-      if (!this.lightsOn && this._lights[0]) {
-        this._lights[0].visible = true
-        this._lights[0].intensity = 0.08
-      } else if (this._lights[0]) {
-        this._lights[0].intensity = 0.4
-      }
+    _formatBytes (bytes) {
+      if (bytes < 1024) return `${bytes} B`
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
     },
 
     _destroyThree () {
@@ -348,9 +263,7 @@ export default {
       this._scene = null
       this._camera = null
       this._renderer = null
-      this._lights = null
-      this._rimLights = null
-      this._dust = null
+      this._sceneModel = null
       this._THREE = null
     }
   }
@@ -361,7 +274,7 @@ export default {
 .Playground
   position: fixed
   inset: 0
-  background: #050505
+  background: #f5f5f5
   overflow: hidden
   z-index: 1
 
@@ -378,7 +291,7 @@ export default {
   &_hud
     position: absolute
     z-index: 5
-    color: $white
+    color: $black
     font-family: $apfel
     pointer-events: none
 
@@ -400,24 +313,6 @@ export default {
         left: 1rem
         right: 1rem
 
-    &--right
-      top: 5rem
-      right: 1.5rem
-      display: flex
-      flex-direction: column
-      gap: 0.6rem
-      align-items: flex-end
-      pointer-events: auto
-
-      +breakpoint(mobile)
-        top: auto
-        bottom: 5rem
-        right: 1rem
-        left: 1rem
-        flex-direction: row
-        flex-wrap: wrap
-        justify-content: center
-
     &--bottom
       bottom: 1.5rem
       left: 50%
@@ -425,7 +320,7 @@ export default {
       font-size: 0.7rem
       letter-spacing: 0.15em
       text-transform: uppercase
-      color: rgba(255, 255, 255, 0.4)
+      color: rgba(0, 0, 0, 0.4)
       white-space: nowrap
 
       +breakpoint(mobile)
@@ -443,6 +338,7 @@ export default {
     letter-spacing: 0.2em
     text-transform: uppercase
     font-weight: 700
+    color: $black
 
     .dot
       width: 0.5rem
@@ -450,43 +346,14 @@ export default {
       border-radius: 50%
       background: #ff4500
       animation: pulse 2s ease-in-out infinite
-      box-shadow: 0 0 12px rgba(255, 69, 0, 0.8)
+      box-shadow: 0 0 12px rgba(255, 69, 0, 0.4)
 
   &_meta
     font-size: 0.7rem
     letter-spacing: 0.1em
-    color: rgba(255, 255, 255, 0.5)
+    color: rgba(0, 0, 0, 0.4)
     display: flex
     gap: 0.4rem
-
-  &_btn
-    display: inline-flex
-    align-items: center
-    gap: 0.5rem
-    padding: 0.6rem 1rem
-    background: rgba(255, 255, 255, 0.05)
-    border: 1px solid rgba(255, 255, 255, 0.1)
-    border-radius: 999px
-    color: $white
-    font-family: $apfel
-    font-weight: 700
-    font-size: 0.7rem
-    letter-spacing: 0.12em
-    text-transform: uppercase
-    cursor: pointer
-    backdrop-filter: blur(8px)
-    -webkit-backdrop-filter: blur(8px)
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease
-
-    &:hover
-      background: rgba(255, 255, 255, 0.12)
-      border-color: rgba(255, 255, 255, 0.25)
-      transform: translateY(-1px)
-
-    &.is-active
-      background: #ff4500
-      border-color: #ff4500
-      color: $black
 
   &_loader
     position: absolute
@@ -495,7 +362,14 @@ export default {
     display: flex
     align-items: center
     justify-content: center
-    background: #050505
+    background: #f5f5f5
+
+    &_inner
+      display: flex
+      flex-direction: column
+      align-items: center
+      gap: 1rem
+      width: min(280px, 70vw)
 
     &_label
       font-family: $apfel
@@ -503,8 +377,19 @@ export default {
       font-size: 0.75rem
       letter-spacing: 0.2em
       text-transform: uppercase
-      color: rgba(255, 255, 255, 0.5)
-      animation: pulse 1.4s ease-in-out infinite
+      color: rgba(0, 0, 0, 0.5)
+
+    &_track
+      width: 100%
+      height: 2px
+      background: rgba(0, 0, 0, 0.08)
+      overflow: hidden
+      border-radius: 1px
+
+    &_bar
+      height: 100%
+      background: #ff4500
+      transition: width 0.2s ease
 
 @keyframes pulse
   0%, 100%
