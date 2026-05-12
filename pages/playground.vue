@@ -314,17 +314,21 @@ export default {
       // dans plusieurs conventions (Meshy, Mixamo, Blender)
       const bones = {
         hips:      findBone(sk, 'hips', 'pelvis'),
-        // Le bone "spine" exact (le plus bas, attaché à Hips) → pelvis body petit + torso body grand
         spine:     findBone(sk, 'spine', 'spine_01', 'chest'),
         head:      findBone(sk, 'head'),
+        headEnd:   findBone(sk, 'head_end', 'headtip', 'headfront'),
         lUpperArm: findBone(sk, 'leftarm', 'upperarm_l', 'l_upperarm', 'arm_l', 'l_arm'),
         lLowerArm: findBone(sk, 'leftforearm', 'forearm_l', 'l_forearm', 'lowerarm_l', 'l_lowerarm'),
+        lHand:     findBone(sk, 'lefthand', 'hand_l', 'l_hand'),
         rUpperArm: findBone(sk, 'rightarm', 'upperarm_r', 'r_upperarm', 'arm_r', 'r_arm'),
         rLowerArm: findBone(sk, 'rightforearm', 'forearm_r', 'r_forearm', 'lowerarm_r', 'r_lowerarm'),
+        rHand:     findBone(sk, 'righthand', 'hand_r', 'r_hand'),
         lUpperLeg: findBone(sk, 'leftupleg', 'upleg_l', 'l_upleg', 'thigh_l', 'l_thigh', 'upperleg_l'),
         lLowerLeg: findBone(sk, 'leftleg', 'leg_l', 'l_leg', 'calf_l', 'l_calf', 'shin_l', 'l_shin', 'lowerleg_l'),
+        lFoot:     findBone(sk, 'leftfoot', 'foot_l', 'l_foot'),
         rUpperLeg: findBone(sk, 'rightupleg', 'upleg_r', 'r_upleg', 'thigh_r', 'r_thigh', 'upperleg_r'),
-        rLowerLeg: findBone(sk, 'rightleg', 'leg_r', 'r_leg', 'calf_r', 'r_calf', 'shin_r', 'r_shin', 'lowerleg_r')
+        rLowerLeg: findBone(sk, 'rightleg', 'leg_r', 'r_leg', 'calf_r', 'r_calf', 'shin_r', 'r_shin', 'lowerleg_r'),
+        rFoot:     findBone(sk, 'rightfoot', 'foot_r', 'r_foot')
       }
 
       // DEBUG : log de la résolution des bones (utile pour les rigs non-standard)
@@ -354,21 +358,21 @@ export default {
         return
       }
 
-      // Pour chaque segment : bone "owner" qu'on sync + bone "tip" pour la longueur
-      // Le segment du pelvis va vers le haut (hips → spine). Les jambes attachent à hips
-      // donc à la BASE du pelvis (et non au sommet).
+      // Chaque segment a un "tip" (bone à la jonction suivante) pour calculer
+      // la direction correcte. Utilise hand/foot/headEnd pour les leaves
+      // (sinon le segment serait orienté arbitrairement, créant des twists)
       const segments = [
-        { name: 'pelvis',    bone: bones.hips,      tip: bones.spine,        radius: 0.10, fallbackLen: 0.20 },
-        { name: 'torso',     bone: bones.spine,     tip: bones.head,         radius: 0.11, fallbackLen: 0.40 },
-        { name: 'head',      bone: bones.head,      tip: null,               radius: 0.11, fallbackLen: 0.20 },
-        { name: 'lUpperArm', bone: bones.lUpperArm, tip: bones.lLowerArm,    radius: 0.045, fallbackLen: 0.27 },
-        { name: 'lLowerArm', bone: bones.lLowerArm, tip: null,               radius: 0.04, fallbackLen: 0.27 },
-        { name: 'rUpperArm', bone: bones.rUpperArm, tip: bones.rLowerArm,    radius: 0.045, fallbackLen: 0.27 },
-        { name: 'rLowerArm', bone: bones.rLowerArm, tip: null,               radius: 0.04, fallbackLen: 0.27 },
-        { name: 'lUpperLeg', bone: bones.lUpperLeg, tip: bones.lLowerLeg,    radius: 0.06, fallbackLen: 0.42 },
-        { name: 'lLowerLeg', bone: bones.lLowerLeg, tip: null,               radius: 0.055, fallbackLen: 0.42 },
-        { name: 'rUpperLeg', bone: bones.rUpperLeg, tip: bones.rLowerLeg,    radius: 0.06, fallbackLen: 0.42 },
-        { name: 'rLowerLeg', bone: bones.rLowerLeg, tip: null,               radius: 0.055, fallbackLen: 0.42 }
+        { name: 'pelvis',    bone: bones.hips,      tip: bones.spine,                    radius: 0.10, fallbackLen: 0.20 },
+        { name: 'torso',     bone: bones.spine,     tip: bones.head,                     radius: 0.11, fallbackLen: 0.40 },
+        { name: 'head',      bone: bones.head,      tip: bones.headEnd,                  radius: 0.11, fallbackLen: 0.20 },
+        { name: 'lUpperArm', bone: bones.lUpperArm, tip: bones.lLowerArm,                radius: 0.045, fallbackLen: 0.27 },
+        { name: 'lLowerArm', bone: bones.lLowerArm, tip: bones.lHand,                    radius: 0.04, fallbackLen: 0.27 },
+        { name: 'rUpperArm', bone: bones.rUpperArm, tip: bones.rLowerArm,                radius: 0.045, fallbackLen: 0.27 },
+        { name: 'rLowerArm', bone: bones.rLowerArm, tip: bones.rHand,                    radius: 0.04, fallbackLen: 0.27 },
+        { name: 'lUpperLeg', bone: bones.lUpperLeg, tip: bones.lLowerLeg,                radius: 0.06, fallbackLen: 0.42 },
+        { name: 'lLowerLeg', bone: bones.lLowerLeg, tip: bones.lFoot,                    radius: 0.055, fallbackLen: 0.42 },
+        { name: 'rUpperLeg', bone: bones.rUpperLeg, tip: bones.rLowerLeg,                radius: 0.06, fallbackLen: 0.42 },
+        { name: 'rLowerLeg', bone: bones.rLowerLeg, tip: bones.rFoot,                    radius: 0.055, fallbackLen: 0.42 }
       ]
 
       const valid = segments.filter(s => s.bone)
@@ -430,12 +434,13 @@ export default {
         const bindBoneWorldScale = new THREE.Vector3()
         seg.bone.matrixWorld.decompose(bindBoneWorldPos, bindBoneWorldQuat, bindBoneWorldScale)
 
-        // Crée le body — damping consistant, densité importante (perso lourd)
-        const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
+        // Crée le body en KINEMATIC d'abord (figé) — passera en dynamic au 1er click.
+        // Comme ça le perso reste debout immobile au load.
+        const bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
           .setTranslation(center.x, center.y, center.z)
           .setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w })
           .setLinearDamping(0.7)
-          .setAngularDamping(3.0)   // membres arrêtent de tourner très vite (anti-wet-noodle)
+          .setAngularDamping(3.0)
           .setCcdEnabled(true)
         const body = this._world.createRigidBody(bodyDesc)
 
@@ -656,6 +661,16 @@ export default {
       }
     },
 
+    // ── Active la physique : passe TOUS les bodies en dynamic ──────
+    // (au load ils étaient kinematic pour rester immobiles)
+    _wakeRagdoll () {
+      if (this._ragdollAwake || !this._ragdoll) return
+      this._ragdollAwake = true
+      for (const seg of this._ragdoll.segments) {
+        seg.body.setBodyType(this._RAPIER.RigidBodyType.Dynamic, true)
+      }
+    },
+
     // ── Mouse picking ───────────────────────────────────────────────
     onMouseDown (event) {
       if (!this.ragdollReady) return
@@ -681,6 +696,9 @@ export default {
         }
       }
       if (!closest) return
+
+      // Au premier clic, réveille la physique (passe tous les bodies en dynamic)
+      this._wakeRagdoll()
 
       this._grabbed = closest
       this._isDragging = true
@@ -775,11 +793,12 @@ export default {
       }
     },
 
-    // ── Reset ───────────────────────────────────────────────────────
+    // ── Reset : re-fige le perso en kinematic à la pose initiale ───
     resetCharacter () {
       if (!this._ragdoll) return
       for (const seg of this._ragdoll.segments) {
-        seg.body.setBodyType(this._RAPIER.RigidBodyType.Dynamic, true)
+        // Repasse en kinematic pour figer
+        seg.body.setBodyType(this._RAPIER.RigidBodyType.KinematicPositionBased, true)
         seg.body.setTranslation(
           { x: seg.initialPos.x, y: seg.initialPos.y, z: seg.initialPos.z },
           true
@@ -791,6 +810,7 @@ export default {
         seg.body.setLinvel({ x: 0, y: 0, z: 0 }, true)
         seg.body.setAngvel({ x: 0, y: 0, z: 0 }, true)
       }
+      this._ragdollAwake = false
     },
 
     // ── Décors visuels (box blanche) ────────────────────────────────
