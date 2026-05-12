@@ -76,6 +76,9 @@
       <div class="form-section">
         <h2>Preview Vidéo (WebGL)</h2>
         <p class="field-hint" style="margin-bottom: 0.25rem">Courte vidéo MP4 affichée au survol de la carte dans la grille des projets.</p>
+        <p class="field-hint" style="margin-bottom: 0.25rem; color: #ff8600;">
+          ⚠️ Max <strong>{{ MAX_PREVIEW_MB }} Mo</strong> — vidéos plus lourdes : compresse via ffmpeg avant upload (commande dans l'erreur si tu dépasses).
+        </p>
 
         <div v-if="form.preview_video" class="preview-video-row">
           <video :src="form.preview_video" muted loop playsinline style="height:72px;border-radius:6px;border:1px solid #2a2a2a;" />
@@ -93,7 +96,7 @@
           <div class="upload-bar" :style="{ width: uploadProgress + '%' }"></div>
           <span>{{ uploadProgress }}%</span>
         </div>
-        <p v-if="uploadError" class="error">{{ uploadError }}</p>
+        <div v-if="uploadError" class="error" style="white-space: pre-line; line-height: 1.5;">{{ uploadError }}</div>
       </div>
 
       <!-- Page projet détaillée -->
@@ -182,6 +185,9 @@ export default {
   name: 'AdminEditProject',
   data() {
     return {
+      // Taille max preview video (en Mo) — au-dessus, on refuse l'upload
+      // pour préserver le quota Supabase Storage. Compresser via ffmpeg avant.
+      MAX_PREVIEW_MB: 3,
       loading: true,
       vimeoInput: '',
       badgesInput: '',
@@ -313,6 +319,22 @@ export default {
       const file = e.target.files[0]
       if (!file) return
       this.uploadError = null
+
+      // Check taille max — refus si > MAX_PREVIEW_MB pour économiser le quota
+      const sizeMB = file.size / (1024 * 1024)
+      if (sizeMB > this.MAX_PREVIEW_MB) {
+        this.uploadError =
+          `Fichier trop lourd : ${sizeMB.toFixed(1)} Mo (max ${this.MAX_PREVIEW_MB} Mo).\n` +
+          `\n` +
+          `Compresse via ffmpeg avant upload :\n` +
+          `\n` +
+          `ffmpeg -i "${file.name}" -t 6 -vf "scale='min(1280,iw)':-2" -c:v libx264 -crf 28 -preset slow -an -movflags +faststart output.mp4\n` +
+          `\n` +
+          `(résultat attendu : 1-2 Mo pour 6 secondes en 720p)`
+        e.target.value = ''
+        return
+      }
+
       this.uploadingVideo = true
       this.uploadProgress = 0
 
