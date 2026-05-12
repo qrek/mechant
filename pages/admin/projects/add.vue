@@ -188,7 +188,8 @@ export default {
     return {
       // Taille max preview video (en Mo) — au-dessus, on refuse l'upload
       // pour préserver le quota Supabase Storage. Compresser via ffmpeg avant.
-      MAX_PREVIEW_MB: 3,
+      // 5 Mo permet du visuellement lossless en 1080p / CRF 22 / 5-6s.
+      MAX_PREVIEW_MB: 5,
       vimeoInput: '',
       badgesInput: '',
       extraVideosInput: '',
@@ -293,11 +294,11 @@ export default {
         this.uploadError =
           `Fichier trop lourd : ${sizeMB.toFixed(1)} Mo (max ${this.MAX_PREVIEW_MB} Mo).\n` +
           `\n` +
-          `Compresse via ffmpeg avant upload :\n` +
+          `Compresse via ffmpeg (qualité visuellement lossless) :\n` +
           `\n` +
-          `ffmpeg -i "${file.name}" -t 6 -vf "scale='min(1280,iw)':-2" -c:v libx264 -crf 28 -preset slow -an -movflags +faststart output.mp4\n` +
+          `ffmpeg -i "${file.name}" -t 5 -vf "scale='min(1920,iw)':-2" -c:v libx264 -crf 22 -preset veryslow -profile:v high -pix_fmt yuv420p -an -movflags +faststart output.mp4\n` +
           `\n` +
-          `(résultat attendu : 1-2 Mo pour 6 secondes en 720p)`
+          `(résultat attendu : 2-4 Mo pour 5s en 1080p, qualité indissociable de l'original à l'œil nu)`
         // Reset l'input pour qu'on puisse re-choisir le même fichier après compression
         e.target.value = ''
         return
