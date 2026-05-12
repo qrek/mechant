@@ -43,12 +43,22 @@
 </template>
 
 <script>
-// Helpers de matching de bones — tolérants aux préfixes Mixamo, Meshy, etc.
+// Helpers de matching de bones — tolérant aux préfixes (mixamorig:, etc.)
+// patterns peut contenir des string (includes) ou {all: ['a','b']} pour ALL-match
 function findBone (skeleton, ...patterns) {
   for (const p of patterns) {
-    const lp = p.toLowerCase()
-    const bone = skeleton.bones.find(b => b.name.toLowerCase().includes(lp))
-    if (bone) return bone
+    if (typeof p === 'string') {
+      const lp = p.toLowerCase()
+      const bone = skeleton.bones.find(b => b.name.toLowerCase().includes(lp))
+      if (bone) return bone
+    } else if (p && p.all) {
+      const parts = p.all.map(s => s.toLowerCase())
+      const bone = skeleton.bones.find(b => {
+        const n = b.name.toLowerCase()
+        return parts.every(part => n.includes(part))
+      })
+      if (bone) return bone
+    }
   }
   return null
 }
@@ -101,10 +111,10 @@ export default {
       scene.fog = new THREE.Fog(0xf2f2f0, 5, 15)
       this._scene = scene
 
-      // ── Camera : plus proche, dans la box ────────────────────────
-      const camera = new THREE.PerspectiveCamera(40, width / height, 0.05, 50)
-      camera.position.set(0, 1.5, 2.2)
-      camera.lookAt(0, 1.2, 0)
+      // ── Camera : juste devant la box, cadre le perso entier ─────
+      const camera = new THREE.PerspectiveCamera(45, width / height, 0.05, 50)
+      camera.position.set(0, 1.1, 3)
+      camera.lookAt(0, 0.85, 0)
       this._camera = camera
 
       // ── Renderer ─────────────────────────────────────────────────
@@ -260,11 +270,16 @@ export default {
       this.stats.tris = Math.round(tris / 1000)
 
       if (!skinnedMesh || !skinnedMesh.skeleton) {
-        console.warn('No skinned mesh / skeleton found — ragdoll will be limited')
+        console.warn('[playground] No skinned mesh / skeleton found — ragdoll will be limited')
       } else {
         this._skinnedMesh = skinnedMesh
         this._skeleton = skinnedMesh.skeleton
         this.stats.bones = skinnedMesh.skeleton.bones.length
+        // DEBUG : log tous les noms de bones pour qu'on les voie
+        console.log('[playground] Skeleton bones (' + skinnedMesh.skeleton.bones.length + ') :')
+        skinnedMesh.skeleton.bones.forEach((b, i) => {
+          console.log(`  [${i}] ${b.name}`)
+        })
       }
 
       // Scale à 1.7m
@@ -300,43 +315,114 @@ export default {
       const RAPIER = this._RAPIER
       const sk = this._skeleton
 
-      // Trouve les bones — tolérant aux préfixes mixamorig_, etc.
+      // Trouve les bones — patterns multiples, tolérants
+      // L'ordre des patterns compte : plus spécifique d'abord
       const bones = {
-        hips:      findBone(sk, 'hips', 'pelvis', 'root'),
-        spine:     findBone(sk, 'spine2', 'spine1', 'chest', 'spine'),
-        head:      findBone(sk, 'head'),
-        lUpperArm: findBone(sk, 'leftarm', 'l_arm', 'upperarm_l', 'arm_l'),
-        lLowerArm: findBone(sk, 'leftforearm', 'l_forearm', 'forearm_l'),
-        rUpperArm: findBone(sk, 'rightarm', 'r_arm', 'upperarm_r', 'arm_r'),
-        rLowerArm: findBone(sk, 'rightforearm', 'r_forearm', 'forearm_r'),
-        lUpperLeg: findBone(sk, 'leftupleg', 'l_thigh', 'upperleg_l', 'upleg_l', 'thigh_l'),
-        lLowerLeg: findBone(sk, 'leftleg', 'l_calf', 'lowerleg_l', 'leg_l', 'calf_l'),
-        rUpperLeg: findBone(sk, 'rightupleg', 'r_thigh', 'upperleg_r', 'upleg_r', 'thigh_r'),
-        rLowerLeg: findBone(sk, 'rightleg', 'r_calf', 'lowerleg_r', 'leg_r', 'calf_r')
+        hips: findBone(sk, 'hips', 'pelvis', 'root_bone', 'root'),
+        spine: findBone(sk, 'spine2', 'spine1', 'chest', 'upper_body', 'spine', 'torso'),
+        head: findBone(sk, 'head'),
+
+        // Bras : on cherche "upperarm" en premier (Meshy/Blender) puis variantes Mixamo
+        lUpperArm: findBone(sk,
+          { all: ['upperarm', 'l'] },
+          { all: ['upper_arm', 'l'] },
+          { all: ['arm', 'l'] },     // Mixamo "LeftArm"
+          'leftarm', 'l_arm', 'arm_l', 'shoulder_l'
+        ),
+        lLowerArm: findBone(sk,
+          { all: ['forearm', 'l'] },
+          { all: ['lower_arm', 'l'] },
+          { all: ['lowerarm', 'l'] },
+          'leftforearm', 'l_forearm', 'forearm_l'
+        ),
+        rUpperArm: findBone(sk,
+          { all: ['upperarm', 'r'] },
+          { all: ['upper_arm', 'r'] },
+          { all: ['arm', 'r'] },
+          'rightarm', 'r_arm', 'arm_r', 'shoulder_r'
+        ),
+        rLowerArm: findBone(sk,
+          { all: ['forearm', 'r'] },
+          { all: ['lower_arm', 'r'] },
+          { all: ['lowerarm', 'r'] },
+          'rightforearm', 'r_forearm', 'forearm_r'
+        ),
+
+        // Jambes : "upleg" / "thigh" / "upperleg" d'abord pour ne pas
+        // confondre avec "leg" qui matcherait les deux
+        lUpperLeg: findBone(sk,
+          { all: ['upleg', 'l'] },
+          { all: ['upperleg', 'l'] },
+          { all: ['upper_leg', 'l'] },
+          { all: ['thigh', 'l'] },
+          'leftupleg', 'l_thigh', 'thigh_l'
+        ),
+        lLowerLeg: findBone(sk,
+          { all: ['lowerleg', 'l'] },
+          { all: ['lower_leg', 'l'] },
+          { all: ['shin', 'l'] },
+          { all: ['calf', 'l'] },
+          { all: ['leg', 'l'] },  // fallback large — testé en dernier
+          'leftleg', 'l_calf', 'calf_l', 'shin_l'
+        ),
+        rUpperLeg: findBone(sk,
+          { all: ['upleg', 'r'] },
+          { all: ['upperleg', 'r'] },
+          { all: ['upper_leg', 'r'] },
+          { all: ['thigh', 'r'] },
+          'rightupleg', 'r_thigh', 'thigh_r'
+        ),
+        rLowerLeg: findBone(sk,
+          { all: ['lowerleg', 'r'] },
+          { all: ['lower_leg', 'r'] },
+          { all: ['shin', 'r'] },
+          { all: ['calf', 'r'] },
+          { all: ['leg', 'r'] },
+          'rightleg', 'r_calf', 'calf_r', 'shin_r'
+        )
       }
 
-      // Si l'un des bones critiques manque, fallback
-      if (!bones.hips || !bones.spine || !bones.head) {
-        console.warn('Critical bones missing — falling back to single-body. Found:', bones)
+      // DEBUG : log de la résolution des bones (utile pour les rigs non-standard)
+      console.log('[playground] Bones detected for ragdoll :')
+      Object.entries(bones).forEach(([key, b]) => {
+        console.log(`  ${key.padEnd(12)} : ${b ? b.name : '✗ NOT FOUND'}`)
+      })
+
+      // Évite qu'un bone soit utilisé pour 2 slots (peut arriver si naming non-standard)
+      const seen = new Set()
+      Object.entries(bones).forEach(([key, b]) => {
+        if (b) {
+          if (seen.has(b.uuid)) {
+            console.warn(`[playground] Bone "${b.name}" matched for multiple slots — keeping first only`)
+            bones[key] = null
+          } else {
+            seen.add(b.uuid)
+          }
+        }
+      })
+
+      // Si bones critiques manquants → fallback single-body
+      if (!bones.hips || !bones.spine) {
+        console.warn('[playground] Critical bones (hips/spine) missing — fallback to single-body. Detected bones :', bones)
+        this.hint = 'Skeleton not recognized — single body mode (open console for bone names)'
         this._buildSingleBodyFallback()
         return
       }
 
       // Définition des segments : un body par segment (parent bone → child bone position)
-      // Chaque segment a un nom, un bone "owner" (qu'on synchronisera), et un bone "tip"
-      // (pour déterminer la longueur et orientation).
+      // `tip` peut être null (on prolongera avec fixedLength)
       const segments = [
-        { name: 'pelvis',    bone: bones.hips,      tip: bones.spine,      radius: 0.10 },
-        { name: 'torso',     bone: bones.spine,     tip: bones.head,       radius: 0.12 },
-        { name: 'head',      bone: bones.head,      tip: null,             radius: 0.10, fixedLength: 0.18 },
-        { name: 'lUpperArm', bone: bones.lUpperArm, tip: bones.lLowerArm,  radius: 0.05 },
-        { name: 'lLowerArm', bone: bones.lLowerArm, tip: null,             radius: 0.045, fixedLength: 0.25 },
-        { name: 'rUpperArm', bone: bones.rUpperArm, tip: bones.rLowerArm,  radius: 0.05 },
-        { name: 'rLowerArm', bone: bones.rLowerArm, tip: null,             radius: 0.045, fixedLength: 0.25 },
-        { name: 'lUpperLeg', bone: bones.lUpperLeg, tip: bones.lLowerLeg,  radius: 0.07 },
-        { name: 'lLowerLeg', bone: bones.lLowerLeg, tip: null,             radius: 0.06, fixedLength: 0.40 },
-        { name: 'rUpperLeg', bone: bones.rUpperLeg, tip: bones.rLowerLeg,  radius: 0.07 },
-        { name: 'rLowerLeg', bone: bones.rLowerLeg, tip: null,             radius: 0.06, fixedLength: 0.40 }
+        { name: 'pelvis',    bone: bones.hips,      tip: bones.spine || bones.head, radius: 0.10 },
+        { name: 'torso',     bone: bones.spine,     tip: bones.head,                radius: 0.12, fixedLength: 0.30 },
+        { name: 'head',      bone: bones.head,      tip: null,                      radius: 0.10, fixedLength: 0.18 },
+        { name: 'lUpperArm', bone: bones.lUpperArm, tip: bones.lLowerArm,           radius: 0.05, fixedLength: 0.25 },
+        { name: 'lLowerArm', bone: bones.lLowerArm, tip: null,                      radius: 0.045, fixedLength: 0.25 },
+        { name: 'rUpperArm', bone: bones.rUpperArm, tip: bones.rLowerArm,           radius: 0.05, fixedLength: 0.25 },
+        { name: 'rLowerArm', bone: bones.rLowerArm, tip: null,                      radius: 0.045, fixedLength: 0.25 },
+        { name: 'lUpperLeg', bone: bones.lUpperLeg, tip: bones.lLowerLeg,           radius: 0.07, fixedLength: 0.40 },
+        { name: 'lLowerLeg', bone: bones.lLowerLeg, tip: null,                      radius: 0.06, fixedLength: 0.40 },
+        { name: 'rUpperLeg', bone: bones.rUpperLeg, tip: bones.rLowerLeg,           radius: 0.07, fixedLength: 0.40 },
+        { name: 'rLowerLeg', bone: bones.rLowerLeg, tip: null,                      radius: 0.06, fixedLength: 0.40 }
       ]
 
       // Filtre les segments qui ont des bones invalides
