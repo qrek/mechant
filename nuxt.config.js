@@ -87,12 +87,10 @@ export default {
   },
 
   serverMiddleware: [
-    '~/middleware/server/auth.js',
-    // NOTE : ce handler est dans serverApi/ et NON dans middleware/ exprès.
-    // Nuxt 2 scanne middleware/ récursivement et inclut tout dans le bundle
-    // client — ce qui ferait embarquer tout le SDK AWS dans le navigateur
-    // et casserait le build. serverApi/ est ignoré du scan.
-    { path: '/api/r2/presign', handler: '~/serverApi/r2-presign.js' }
+    '~/middleware/server/auth.js'
+    // NOTE : /api/r2/presign est géré par api/r2/presign.js (Vercel Function),
+    // pas par un serverMiddleware Nuxt. Les serverMiddleware ne tournent pas
+    // sur Vercel quand Nuxt est déployé en SPA static.
   ],
 
   // Build Configuration: https://go.nuxtjs.dev/config-build

@@ -1,16 +1,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Endpoint serverMiddleware : génère une URL présignée pour upload R2
+// Vercel Serverless Function : génère une URL présignée pour upload R2
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// Le client (admin) appelle POST /api/r2/presign avec { filename, contentType, size }
-// Le serveur :
-//   1. valide la requête (taille max, content-type vidéo)
-//   2. génère une clé unique et un presigned URL PUT signé pour ~5 minutes
-//   3. renvoie { uploadUrl, publicUrl, key }
-// Le client uploade ensuite DIRECTEMENT vers R2 via PUT, sans repasser par le
-// serveur Nuxt (zéro bande passante côté Vercel, ultra rapide).
+// Route Vercel : POST /api/r2/presign
+// (Le routage est automatique : ce fichier api/r2/presign.js → /api/r2/presign)
 //
-// Variables d'environnement requises :
+// Pourquoi pas un serverMiddleware Nuxt ? Parce que Nuxt 2 en mode SPA
+// (ssr: false) est déployé en static sur Vercel — les serverMiddleware
+// ne tournent PAS en prod. Les Vercel Functions, elles, tournent toujours.
+//
+// Variables d'environnement requises (Vercel Project Settings) :
 //   R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,
 //   R2_ENDPOINT, R2_PUBLIC_URL, R2_BUCKET_NAME
 // ─────────────────────────────────────────────────────────────────────────────
@@ -21,7 +20,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 const MAX_SIZE_MB = 5
 const ALLOWED_TYPES = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v']
 
-// Singleton du client S3 (réutilisé entre invocations serverless)
+// Singleton du client S3 (réutilisé entre invocations)
 let _client = null
 function getClient () {
   if (_client) return _client
@@ -36,85 +35,63 @@ function getClient () {
   return _client
 }
 
-function readJsonBody (req) {
-  return new Promise((resolve, reject) => {
-    let raw = ''
-    req.on('data', (chunk) => { raw += chunk })
-    req.on('end', () => {
-      if (!raw) return resolve({})
-      try { resolve(JSON.parse(raw)) }
-      catch (err) { reject(new Error('Invalid JSON body')) }
-    })
-    req.on('error', reject)
-  })
+function sanitizeName (str) {
+  return (str || 'video')
+    .replace(/\.[^/.]+$/, '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z0-9-_]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 50)
+    .toLowerCase() || 'video'
 }
 
-function sendJson (res, status, payload) {
-  res.statusCode = status
-  res.setHeader('Content-Type', 'application/json')
-  res.end(JSON.stringify(payload))
-}
-
-export default async (req, res) => {
-  // Seul POST est accepté
+export default async function handler (req, res) {
   if (req.method !== 'POST') {
-    return sendJson(res, 405, { error: 'Method not allowed' })
+    return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  // Vérifie que toutes les env vars sont bien là
+  // Vercel parse le body JSON automatiquement, mais on sécurise au cas où
+  let body = req.body
+  if (!body || typeof body === 'string') {
+    try { body = JSON.parse(body || '{}') }
+    catch { return res.status(400).json({ error: 'Invalid JSON body' }) }
+  }
+
+  // Vérifie env vars
   const requiredEnv = ['R2_ENDPOINT', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET_NAME', 'R2_PUBLIC_URL']
   const missing = requiredEnv.filter(k => !process.env[k])
   if (missing.length) {
-    return sendJson(res, 500, {
-      error: 'Server R2 misconfigured',
-      missing
-    })
-  }
-
-  let body
-  try {
-    body = await readJsonBody(req)
-  } catch (err) {
-    return sendJson(res, 400, { error: err.message })
+    return res.status(500).json({ error: 'Server R2 misconfigured', missing })
   }
 
   const { filename, contentType, size } = body
 
   if (!filename || typeof filename !== 'string') {
-    return sendJson(res, 400, { error: 'filename is required' })
+    return res.status(400).json({ error: 'filename is required' })
   }
-
   if (!contentType || !ALLOWED_TYPES.includes(contentType)) {
-    return sendJson(res, 400, {
+    return res.status(400).json({
       error: `contentType must be one of: ${ALLOWED_TYPES.join(', ')}`,
       received: contentType
     })
   }
-
   if (typeof size !== 'number' || size <= 0) {
-    return sendJson(res, 400, { error: 'size (in bytes) is required' })
+    return res.status(400).json({ error: 'size (in bytes) is required' })
   }
 
   const sizeMB = size / (1024 * 1024)
   if (sizeMB > MAX_SIZE_MB) {
-    return sendJson(res, 413, {
+    return res.status(413).json({
       error: `File too large: ${sizeMB.toFixed(1)} MB (max ${MAX_SIZE_MB} MB). Compress with ffmpeg first.`
     })
   }
 
   // Génère une clé unique et propre pour R2
-  // Format : <timestamp>_<random>_<original-name-sanitized>.<ext>
   const ext = (filename.split('.').pop() || 'mp4').toLowerCase().slice(0, 5)
-  const safeBase = filename
-    .replace(/\.[^/.]+$/, '')                 // retire extension
-    .normalize('NFD').replace(/[̀-ͯ]/g, '') // retire accents
-    .replace(/[^a-zA-Z0-9-_]/g, '-')          // remplace tout le reste par tirets
-    .replace(/-+/g, '-')                       // dédoublonne les tirets
-    .replace(/^-|-$/g, '')                     // trim les tirets de début/fin
-    .slice(0, 50)                              // limite la longueur
-    .toLowerCase()
+  const safeBase = sanitizeName(filename)
   const rand = Math.random().toString(36).slice(2, 8)
-  const key = `previews/${Date.now()}_${rand}_${safeBase || 'video'}.${ext}`
+  const key = `previews/${Date.now()}_${rand}_${safeBase}.${ext}`
 
   try {
     const command = new PutObjectCommand({
@@ -130,9 +107,9 @@ export default async (req, res) => {
 
     const publicUrl = `${process.env.R2_PUBLIC_URL.replace(/\/$/, '')}/${key}`
 
-    return sendJson(res, 200, { uploadUrl, publicUrl, key })
+    return res.status(200).json({ uploadUrl, publicUrl, key })
   } catch (err) {
     console.error('[r2-presign] error generating signed URL:', err)
-    return sendJson(res, 500, { error: 'Failed to generate signed URL', detail: err.message })
+    return res.status(500).json({ error: 'Failed to generate signed URL', detail: err.message })
   }
 }
