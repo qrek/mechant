@@ -22,6 +22,13 @@
         </svg>
         Reset
       </button>
+      <button class="Playground_btn" @click="toggleDebug" :disabled="!ragdollReady" :class="{ 'is-active': debugViz }">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v6m0 10v6M4.22 4.22l4.24 4.24m7.08 7.08l4.24 4.24M1 12h6m10 0h6M4.22 19.78l4.24-4.24m7.08-7.08l4.24-4.24"/>
+        </svg>
+        {{ debugViz ? 'Hide bodies' : 'Show bodies' }}
+      </button>
     </div>
 
     <footer class="Playground_hud Playground_hud--bottom">
@@ -88,6 +95,7 @@ export default {
       loadingLabel: 'Loading character',
       progress: 0,
       ragdollReady: false,
+      debugViz: false,
       hint: 'Click & drag the character',
       stats: { tris: 0, bones: 0 },
 
@@ -422,12 +430,12 @@ export default {
         const bindBoneWorldScale = new THREE.Vector3()
         seg.bone.matrixWorld.decompose(bindBoneWorldPos, bindBoneWorldQuat, bindBoneWorldScale)
 
-        // Crée le body — damping plus consistant pour pas être trop flagada
+        // Crée le body — damping consistant, densité importante (perso lourd)
         const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
           .setTranslation(center.x, center.y, center.z)
           .setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w })
-          .setLinearDamping(0.5)
-          .setAngularDamping(2.0)   // les membres arrêtent de tourner vite (pas wet noodle)
+          .setLinearDamping(0.7)
+          .setAngularDamping(3.0)   // membres arrêtent de tourner très vite (anti-wet-noodle)
           .setCcdEnabled(true)
         const body = this._world.createRigidBody(bodyDesc)
 
@@ -441,12 +449,23 @@ export default {
         const filter = (allBodyBits & ~adjacencyMask & ~myBit) | WORLD_BIT
         const collisionGroups = ((myBit & 0xFFFF) << 16) | (filter & 0xFFFF)
 
+        // Density plus haute → perso plus lourd, impacts plus solides
         const collDesc = RAPIER.ColliderDesc.capsule(halfHeight, seg.radius)
-          .setFriction(0.8)
+          .setFriction(0.85)
           .setRestitution(0.02)
-          .setDensity(1.0)
-          .setCollisionGroups(collisionGroups >>> 0)  // unsigned
+          .setDensity(4.0)   // 4× plus lourd qu'avant
+          .setCollisionGroups(collisionGroups >>> 0)
         this._world.createCollider(collDesc, body)
+
+        // Wireframe debug capsule (visible quand debugViz = true)
+        const dbgGeom = new THREE.CapsuleGeometry(seg.radius, halfHeight * 2, 6, 12)
+        const dbgMat = new THREE.MeshBasicMaterial({
+          color: 0xff4500, wireframe: true, transparent: true, opacity: 0.8, depthTest: false
+        })
+        const dbgMesh = new THREE.Mesh(dbgGeom, dbgMat)
+        dbgMesh.renderOrder = 999
+        dbgMesh.visible = false
+        this._scene.add(dbgMesh)
 
         // OFFSET LOCAL : position du bone relative au CENTER du body, exprimée
         // dans le LOCAL frame du body (et non en world !). On l'obtient via
@@ -462,6 +481,7 @@ export default {
           name: seg.name,
           bone: seg.bone,
           body,
+          dbgMesh,
           halfHeight,
           radius: seg.radius,
           length,
@@ -470,7 +490,6 @@ export default {
           boneOffsetLocal,
           restRotationDelta,
           bindBoneWorldPos: bindBoneWorldPos.clone(),
-          // Cache la scale initiale du bone pour la préserver
           boneScale: seg.bone.scale.clone()
         })
       }
@@ -501,21 +520,19 @@ export default {
         return { x: v.x, y: v.y, z: v.z }
       }
 
-      // Tonus articulaire : chaque joint a un motor qui essaie de revenir à la
-      // rest pose. stiffness = raideur (plus haut = plus "musclé"), damping = freinage
-      // Valeurs par défaut, override par membre pour les zones plus rigides
-      const defaultMotor = { stiffness: 8, damping: 1.5 }
+      // Tonus articulaire MUSCLÉ — beaucoup plus rigide pour pas être flagada
+      const defaultMotor = { stiffness: 50, damping: 5 }
       const motorByJoint = {
-        'pelvis-torso':       { stiffness: 30, damping: 3 }, // colonne plus raide
-        'torso-head':         { stiffness: 15, damping: 2 }, // cou avec tonus
-        'torso-lUpperArm':    { stiffness: 10, damping: 1.5 },
-        'torso-rUpperArm':    { stiffness: 10, damping: 1.5 },
-        'lUpperArm-lLowerArm':{ stiffness: 8, damping: 1.2 }, // coude
-        'rUpperArm-rLowerArm':{ stiffness: 8, damping: 1.2 },
-        'pelvis-lUpperLeg':   { stiffness: 15, damping: 2 }, // hanche
-        'pelvis-rUpperLeg':   { stiffness: 15, damping: 2 },
-        'lUpperLeg-lLowerLeg':{ stiffness: 12, damping: 1.5 }, // genou
-        'rUpperLeg-rLowerLeg':{ stiffness: 12, damping: 1.5 }
+        'pelvis-torso':        { stiffness: 200, damping: 12 }, // colonne très raide (ancrage)
+        'torso-head':          { stiffness: 100, damping: 8 },  // cou solide
+        'torso-lUpperArm':     { stiffness: 60, damping: 6 },   // épaule
+        'torso-rUpperArm':     { stiffness: 60, damping: 6 },
+        'lUpperArm-lLowerArm': { stiffness: 50, damping: 5 },   // coude
+        'rUpperArm-rLowerArm': { stiffness: 50, damping: 5 },
+        'pelvis-lUpperLeg':    { stiffness: 100, damping: 8 },  // hanche
+        'pelvis-rUpperLeg':    { stiffness: 100, damping: 8 },
+        'lUpperLeg-lLowerLeg': { stiffness: 80, damping: 6 },   // genou
+        'rUpperLeg-rLowerLeg': { stiffness: 80, damping: 6 }
       }
 
       const JointAxis = RAPIER.JointAxis
@@ -608,6 +625,12 @@ export default {
         const t = seg.body.translation()
         const r = seg.body.rotation()
         tmp.bodyQuat.set(r.x, r.y, r.z, r.w)
+
+        // Sync debug mesh (toujours, même si caché)
+        if (seg.dbgMesh) {
+          seg.dbgMesh.position.set(t.x, t.y, t.z)
+          seg.dbgMesh.quaternion.copy(tmp.bodyQuat)
+        }
 
         // POSITION : boneWorld = bodyCenter + bodyQuat * boneOffsetLocal
         tmp.offset.copy(seg.boneOffsetLocal).applyQuaternion(tmp.bodyQuat)
@@ -740,6 +763,15 @@ export default {
         point.y = Math.max(m, Math.min(this.BOX.h - m, point.y))
         point.z = Math.max(-this.BOX.d / 2 + m, Math.min(this.BOX.d / 2 - m, point.z))
         this._mouseWorldPos = { x: point.x, y: point.y, z: point.z }
+      }
+    },
+
+    // ── Toggle debug visualization ──────────────────────────────────
+    toggleDebug () {
+      this.debugViz = !this.debugViz
+      if (!this._ragdoll) return
+      for (const seg of this._ragdoll.segments) {
+        if (seg.dbgMesh) seg.dbgMesh.visible = this.debugViz
       }
     },
 
