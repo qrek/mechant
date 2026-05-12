@@ -134,7 +134,8 @@ export default {
       renderer.toneMappingExposure = 0.95
       renderer.shadowMap.enabled = true
       renderer.shadowMap.type = THREE.PCFSoftShadowMap
-      renderer.physicallyCorrectLights = true
+      // physicallyCorrectLights: off pour gagner en perf — visuel quasi identique
+      renderer.physicallyCorrectLights = false
       container.appendChild(renderer.domElement)
       this._renderer = renderer
 
@@ -193,54 +194,27 @@ export default {
       this._world = new RAPIER.World({ x: 0, y: -8.5, z: 0 })
 
       const BOX = this.BOX
-      // Sol
-      const floor = this._world.createRigidBody(
-        RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.1, 0)
-      )
-      this._world.createCollider(
-        RAPIER.ColliderDesc.cuboid(BOX.w / 2, 0.1, BOX.d / 2).setFriction(0.9).setRestitution(0.05),
-        floor
-      )
-      // Plafond invisible (évite que le perso s'envole)
-      const ceiling = this._world.createRigidBody(
-        RAPIER.RigidBodyDesc.fixed().setTranslation(0, BOX.h + 0.1, 0)
-      )
-      this._world.createCollider(
-        RAPIER.ColliderDesc.cuboid(BOX.w / 2, 0.1, BOX.d / 2).setFriction(0.5).setRestitution(0.2),
-        ceiling
-      )
-      // Mur du fond
-      const back = this._world.createRigidBody(
-        RAPIER.RigidBodyDesc.fixed().setTranslation(0, BOX.h / 2, -BOX.d / 2 - 0.1)
-      )
-      this._world.createCollider(
-        RAPIER.ColliderDesc.cuboid(BOX.w / 2, BOX.h / 2, 0.1).setFriction(0.5).setRestitution(0.3),
-        back
-      )
-      // Mur avant (invisible — derrière la caméra) pour pas que le perso s'échappe
-      const front = this._world.createRigidBody(
-        RAPIER.RigidBodyDesc.fixed().setTranslation(0, BOX.h / 2, BOX.d / 2 + 0.1)
-      )
-      this._world.createCollider(
-        RAPIER.ColliderDesc.cuboid(BOX.w / 2, BOX.h / 2, 0.1).setFriction(0.5).setRestitution(0.3),
-        front
-      )
-      // Mur gauche
-      const left = this._world.createRigidBody(
-        RAPIER.RigidBodyDesc.fixed().setTranslation(-BOX.w / 2 - 0.1, BOX.h / 2, 0)
-      )
-      this._world.createCollider(
-        RAPIER.ColliderDesc.cuboid(0.1, BOX.h / 2, BOX.d / 2).setFriction(0.5).setRestitution(0.3),
-        left
-      )
-      // Mur droit
-      const right = this._world.createRigidBody(
-        RAPIER.RigidBodyDesc.fixed().setTranslation(BOX.w / 2 + 0.1, BOX.h / 2, 0)
-      )
-      this._world.createCollider(
-        RAPIER.ColliderDesc.cuboid(0.1, BOX.h / 2, BOX.d / 2).setFriction(0.5).setRestitution(0.3),
-        right
-      )
+      // Collision groups pour le world : bit 15 = membership "world",
+      // filter = tout (collide avec tous les bodies qui ont le bit 15 dans leur filter)
+      const WORLD_GROUPS = ((1 << 15) << 16) | 0xFFFF
+
+      const makeStatic = (pos, half) => {
+        const body = this._world.createRigidBody(
+          RAPIER.RigidBodyDesc.fixed().setTranslation(pos.x, pos.y, pos.z)
+        )
+        this._world.createCollider(
+          RAPIER.ColliderDesc.cuboid(half.x, half.y, half.z)
+            .setFriction(0.85).setRestitution(0.1)
+            .setCollisionGroups(WORLD_GROUPS >>> 0),
+          body
+        )
+      }
+      makeStatic({ x: 0,                y: -0.1,         z: 0 },              { x: BOX.w / 2, y: 0.1,       z: BOX.d / 2 }) // sol
+      makeStatic({ x: 0,                y: BOX.h + 0.1,  z: 0 },              { x: BOX.w / 2, y: 0.1,       z: BOX.d / 2 }) // plafond
+      makeStatic({ x: 0,                y: BOX.h / 2,    z: -BOX.d / 2 - 0.1 }, { x: BOX.w / 2, y: BOX.h / 2, z: 0.1 })     // back
+      makeStatic({ x: 0,                y: BOX.h / 2,    z: BOX.d / 2 + 0.1 },  { x: BOX.w / 2, y: BOX.h / 2, z: 0.1 })     // front
+      makeStatic({ x: -BOX.w / 2 - 0.1, y: BOX.h / 2,    z: 0 },              { x: 0.1,       y: BOX.h / 2, z: BOX.d / 2 }) // left
+      makeStatic({ x: BOX.w / 2 + 0.1,  y: BOX.h / 2,    z: 0 },              { x: 0.1,       y: BOX.h / 2, z: BOX.d / 2 }) // right
     },
 
     // ── Charge le GLB ───────────────────────────────────────────────
@@ -392,10 +366,26 @@ export default {
       const valid = segments.filter(s => s.bone)
       this._ragdoll = { segments: [] }
 
-      // Collision groups : tous les corps du ragdoll dans le même groupe (0x0001)
-      // avec filter qui exclut ce groupe → pas de self-collision entre membres du ragdoll
-      // (sinon ils explosent au démarrage à cause des chevauchements aux joints)
-      const RAGDOLL_GROUP = 0x00010002  // membership=0001, filter=0010 (collide world only)
+      // Per-body collision groups : chaque body a son propre bit. Il collide avec
+      // tous les autres SAUF ceux directement joints (adjacency) et lui-même.
+      // Bit 15 réservé au "world" (sol, murs).
+      const WORLD_BIT = 1 << 15
+      const adjacencyByName = {
+        pelvis:    ['torso', 'lUpperLeg', 'rUpperLeg'],
+        torso:     ['pelvis', 'head', 'lUpperArm', 'rUpperArm'],
+        head:      ['torso'],
+        lUpperArm: ['torso', 'lLowerArm'],
+        lLowerArm: ['lUpperArm'],
+        rUpperArm: ['torso', 'rLowerArm'],
+        rLowerArm: ['rUpperArm'],
+        lUpperLeg: ['pelvis', 'lLowerLeg'],
+        lLowerLeg: ['lUpperLeg'],
+        rUpperLeg: ['pelvis', 'rLowerLeg'],
+        rLowerLeg: ['rUpperLeg']
+      }
+      // Assigne un bit unique à chaque body valide
+      const bitByName = {}
+      valid.forEach((s, i) => { bitByName[s.name] = 1 << i })
 
       for (const seg of valid) {
         const startPos = new THREE.Vector3()
@@ -432,20 +422,30 @@ export default {
         const bindBoneWorldScale = new THREE.Vector3()
         seg.bone.matrixWorld.decompose(bindBoneWorldPos, bindBoneWorldQuat, bindBoneWorldScale)
 
-        // Crée le body
+        // Crée le body — damping plus light pour un feeling plus dynamique
         const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
           .setTranslation(center.x, center.y, center.z)
           .setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w })
-          .setLinearDamping(0.5)
-          .setAngularDamping(0.8)
+          .setLinearDamping(0.15)
+          .setAngularDamping(0.4)
           .setCcdEnabled(true)
         const body = this._world.createRigidBody(bodyDesc)
+
+        // Collision groups :
+        //   membership = bit propre du body
+        //   filter     = tous les autres bits sauf adjacents + world
+        const myBit = bitByName[seg.name]
+        const adjacents = adjacencyByName[seg.name] || []
+        const adjacencyMask = adjacents.reduce((m, n) => m | (bitByName[n] || 0), 0)
+        const allBodyBits = valid.reduce((m, s) => m | bitByName[s.name], 0)
+        const filter = (allBodyBits & ~adjacencyMask & ~myBit) | WORLD_BIT
+        const collisionGroups = ((myBit & 0xFFFF) << 16) | (filter & 0xFFFF)
 
         const collDesc = RAPIER.ColliderDesc.capsule(halfHeight, seg.radius)
           .setFriction(0.8)
           .setRestitution(0.02)
           .setDensity(1.0)
-          .setCollisionGroups(RAGDOLL_GROUP)
+          .setCollisionGroups(collisionGroups >>> 0)  // unsigned
         this._world.createCollider(collDesc, body)
 
         // OFFSET LOCAL : position du bone relative au CENTER du body, exprimée
@@ -555,38 +555,47 @@ export default {
         return
       }
 
+      // Pre-allocated objects (réutilisés chaque frame, évite GC pressure)
       const THREE = this._THREE
-      const tmpMatrix = new THREE.Matrix4()
-      const tmpParentInverse = new THREE.Matrix4()
-      const tmpV = new THREE.Vector3()
+      if (!this._syncTmp) {
+        this._syncTmp = {
+          matrix: new THREE.Matrix4(),
+          parentInverse: new THREE.Matrix4(),
+          bodyQuat: new THREE.Quaternion(),
+          boneQuat: new THREE.Quaternion(),
+          deltaInv: new THREE.Quaternion(),
+          offset: new THREE.Vector3(),
+          bonePos: new THREE.Vector3(),
+          scratchV: new THREE.Vector3()
+        }
+      }
+      const tmp = this._syncTmp
 
       for (const seg of this._ragdoll.segments) {
         if (!seg.bone) continue
         const t = seg.body.translation()
         const r = seg.body.rotation()
-        const bodyQuat = new THREE.Quaternion(r.x, r.y, r.z, r.w)
+        tmp.bodyQuat.set(r.x, r.y, r.z, r.w)
 
         // POSITION : boneWorld = bodyCenter + bodyQuat * boneOffsetLocal
-        const offsetWorld = seg.boneOffsetLocal.clone().applyQuaternion(bodyQuat)
-        const bonePos = new THREE.Vector3(t.x + offsetWorld.x, t.y + offsetWorld.y, t.z + offsetWorld.z)
+        tmp.offset.copy(seg.boneOffsetLocal).applyQuaternion(tmp.bodyQuat)
+        tmp.bonePos.set(t.x + tmp.offset.x, t.y + tmp.offset.y, t.z + tmp.offset.z)
 
-        // ROTATION : on applique le bind delta pour préserver l'orientation
-        // rest-pose du bone tout en suivant la rotation du body.
-        // boneWorldQuat = bodyQuat * restRotationDelta.invert()
-        const boneWorldQuat = bodyQuat.clone().multiply(seg.restRotationDelta.clone().invert())
+        // ROTATION : bodyQuat * restRotationDelta.invert()
+        tmp.deltaInv.copy(seg.restRotationDelta).invert()
+        tmp.boneQuat.copy(tmp.bodyQuat).multiply(tmp.deltaInv)
 
         // Compose target world matrix
-        tmpMatrix.compose(bonePos, boneWorldQuat, seg.boneScale)
+        tmp.matrix.compose(tmp.bonePos, tmp.boneQuat, seg.boneScale)
 
-        // Convertit en local relative au parent du bone
         const parent = seg.bone.parent
         if (parent) {
           parent.updateMatrixWorld(false)
-          tmpParentInverse.copy(parent.matrixWorld).invert()
-          tmpMatrix.premultiply(tmpParentInverse)
+          tmp.parentInverse.copy(parent.matrixWorld).invert()
+          tmp.matrix.premultiply(tmp.parentInverse)
         }
-        tmpMatrix.decompose(seg.bone.position, seg.bone.quaternion, tmpV)
-        // Force la scale d'origine (ne laisse pas la décomposition la modifier)
+        tmp.matrix.decompose(seg.bone.position, seg.bone.quaternion, tmp.scratchV)
+        // Force la scale d'origine
         seg.bone.scale.copy(seg.boneScale)
         seg.bone.updateMatrixWorld(true)
       }
@@ -760,7 +769,7 @@ export default {
       const key = new THREE.DirectionalLight(0xfff6e8, 1.1)
       key.position.set(2, 4, 2.5)
       key.castShadow = true
-      key.shadow.mapSize.set(2048, 2048)
+      key.shadow.mapSize.set(1024, 1024)   // 1024 au lieu de 2048 (4× moins de pixels)
       key.shadow.camera.near = 0.3
       key.shadow.camera.far = 12
       key.shadow.camera.left = -3
@@ -769,7 +778,7 @@ export default {
       key.shadow.camera.bottom = -0.5
       key.shadow.bias = -0.0005
       key.shadow.normalBias = 0.02
-      key.shadow.radius = 4
+      key.shadow.radius = 3
       scene.add(key)
 
       const fill = new THREE.DirectionalLight(0xf0f4ff, 0.25)
