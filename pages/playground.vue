@@ -275,7 +275,12 @@ export default {
         this._skinnedMesh = skinnedMesh
         this._skeleton = skinnedMesh.skeleton
         this.stats.bones = skinnedMesh.skeleton.bones.length
-        // DEBUG : log tous les noms de bones pour qu'on les voie
+
+        // Force la bind pose (T-pose) — au cas où le GLB embarque une animation
+        // qui aurait posé les bones dans un autre état au load
+        skinnedMesh.pose()
+
+        // DEBUG : log tous les noms de bones
         console.log('[playground] Skeleton bones (' + skinnedMesh.skeleton.bones.length + ') :')
         skinnedMesh.skeleton.bones.forEach((b, i) => {
           console.log(`  [${i}] ${b.name}`)
