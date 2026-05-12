@@ -16,6 +16,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1045.0",
     "@aws-sdk/s3-request-presigner": "^3.1045.0",
+    "@dimforge/rapier3d-compat": "^0.19.3",
     "@supabase/supabase-js": "^1.35.7",
     "bidello": "^1.0.1",
     "core-js": "^3.25.3",

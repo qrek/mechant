@@ -124,7 +124,7 @@ export default {
       config.resolve.alias.vue = 'vue/dist/vue.common'
     },
 
-    transpile: ['three', 'lenis']
+    transpile: ['three', 'lenis', '@dimforge/rapier3d-compat']
   },
   pageTransition: {
     name: 'page',
