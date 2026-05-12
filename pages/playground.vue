@@ -414,31 +414,31 @@ export default {
         return
       }
 
-      // Définition des segments : un body par segment (parent bone → child bone position)
-      // `tip` peut être null (on prolongera avec fixedLength)
+      // Pour chaque segment : bone "owner" qu'on sync + bone "tip" pour la longueur
+      // Le segment du pelvis va vers le haut (hips → spine). Les jambes attachent à hips
+      // donc à la BASE du pelvis (et non au sommet).
       const segments = [
-        { name: 'pelvis',    bone: bones.hips,      tip: bones.spine || bones.head, radius: 0.10 },
-        { name: 'torso',     bone: bones.spine,     tip: bones.head,                radius: 0.12, fixedLength: 0.30 },
-        { name: 'head',      bone: bones.head,      tip: null,                      radius: 0.10, fixedLength: 0.18 },
-        { name: 'lUpperArm', bone: bones.lUpperArm, tip: bones.lLowerArm,           radius: 0.05, fixedLength: 0.25 },
-        { name: 'lLowerArm', bone: bones.lLowerArm, tip: null,                      radius: 0.045, fixedLength: 0.25 },
-        { name: 'rUpperArm', bone: bones.rUpperArm, tip: bones.rLowerArm,           radius: 0.05, fixedLength: 0.25 },
-        { name: 'rLowerArm', bone: bones.rLowerArm, tip: null,                      radius: 0.045, fixedLength: 0.25 },
-        { name: 'lUpperLeg', bone: bones.lUpperLeg, tip: bones.lLowerLeg,           radius: 0.07, fixedLength: 0.40 },
-        { name: 'lLowerLeg', bone: bones.lLowerLeg, tip: null,                      radius: 0.06, fixedLength: 0.40 },
-        { name: 'rUpperLeg', bone: bones.rUpperLeg, tip: bones.rLowerLeg,           radius: 0.07, fixedLength: 0.40 },
-        { name: 'rLowerLeg', bone: bones.rLowerLeg, tip: null,                      radius: 0.06, fixedLength: 0.40 }
+        { name: 'pelvis',    bone: bones.hips,      tip: bones.spine,        radius: 0.10, fallbackLen: 0.20 },
+        { name: 'torso',     bone: bones.spine,     tip: bones.head,         radius: 0.11, fallbackLen: 0.40 },
+        { name: 'head',      bone: bones.head,      tip: null,               radius: 0.11, fallbackLen: 0.20 },
+        { name: 'lUpperArm', bone: bones.lUpperArm, tip: bones.lLowerArm,    radius: 0.045, fallbackLen: 0.27 },
+        { name: 'lLowerArm', bone: bones.lLowerArm, tip: null,               radius: 0.04, fallbackLen: 0.27 },
+        { name: 'rUpperArm', bone: bones.rUpperArm, tip: bones.rLowerArm,    radius: 0.045, fallbackLen: 0.27 },
+        { name: 'rLowerArm', bone: bones.rLowerArm, tip: null,               radius: 0.04, fallbackLen: 0.27 },
+        { name: 'lUpperLeg', bone: bones.lUpperLeg, tip: bones.lLowerLeg,    radius: 0.06, fallbackLen: 0.42 },
+        { name: 'lLowerLeg', bone: bones.lLowerLeg, tip: null,               radius: 0.055, fallbackLen: 0.42 },
+        { name: 'rUpperLeg', bone: bones.rUpperLeg, tip: bones.rLowerLeg,    radius: 0.06, fallbackLen: 0.42 },
+        { name: 'rLowerLeg', bone: bones.rLowerLeg, tip: null,               radius: 0.055, fallbackLen: 0.42 }
       ]
 
-      // Filtre les segments qui ont des bones invalides
       const valid = segments.filter(s => s.bone)
       this._ragdoll = { segments: [] }
 
-      const tmpV = new THREE.Vector3()
-      const tmpV2 = new THREE.Vector3()
-      const tmpQ = new THREE.Quaternion()
+      // Collision groups : tous les corps du ragdoll dans le même groupe (0x0001)
+      // avec filter qui exclut ce groupe → pas de self-collision entre membres du ragdoll
+      // (sinon ils explosent au démarrage à cause des chevauchements aux joints)
+      const RAGDOLL_GROUP = 0x00010002  // membership=0001, filter=0010 (collide world only)
 
-      // Crée les rigid bodies
       for (const seg of valid) {
         const startPos = new THREE.Vector3()
         seg.bone.getWorldPosition(startPos)
@@ -447,82 +447,112 @@ export default {
         if (seg.tip) {
           endPos = new THREE.Vector3()
           seg.tip.getWorldPosition(endPos)
+          // Sanity : si trop proche, fallback à la longueur par défaut le long de Y down
+          const dist = new THREE.Vector3().subVectors(endPos, startPos).length()
+          if (dist < 0.05) {
+            endPos = startPos.clone().add(new THREE.Vector3(0, -seg.fallbackLen, 0))
+          }
         } else {
-          // Pas de tip : on prolonge dans la direction +Y locale du bone
-          endPos = startPos.clone().add(new THREE.Vector3(0, seg.fixedLength || 0.2, 0))
+          // Direction = parent->bone si possible (continuité naturelle), sinon Y up
+          endPos = startPos.clone().add(new THREE.Vector3(0, seg.name === 'head' ? seg.fallbackLen : -seg.fallbackLen, 0))
         }
 
         const segVec = new THREE.Vector3().subVectors(endPos, startPos)
         const length = Math.max(0.05, segVec.length())
         const center = new THREE.Vector3().addVectors(startPos, endPos).multiplyScalar(0.5)
-
-        // Capsule : halfHeight + radius, axe par défaut +Y
         const halfHeight = Math.max(0.02, (length - 2 * seg.radius) / 2)
+        const segDir = segVec.clone().normalize()
 
-        // Orientation : aligner +Y vers segVec
-        const up = new THREE.Vector3(0, 1, 0)
-        const quat = new THREE.Quaternion().setFromUnitVectors(up, segVec.clone().normalize())
+        // Orientation : aligner +Y du capsule vers segDir
+        const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), segDir)
+
+        // World-space bind pose du bone : on capture la rotation actuelle (au moment de
+        // la T-pose post-skinnedMesh.pose())
+        seg.bone.updateMatrixWorld(true)
+        const bindBoneWorldPos = new THREE.Vector3()
+        const bindBoneWorldQuat = new THREE.Quaternion()
+        const bindBoneWorldScale = new THREE.Vector3()
+        seg.bone.matrixWorld.decompose(bindBoneWorldPos, bindBoneWorldQuat, bindBoneWorldScale)
 
         // Crée le body
         const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
           .setTranslation(center.x, center.y, center.z)
           .setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w })
-          .setLinearDamping(0.3)
-          .setAngularDamping(0.6)
+          .setLinearDamping(0.5)
+          .setAngularDamping(0.8)
           .setCcdEnabled(true)
         const body = this._world.createRigidBody(bodyDesc)
 
         const collDesc = RAPIER.ColliderDesc.capsule(halfHeight, seg.radius)
           .setFriction(0.8)
-          .setRestitution(0.05)
+          .setRestitution(0.02)
           .setDensity(1.0)
+          .setCollisionGroups(RAGDOLL_GROUP)
         this._world.createCollider(collDesc, body)
 
-        // Mémorise pour le sync
+        // OFFSET LOCAL : position du bone relative au CENTER du body, exprimée
+        // dans le LOCAL frame du body (et non en world !). On l'obtient via
+        // inverse(initialQuat) * (bonePos - center).
+        const offsetWorld = new THREE.Vector3().subVectors(bindBoneWorldPos, center)
+        const boneOffsetLocal = offsetWorld.clone().applyQuaternion(quat.clone().invert())
+
+        // ROTATION DELTA : différence entre la rotation bind-pose du bone et la
+        // rotation initiale du body. Permet de préserver la rest pose pendant le sync.
+        const restRotationDelta = bindBoneWorldQuat.clone().invert().multiply(quat)
+
         this._ragdoll.segments.push({
           name: seg.name,
           bone: seg.bone,
-          tip: seg.tip,
           body,
           halfHeight,
           radius: seg.radius,
           length,
-          // initial state pour le reset
           initialPos: center.clone(),
           initialQuat: quat.clone(),
-          // bone offset : on stocke la position de départ du bone relative au center du body
-          // (pour pouvoir reconstruire la position du bone à partir du body)
-          boneStartOffset: new THREE.Vector3().subVectors(startPos, center)
+          boneOffsetLocal,
+          restRotationDelta,
+          bindBoneWorldPos: bindBoneWorldPos.clone(),
+          // Cache la scale initiale du bone pour la préserver
+          boneScale: seg.bone.scale.clone()
         })
       }
 
-      // Index par nom pour faciliter les joints
       this._segByName = Object.fromEntries(this._ragdoll.segments.map(s => [s.name, s]))
 
-      // Définition des joints (parent → child)
+      // Joints : on calcule les anchor positions en WORLD via les bones, puis on
+      // convertit en LOCAL pour chaque body (parent et child).
+      // jointDefs : [parentName, childName, worldAnchorBoneName]
+      // worldAnchorBoneName est le bone à la jonction (souvent = child bone)
       const jointDefs = [
-        ['pelvis',    'torso',     true],   // joint à la base de la torse (= top du pelvis)
-        ['torso',     'head',      true],
-        ['torso',     'lUpperArm', true],
-        ['lUpperArm', 'lLowerArm', true],
-        ['torso',     'rUpperArm', true],
-        ['rUpperArm', 'rLowerArm', true],
-        ['pelvis',    'lUpperLeg', true],
-        ['lUpperLeg', 'lLowerLeg', true],
-        ['pelvis',    'rUpperLeg', true],
-        ['rUpperLeg', 'rLowerLeg', true]
+        ['pelvis',    'torso',     bones.spine],     // hip/spine junction
+        ['torso',     'head',      bones.head],      // neck
+        ['torso',     'lUpperArm', bones.lUpperArm], // left shoulder
+        ['lUpperArm', 'lLowerArm', bones.lLowerArm], // left elbow
+        ['torso',     'rUpperArm', bones.rUpperArm], // right shoulder
+        ['rUpperArm', 'rLowerArm', bones.rLowerArm], // right elbow
+        ['pelvis',    'lUpperLeg', bones.lUpperLeg], // left hip
+        ['lUpperLeg', 'lLowerLeg', bones.lLowerLeg], // left knee
+        ['pelvis',    'rUpperLeg', bones.rUpperLeg], // right hip
+        ['rUpperLeg', 'rLowerLeg', bones.rLowerLeg]  // right knee
       ]
 
-      for (const [parentName, childName] of jointDefs) {
+      // Helper : convertit un worldPos en LOCAL d'un seg (à son état initial)
+      const toLocal = (seg, worldPos) => {
+        const v = new THREE.Vector3().subVectors(worldPos, seg.initialPos)
+        v.applyQuaternion(seg.initialQuat.clone().invert())
+        return { x: v.x, y: v.y, z: v.z }
+      }
+
+      for (const [parentName, childName, anchorBone] of jointDefs) {
         const parent = this._segByName[parentName]
         const child = this._segByName[childName]
-        if (!parent || !child) continue
+        if (!parent || !child || !anchorBone) continue
 
-        // Anchors : pour le parent, l'anchor est à l'extrémité "haute" (vers le child) en local
-        // = (0, halfHeight + radius, 0) puisque +Y est l'axe du capsule.
-        // Pour le child, à l'extrémité "basse" = (0, -halfHeight - radius, 0).
-        const parentAnchor = { x: 0, y: parent.halfHeight + parent.radius * 0.5, z: 0 }
-        const childAnchor  = { x: 0, y: -child.halfHeight - child.radius * 0.5, z: 0 }
+        const anchorWorld = new THREE.Vector3()
+        anchorBone.getWorldPosition(anchorWorld)
+
+        const parentAnchor = toLocal(parent, anchorWorld)
+        const childAnchor = toLocal(child, anchorWorld)
 
         const jointData = RAPIER.JointData.spherical(parentAnchor, childAnchor)
         this._world.createImpulseJoint(jointData, parent.body, child.body, true)
@@ -571,33 +601,35 @@ export default {
       const tmpMatrix = new THREE.Matrix4()
       const tmpParentInverse = new THREE.Matrix4()
       const tmpV = new THREE.Vector3()
-      const tmpQ = new THREE.Quaternion()
-      const tmpS = new THREE.Vector3(1, 1, 1)
 
       for (const seg of this._ragdoll.segments) {
         if (!seg.bone) continue
         const t = seg.body.translation()
         const r = seg.body.rotation()
-
-        // Position du bone en world = center du body + offset initial transformé par
-        // la rotation actuelle du body.
-        // En gros : start position of segment (= bone position) = body.center + bodyRot * boneStartOffset
-        const offset = seg.boneStartOffset.clone()
         const bodyQuat = new THREE.Quaternion(r.x, r.y, r.z, r.w)
-        offset.applyQuaternion(bodyQuat)
-        const bonePos = new THREE.Vector3(t.x + offset.x, t.y + offset.y, t.z + offset.z)
 
-        // Build world matrix avec rotation = body rotation
-        tmpMatrix.compose(bonePos, bodyQuat, tmpS)
+        // POSITION : boneWorld = bodyCenter + bodyQuat * boneOffsetLocal
+        const offsetWorld = seg.boneOffsetLocal.clone().applyQuaternion(bodyQuat)
+        const bonePos = new THREE.Vector3(t.x + offsetWorld.x, t.y + offsetWorld.y, t.z + offsetWorld.z)
+
+        // ROTATION : on applique le bind delta pour préserver l'orientation
+        // rest-pose du bone tout en suivant la rotation du body.
+        // boneWorldQuat = bodyQuat * restRotationDelta.invert()
+        const boneWorldQuat = bodyQuat.clone().multiply(seg.restRotationDelta.clone().invert())
+
+        // Compose target world matrix
+        tmpMatrix.compose(bonePos, boneWorldQuat, seg.boneScale)
 
         // Convertit en local relative au parent du bone
         const parent = seg.bone.parent
         if (parent) {
-          parent.updateMatrixWorld()
+          parent.updateMatrixWorld(false)
           tmpParentInverse.copy(parent.matrixWorld).invert()
           tmpMatrix.premultiply(tmpParentInverse)
         }
         tmpMatrix.decompose(seg.bone.position, seg.bone.quaternion, tmpV)
+        // Force la scale d'origine (ne laisse pas la décomposition la modifier)
+        seg.bone.scale.copy(seg.boneScale)
         seg.bone.updateMatrixWorld(true)
       }
     },
