@@ -422,12 +422,12 @@ export default {
         const bindBoneWorldScale = new THREE.Vector3()
         seg.bone.matrixWorld.decompose(bindBoneWorldPos, bindBoneWorldQuat, bindBoneWorldScale)
 
-        // Crée le body — damping plus light pour un feeling plus dynamique
+        // Crée le body — damping plus consistant pour pas être trop flagada
         const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
           .setTranslation(center.x, center.y, center.z)
           .setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w })
-          .setLinearDamping(0.15)
-          .setAngularDamping(0.4)
+          .setLinearDamping(0.5)
+          .setAngularDamping(2.0)   // les membres arrêtent de tourner vite (pas wet noodle)
           .setCcdEnabled(true)
         const body = this._world.createRigidBody(bodyDesc)
 
@@ -501,6 +501,25 @@ export default {
         return { x: v.x, y: v.y, z: v.z }
       }
 
+      // Tonus articulaire : chaque joint a un motor qui essaie de revenir à la
+      // rest pose. stiffness = raideur (plus haut = plus "musclé"), damping = freinage
+      // Valeurs par défaut, override par membre pour les zones plus rigides
+      const defaultMotor = { stiffness: 8, damping: 1.5 }
+      const motorByJoint = {
+        'pelvis-torso':       { stiffness: 30, damping: 3 }, // colonne plus raide
+        'torso-head':         { stiffness: 15, damping: 2 }, // cou avec tonus
+        'torso-lUpperArm':    { stiffness: 10, damping: 1.5 },
+        'torso-rUpperArm':    { stiffness: 10, damping: 1.5 },
+        'lUpperArm-lLowerArm':{ stiffness: 8, damping: 1.2 }, // coude
+        'rUpperArm-rLowerArm':{ stiffness: 8, damping: 1.2 },
+        'pelvis-lUpperLeg':   { stiffness: 15, damping: 2 }, // hanche
+        'pelvis-rUpperLeg':   { stiffness: 15, damping: 2 },
+        'lUpperLeg-lLowerLeg':{ stiffness: 12, damping: 1.5 }, // genou
+        'rUpperLeg-rLowerLeg':{ stiffness: 12, damping: 1.5 }
+      }
+
+      const JointAxis = RAPIER.JointAxis
+
       for (const [parentName, childName, anchorBone] of jointDefs) {
         const parent = this._segByName[parentName]
         const child = this._segByName[childName]
@@ -513,7 +532,20 @@ export default {
         const childAnchor = toLocal(child, anchorWorld)
 
         const jointData = RAPIER.JointData.spherical(parentAnchor, childAnchor)
-        this._world.createImpulseJoint(jointData, parent.body, child.body, true)
+        const joint = this._world.createImpulseJoint(jointData, parent.body, child.body, true)
+
+        // Configure motors sur les 3 axes de rotation (X, Y, Z)
+        // pour revenir vers position 0 (= bind pose) avec stiffness/damping
+        const m = motorByJoint[`${parentName}-${childName}`] || defaultMotor
+        try {
+          if (joint && joint.configureMotorPosition && JointAxis) {
+            joint.configureMotorPosition(JointAxis.AngX, 0, m.stiffness, m.damping)
+            joint.configureMotorPosition(JointAxis.AngY, 0, m.stiffness, m.damping)
+            joint.configureMotorPosition(JointAxis.AngZ, 0, m.stiffness, m.damping)
+          }
+        } catch (e) {
+          console.warn('[playground] joint motors not configurable, skipping', e)
+        }
       }
     },
 
