@@ -43,22 +43,30 @@
 </template>
 
 <script>
-// Helpers de matching de bones — tolérant aux préfixes (mixamorig:, etc.)
-// patterns peut contenir des string (includes) ou {all: ['a','b']} pour ALL-match
+// Helpers de matching de bones.
+// Stratégie en 2 passes pour éviter les collisions de substrings
+// (ex: "LeftArm" contient 'r' du mot 'arm', donc un pattern qui cherche
+// 'r' avec 'arm' matchait LeftArm pour le côté droit) :
+//   Pass 1 : match EXACT (en tolérant préfixes mixamorig:, prefixes._)
+//   Pass 2 : fallback en substring (.includes)
 function findBone (skeleton, ...patterns) {
+  // Pass 1 : exact match (avec ou sans préfixe séparé par : _ ou .)
   for (const p of patterns) {
-    if (typeof p === 'string') {
-      const lp = p.toLowerCase()
-      const bone = skeleton.bones.find(b => b.name.toLowerCase().includes(lp))
-      if (bone) return bone
-    } else if (p && p.all) {
-      const parts = p.all.map(s => s.toLowerCase())
-      const bone = skeleton.bones.find(b => {
-        const n = b.name.toLowerCase()
-        return parts.every(part => n.includes(part))
-      })
-      if (bone) return bone
-    }
+    const lp = p.toLowerCase()
+    const bone = skeleton.bones.find(b => {
+      const n = b.name.toLowerCase()
+      return n === lp ||
+        n.endsWith(':' + lp) ||
+        n.endsWith('_' + lp) ||
+        n.endsWith('.' + lp)
+    })
+    if (bone) return bone
+  }
+  // Pass 2 : substring (au cas où le naming est exotique)
+  for (const p of patterns) {
+    const lp = p.toLowerCase()
+    const bone = skeleton.bones.find(b => b.name.toLowerCase().includes(lp))
+    if (bone) return bone
   }
   return null
 }
@@ -320,71 +328,21 @@ export default {
       const RAPIER = this._RAPIER
       const sk = this._skeleton
 
-      // Trouve les bones — patterns multiples, tolérants
-      // L'ordre des patterns compte : plus spécifique d'abord
+      // Patterns en exact-match prioritaire — chaque slot a un nom canonique
+      // dans plusieurs conventions (Meshy, Mixamo, Blender)
       const bones = {
-        hips: findBone(sk, 'hips', 'pelvis', 'root_bone', 'root'),
-        spine: findBone(sk, 'spine2', 'spine1', 'chest', 'upper_body', 'spine', 'torso'),
-        head: findBone(sk, 'head'),
-
-        // Bras : on cherche "upperarm" en premier (Meshy/Blender) puis variantes Mixamo
-        lUpperArm: findBone(sk,
-          { all: ['upperarm', 'l'] },
-          { all: ['upper_arm', 'l'] },
-          { all: ['arm', 'l'] },     // Mixamo "LeftArm"
-          'leftarm', 'l_arm', 'arm_l', 'shoulder_l'
-        ),
-        lLowerArm: findBone(sk,
-          { all: ['forearm', 'l'] },
-          { all: ['lower_arm', 'l'] },
-          { all: ['lowerarm', 'l'] },
-          'leftforearm', 'l_forearm', 'forearm_l'
-        ),
-        rUpperArm: findBone(sk,
-          { all: ['upperarm', 'r'] },
-          { all: ['upper_arm', 'r'] },
-          { all: ['arm', 'r'] },
-          'rightarm', 'r_arm', 'arm_r', 'shoulder_r'
-        ),
-        rLowerArm: findBone(sk,
-          { all: ['forearm', 'r'] },
-          { all: ['lower_arm', 'r'] },
-          { all: ['lowerarm', 'r'] },
-          'rightforearm', 'r_forearm', 'forearm_r'
-        ),
-
-        // Jambes : "upleg" / "thigh" / "upperleg" d'abord pour ne pas
-        // confondre avec "leg" qui matcherait les deux
-        lUpperLeg: findBone(sk,
-          { all: ['upleg', 'l'] },
-          { all: ['upperleg', 'l'] },
-          { all: ['upper_leg', 'l'] },
-          { all: ['thigh', 'l'] },
-          'leftupleg', 'l_thigh', 'thigh_l'
-        ),
-        lLowerLeg: findBone(sk,
-          { all: ['lowerleg', 'l'] },
-          { all: ['lower_leg', 'l'] },
-          { all: ['shin', 'l'] },
-          { all: ['calf', 'l'] },
-          { all: ['leg', 'l'] },  // fallback large — testé en dernier
-          'leftleg', 'l_calf', 'calf_l', 'shin_l'
-        ),
-        rUpperLeg: findBone(sk,
-          { all: ['upleg', 'r'] },
-          { all: ['upperleg', 'r'] },
-          { all: ['upper_leg', 'r'] },
-          { all: ['thigh', 'r'] },
-          'rightupleg', 'r_thigh', 'thigh_r'
-        ),
-        rLowerLeg: findBone(sk,
-          { all: ['lowerleg', 'r'] },
-          { all: ['lower_leg', 'r'] },
-          { all: ['shin', 'r'] },
-          { all: ['calf', 'r'] },
-          { all: ['leg', 'r'] },
-          'rightleg', 'r_calf', 'calf_r', 'shin_r'
-        )
+        hips:      findBone(sk, 'hips', 'pelvis'),
+        // Le bone "spine" exact (le plus bas, attaché à Hips) → pelvis body petit + torso body grand
+        spine:     findBone(sk, 'spine', 'spine_01', 'chest'),
+        head:      findBone(sk, 'head'),
+        lUpperArm: findBone(sk, 'leftarm', 'upperarm_l', 'l_upperarm', 'arm_l', 'l_arm'),
+        lLowerArm: findBone(sk, 'leftforearm', 'forearm_l', 'l_forearm', 'lowerarm_l', 'l_lowerarm'),
+        rUpperArm: findBone(sk, 'rightarm', 'upperarm_r', 'r_upperarm', 'arm_r', 'r_arm'),
+        rLowerArm: findBone(sk, 'rightforearm', 'forearm_r', 'r_forearm', 'lowerarm_r', 'r_lowerarm'),
+        lUpperLeg: findBone(sk, 'leftupleg', 'upleg_l', 'l_upleg', 'thigh_l', 'l_thigh', 'upperleg_l'),
+        lLowerLeg: findBone(sk, 'leftleg', 'leg_l', 'l_leg', 'calf_l', 'l_calf', 'shin_l', 'l_shin', 'lowerleg_l'),
+        rUpperLeg: findBone(sk, 'rightupleg', 'upleg_r', 'r_upleg', 'thigh_r', 'r_thigh', 'upperleg_r'),
+        rLowerLeg: findBone(sk, 'rightleg', 'leg_r', 'r_leg', 'calf_r', 'r_calf', 'shin_r', 'r_shin', 'lowerleg_r')
       }
 
       // DEBUG : log de la résolution des bones (utile pour les rigs non-standard)
