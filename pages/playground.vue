@@ -206,13 +206,13 @@ export default {
       // filter = tout (collide avec tous les bodies qui ont le bit 15 dans leur filter)
       const WORLD_GROUPS = ((1 << 15) << 16) | 0xFFFF
 
-      const makeStatic = (pos, half) => {
+      const makeStatic = (pos, half, restitution = 0.5) => {
         const body = this._world.createRigidBody(
           RAPIER.RigidBodyDesc.fixed().setTranslation(pos.x, pos.y, pos.z)
         )
         this._world.createCollider(
           RAPIER.ColliderDesc.cuboid(half.x, half.y, half.z)
-            .setFriction(0.85).setRestitution(0.1)
+            .setFriction(0.7).setRestitution(restitution)
             .setCollisionGroups(WORLD_GROUPS >>> 0),
           body
         )
@@ -435,12 +435,12 @@ export default {
         seg.bone.matrixWorld.decompose(bindBoneWorldPos, bindBoneWorldQuat, bindBoneWorldScale)
 
         // Crée le body en KINEMATIC d'abord (figé) — passera en dynamic au 1er click.
-        // Comme ça le perso reste debout immobile au load.
+        // Damping élevé pour limiter les rotations libres (corps moins souple)
         const bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
           .setTranslation(center.x, center.y, center.z)
           .setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w })
-          .setLinearDamping(0.7)
-          .setAngularDamping(3.0)
+          .setLinearDamping(1.5)    // freine vite les déplacements
+          .setAngularDamping(8.0)   // freine TRÈS vite les rotations (anti-spin)
           .setCcdEnabled(true)
         const body = this._world.createRigidBody(bodyDesc)
 
@@ -454,11 +454,12 @@ export default {
         const filter = (allBodyBits & ~adjacencyMask & ~myBit) | WORLD_BIT
         const collisionGroups = ((myBit & 0xFFFF) << 16) | (filter & 0xFFFF)
 
-        // Density plus haute → perso plus lourd, impacts plus solides
+        // Density + restitution pour le feeling "ballon"
+        // (rebondit un peu quand il tape les murs/sol)
         const collDesc = RAPIER.ColliderDesc.capsule(halfHeight, seg.radius)
-          .setFriction(0.85)
-          .setRestitution(0.02)
-          .setDensity(4.0)   // 4× plus lourd qu'avant
+          .setFriction(0.7)
+          .setRestitution(0.35)   // rebond ballon
+          .setDensity(3.0)
           .setCollisionGroups(collisionGroups >>> 0)
         this._world.createCollider(collDesc, body)
 
@@ -525,19 +526,21 @@ export default {
         return { x: v.x, y: v.y, z: v.z }
       }
 
-      // Tonus articulaire MUSCLÉ — beaucoup plus rigide pour pas être flagada
-      const defaultMotor = { stiffness: 50, damping: 5 }
+      // Tonus articulaire TRÈS rigide (feeling ballon : peu souple, mais avec
+      // une mini-élasticité de retour). Les motors agissent comme des ressorts
+      // forts qui ramènent toujours vers la bind pose.
+      const defaultMotor = { stiffness: 500, damping: 30 }
       const motorByJoint = {
-        'pelvis-torso':        { stiffness: 200, damping: 12 }, // colonne très raide (ancrage)
-        'torso-head':          { stiffness: 100, damping: 8 },  // cou solide
-        'torso-lUpperArm':     { stiffness: 60, damping: 6 },   // épaule
-        'torso-rUpperArm':     { stiffness: 60, damping: 6 },
-        'lUpperArm-lLowerArm': { stiffness: 50, damping: 5 },   // coude
-        'rUpperArm-rLowerArm': { stiffness: 50, damping: 5 },
-        'pelvis-lUpperLeg':    { stiffness: 100, damping: 8 },  // hanche
-        'pelvis-rUpperLeg':    { stiffness: 100, damping: 8 },
-        'lUpperLeg-lLowerLeg': { stiffness: 80, damping: 6 },   // genou
-        'rUpperLeg-rLowerLeg': { stiffness: 80, damping: 6 }
+        'pelvis-torso':        { stiffness: 2000, damping: 80 }, // colonne ultra raide
+        'torso-head':          { stiffness: 1200, damping: 50 }, // cou solide
+        'torso-lUpperArm':     { stiffness: 800,  damping: 35 }, // épaule
+        'torso-rUpperArm':     { stiffness: 800,  damping: 35 },
+        'lUpperArm-lLowerArm': { stiffness: 600,  damping: 30 }, // coude — moins libre
+        'rUpperArm-rLowerArm': { stiffness: 600,  damping: 30 },
+        'pelvis-lUpperLeg':    { stiffness: 1200, damping: 50 }, // hanche
+        'pelvis-rUpperLeg':    { stiffness: 1200, damping: 50 },
+        'lUpperLeg-lLowerLeg': { stiffness: 900,  damping: 40 }, // genou
+        'rUpperLeg-rLowerLeg': { stiffness: 900,  damping: 40 }
       }
 
       const JointAxis = RAPIER.JointAxis
