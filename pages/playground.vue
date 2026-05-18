@@ -175,11 +175,23 @@ export default {
       // ── Animation loop ───────────────────────────────────────────
       this._tick = () => {
         if (this._world) {
-          // Si on drag : la body grabbée suit la souris en kinematic
           if (this._isDragging && this._grabbed && this._mouseWorldPos) {
             this._grabbed.body.setNextKinematicTranslation(this._mouseWorldPos)
           }
           this._world.step()
+          // Clamp la vélocité angulaire — anti-rotations folles qui passeraient
+          // au-delà des limites des joints
+          if (this._ragdollAwake && this._ragdoll) {
+            const MAX_AV = 6.0
+            for (const seg of this._ragdoll.segments) {
+              const av = seg.body.angvel()
+              const sp = Math.sqrt(av.x * av.x + av.y * av.y + av.z * av.z)
+              if (sp > MAX_AV) {
+                const k = MAX_AV / sp
+                seg.body.setAngvel({ x: av.x * k, y: av.y * k, z: av.z * k }, true)
+              }
+            }
+          }
           this._syncRagdoll()
         }
         renderer.render(scene, camera)
@@ -434,13 +446,12 @@ export default {
         const bindBoneWorldScale = new THREE.Vector3()
         seg.bone.matrixWorld.decompose(bindBoneWorldPos, bindBoneWorldQuat, bindBoneWorldScale)
 
-        // Crée le body en KINEMATIC d'abord (figé) — passera en dynamic au 1er click.
-        // Damping élevé pour limiter les rotations libres (corps moins souple)
+        // Damping body très élevé pour anti-spin
         const bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
           .setTranslation(center.x, center.y, center.z)
           .setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w })
-          .setLinearDamping(1.5)    // freine vite les déplacements
-          .setAngularDamping(8.0)   // freine TRÈS vite les rotations (anti-spin)
+          .setLinearDamping(2.5)
+          .setAngularDamping(20.0)  // tue les rotations très vite
           .setCcdEnabled(true)
         const body = this._world.createRigidBody(bodyDesc)
 
@@ -526,21 +537,35 @@ export default {
         return { x: v.x, y: v.y, z: v.z }
       }
 
-      // Tonus articulaire TRÈS rigide (feeling ballon : peu souple, mais avec
-      // une mini-élasticité de retour). Les motors agissent comme des ressorts
-      // forts qui ramènent toujours vers la bind pose.
-      const defaultMotor = { stiffness: 500, damping: 30 }
+      // Tonus articulaire QUASI-RIGIDE : stiffness explosée pour empêcher
+      // les rotations 360°. Combiné avec les hard limits ci-dessous.
+      const defaultMotor = { stiffness: 5000, damping: 150 }
       const motorByJoint = {
-        'pelvis-torso':        { stiffness: 2000, damping: 80 }, // colonne ultra raide
-        'torso-head':          { stiffness: 1200, damping: 50 }, // cou solide
-        'torso-lUpperArm':     { stiffness: 800,  damping: 35 }, // épaule
-        'torso-rUpperArm':     { stiffness: 800,  damping: 35 },
-        'lUpperArm-lLowerArm': { stiffness: 600,  damping: 30 }, // coude — moins libre
-        'rUpperArm-rLowerArm': { stiffness: 600,  damping: 30 },
-        'pelvis-lUpperLeg':    { stiffness: 1200, damping: 50 }, // hanche
-        'pelvis-rUpperLeg':    { stiffness: 1200, damping: 50 },
-        'lUpperLeg-lLowerLeg': { stiffness: 900,  damping: 40 }, // genou
-        'rUpperLeg-rLowerLeg': { stiffness: 900,  damping: 40 }
+        'pelvis-torso':        { stiffness: 20000, damping: 500 },
+        'torso-head':          { stiffness: 12000, damping: 300 },
+        'torso-lUpperArm':     { stiffness: 6000,  damping: 200 },
+        'torso-rUpperArm':     { stiffness: 6000,  damping: 200 },
+        'lUpperArm-lLowerArm': { stiffness: 4000,  damping: 150 },
+        'rUpperArm-rLowerArm': { stiffness: 4000,  damping: 150 },
+        'pelvis-lUpperLeg':    { stiffness: 10000, damping: 250 },
+        'pelvis-rUpperLeg':    { stiffness: 10000, damping: 250 },
+        'lUpperLeg-lLowerLeg': { stiffness: 6000,  damping: 200 },
+        'rUpperLeg-rLowerLeg': { stiffness: 6000,  damping: 200 }
+      }
+
+      // Limites angulaires HARD par axe (en radians)
+      // 0.7 rad ≈ 40°, 1.0 rad ≈ 57° — limites anatomiques approximatives
+      const limitsByJoint = {
+        'pelvis-torso':        0.4,   // colonne : très peu de mouvement
+        'torso-head':          0.6,   // cou : ~35°
+        'torso-lUpperArm':     1.2,   // épaule : grande amplitude (~70°)
+        'torso-rUpperArm':     1.2,
+        'lUpperArm-lLowerArm': 1.5,   // coude : peut beaucoup bouger (~85°)
+        'rUpperArm-rLowerArm': 1.5,
+        'pelvis-lUpperLeg':    1.0,   // hanche
+        'pelvis-rUpperLeg':    1.0,
+        'lUpperLeg-lLowerLeg': 1.3,   // genou
+        'rUpperLeg-rLowerLeg': 1.3
       }
 
       const JointAxis = RAPIER.JointAxis
@@ -559,9 +584,11 @@ export default {
         const jointData = RAPIER.JointData.spherical(parentAnchor, childAnchor)
         const joint = this._world.createImpulseJoint(jointData, parent.body, child.body, true)
 
-        // Configure motors sur les 3 axes de rotation (X, Y, Z)
-        // pour revenir vers position 0 (= bind pose) avec stiffness/damping
-        const m = motorByJoint[`${parentName}-${childName}`] || defaultMotor
+        const jointKey = `${parentName}-${childName}`
+        const m = motorByJoint[jointKey] || defaultMotor
+        const limit = limitsByJoint[jointKey]
+
+        // Motors (ressorts qui ramènent à la rest pose)
         try {
           if (joint && joint.configureMotorPosition && JointAxis) {
             joint.configureMotorPosition(JointAxis.AngX, 0, m.stiffness, m.damping)
@@ -569,7 +596,18 @@ export default {
             joint.configureMotorPosition(JointAxis.AngZ, 0, m.stiffness, m.damping)
           }
         } catch (e) {
-          console.warn('[playground] joint motors not configurable, skipping', e)
+          console.warn('[playground] motors not configurable', e)
+        }
+
+        // HARD LIMITS angulaires — empêchent les rotations 360°
+        try {
+          if (joint && joint.setLimits && JointAxis && typeof limit === 'number') {
+            joint.setLimits(JointAxis.AngX, -limit, limit)
+            joint.setLimits(JointAxis.AngY, -limit, limit)
+            joint.setLimits(JointAxis.AngZ, -limit, limit)
+          }
+        } catch (e) {
+          console.warn('[playground] joint limits not supported, fallback to motors only', e)
         }
       }
     },
