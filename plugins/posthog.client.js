@@ -28,13 +28,15 @@ export default function (ctx, inject) {
     return
   }
 
-  // Reverse proxy : on route via /ingest (first-party, même domaine) au lieu
-  // de eu.i.posthog.com directement → contourne les ad-blockers qui bloquent
-  // les domaines analytics tiers. Les rewrites sont dans vercel.json.
-  // ui_host pointe vers le vrai PostHog pour que les liens du toolbar marchent.
+  // Connexion directe à PostHog EU.
+  // NOTE : le reverse proxy via /ingest a été tenté mais le conflit
+  // trailing-slash de Nuxt 2 static + Vercel le rend inopérant (les URLs
+  // à slash final tapent dans le 404 statique avant le rewrite).
+  // À revisiter plus tard via un sous-domaine CNAME dédié (ph.mechant.tv)
+  // si on veut contourner les ad-blockers.
+  const host = process.env.POSTHOG_HOST || 'https://eu.i.posthog.com'
   posthog.init(key, {
-    api_host: '/ingest',
-    ui_host: 'https://eu.posthog.com',
+    api_host: host,
     person_profiles: 'identified_only',
     capture_pageview: false,            // on gère les pageviews manuellement (SPA)
     capture_pageleave: true,
