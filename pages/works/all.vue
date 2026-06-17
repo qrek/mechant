@@ -217,11 +217,12 @@ export default {
   min-height: 100vh
   background: #0a0a0a
   padding-top: 9rem
-  padding-bottom: 12rem
+  // padding-bottom retiré : il créait un vide noir SOUS le footer
+  // (le footer est dans la section). L'espacement avant le footer
+  // est désormais porté par _inner.
 
   +breakpoint(mobile)
     padding-top: 8rem
-    padding-bottom: 8rem
 
   // ── Fond vidéo ────────────────────────────────────────────────────────────
   &_bg
@@ -249,7 +250,10 @@ export default {
   &_inner
     position: relative
     z-index: 1
-    padding: 0 4vw
+    padding: 0 4vw 12rem
+
+    +breakpoint(mobile)
+      padding-bottom: 8rem
 
   // ── En-tête ───────────────────────────────────────────────────────────────
   &_head
