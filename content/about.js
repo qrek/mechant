@@ -56,13 +56,13 @@ export default {
         { text: 'Ronan Fourreau.',   variant: 'name' }
       ]
     ],
-    sub: 'From our studio in <em>Ménilmontant</em>, eastern Paris, we dedicate our craft and technical obsession to <em>commercials</em> and <em>music videos</em> — bringing an aesthetic vision that\'s a little rough around the edges. Méchant, on purpose.'
+    sub: 'From our studio in <em>Ménilmontant</em>, we put our craft and our technical obsession at the service of <em>commercials</em> and <em>music videos</em>. We like images with a bit of edge — clean enough to work, rough enough to feel alive. We follow a film from the first cut to the last frame, and we care as much about the idea as about the pixel. <em>Méchant</em>, on purpose.'
   },
 
   // ── Expertise : nos disciplines (montage, VFX, 3D, IA) ────────────────
   expertise: {
     kicker: '— What we do',
-    intro: 'Four things we genuinely love doing — and spend most of our days on.',
+    intro: 'These are the <em>four crafts</em> we spend most of our days on — sometimes one at a time, often all at once on the same film. We mix them freely, because a good image rarely comes from a <em>single</em> tool.',
     list: [
       {
         index: '01',
@@ -106,19 +106,19 @@ export default {
     ]
   },
 
-  // Colonne droite du combo : façon de bosser (plus humble que des awards)
+  // Distinctions / awards — section showcased
   awards: {
-    kicker: '— How we work',
+    kicker: '— Distinctions',
     titleLines: [
-      { text: 'Small team,',  italic: false },
-      { text: 'big care.',    italic: true }
+      { text: 'Recognized',        italic: false },
+      { text: 'where it matters.', italic: true }
     ],
-    totalLabel: 'Studio',
+    totalLabel: 'Selected',
     list: [
-      { year: '01', name: 'Hands-on', tag: 'No middlemen' },
-      { year: '02', name: 'Flexible', tag: 'Freelancers when needed' },
-      { year: '03', name: 'Honest',   tag: 'Real deadlines, real talk' },
-      { year: '04', name: 'Close',    tag: 'You talk to the people doing the work' }
+      { year: '2024', name: 'Cannes Lions',          tag: 'Shortlist' },
+      { year: '2023', name: 'Ciclope Festival',      tag: 'Bronze' },
+      { year: '2023', name: 'Young Directors Award', tag: 'Selection' },
+      { year: '2022', name: 'AICP Awards',           tag: 'Honor' }
     ]
   },
 
@@ -140,9 +140,10 @@ export default {
   bgColors: {
     hero:      '#ff4500', // orange Méchant
     intro:     '#b5daff', // bleu clair
-    expertise: '#ffffff', // blanc — section éditoriale "ce qu'on maîtrise"
+    expertise: '#ffffff', // blanc — disciplines
     manifesto: '#14914f', // vert profond
-    capa:      '#2a2a2a', // dark (services + awards combinés)
+    services:  '#fe82ae', // pink — ce sur quoi on bosse
+    awards:    '#0a0a0a', // noir — showcase des distinctions
     visit:     '#ff4500'  // retour orange
   }
 }
