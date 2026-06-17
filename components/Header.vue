@@ -1,23 +1,19 @@
 <template>
   <header class="Header" :class="{ 'Header--hasBack': !!backLink }">
 
-    <!-- Gauche : wordmark (→ home) OU bouton retour contextuel -->
-    <div class="Header_left">
-      <NuxtLink
-        v-if="backLink"
-        :to="backLink.to"
-        class="Header_back"
-        ref="back"
-      >
-        <span class="Header_back_arrow" aria-hidden="true">←</span>
-        <span class="Header_back_label">{{ backLink.label }}</span>
-      </NuxtLink>
+    <!-- Lien retour contextuel (sous-pages), à gauche -->
+    <NuxtLink
+      v-if="backLink"
+      :to="backLink.to"
+      class="Header_back"
+      ref="back"
+    >
+      <span class="Header_back_arrow" aria-hidden="true">←</span>
+      <span class="Header_back_label">{{ backLink.label }}</span>
+    </NuxtLink>
 
-      <NuxtLink v-else to="/" class="Header_wordmark" ref="wordmark">MÉCHANT</NuxtLink>
-    </div>
-
-    <!-- Droite : navigation principale (identique sur toutes les pages) -->
-    <nav class="Header_nav" ref="nav">
+    <!-- Navigation principale étalée — identique sur toutes les pages -->
+    <nav class="Header_nav" :class="{ 'is-spread': !backLink }" ref="nav">
       <NuxtLink to="/about">About</NuxtLink>
       <NuxtLink to="/works">Works</NuxtLink>
       <NuxtLink to="/contact">Contact</NuxtLink>
@@ -37,7 +33,6 @@ export default {
   },
 
   watch: {
-    // Re-anime à chaque changement de page (les liens reviennent en fade)
     $route () {
       this.$nextTick(() => this._animateIn())
     }
@@ -46,12 +41,9 @@ export default {
   computed: {
     backLink () {
       const path = this.$route.path || ''
-      // Pages racines : pas de retour, on montre le wordmark
       if (path === '/' || path === '/works' || path === '/works/') return null
       if (path.startsWith('/admin')) return null
-      // Sous-pages de works (case studies) → retour à Works
       if (path.startsWith('/works/')) return { to: '/works', label: 'Works' }
-      // Toute autre page interne (about, contact, playground, legal…) → home
       return { to: '/', label: 'Back' }
     }
   },
@@ -59,9 +51,9 @@ export default {
   methods: {
     _animateIn () {
       const targets = []
+      const back = this.$refs.back?.$el
+      if (back) targets.push(back)
       if (this.$refs.nav) targets.push(...this.$refs.nav.querySelectorAll('a'))
-      const left = this.$refs.back?.$el || this.$refs.wordmark?.$el
-      if (left) targets.unshift(left)
       if (!targets.length) return
 
       gsap.fromTo(targets,
@@ -93,49 +85,29 @@ export default {
   z-index: 20
   padding: 2.5rem 4vw
   box-sizing: border-box
-  // mix-blend difference : le texte blanc s'inverse selon le fond
-  // → toujours lisible, sur fond clair (about) comme sombre (works/contact)
-  mix-blend-mode: difference
   pointer-events: none
 
   +breakpoint(mobile)
     padding: 2rem 5vw
 
-  // Tous les éléments interactifs reçoivent les events (le header global non)
   a
     pointer-events: auto
-
-  &_left
-    display: flex
-    align-items: center
-
-  &_wordmark
-    font-family: $apfel
-    font-weight: 900
-    font-size: 1.15rem
-    letter-spacing: 0.02em
-    text-transform: uppercase
-    color: $white
-    text-decoration: none
-    transition: opacity 0.25s ease
-
-    &:hover
-      opacity: 0.6
-
-    +breakpoint(mobile)
-      font-size: 1rem
 
   &_back
     display: inline-flex
     align-items: center
     gap: 0.5rem
+    flex-shrink: 0
+    margin-right: 3rem
     font-family: $apfel
     font-weight: 700
-    font-size: 0.8rem
-    letter-spacing: 0.15em
+    font-size: 0.85rem
+    letter-spacing: 0.12em
     text-transform: uppercase
     color: $white
     text-decoration: none
+    // Ombre légère pour rester lisible sur les fonds clairs
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25)
     transition: opacity 0.25s ease
 
     &:hover
@@ -150,15 +122,23 @@ export default {
       transition: transform 0.3s ease
 
     +breakpoint(mobile)
-      font-size: 0.75rem
+      font-size: 0.78rem
+      margin-right: 1.5rem
 
   &_nav
     display: flex
     align-items: center
     gap: 2.5rem
+    margin-left: auto
+
+    // Sur les pages racines (pas de back), la nav s'étale sur toute la largeur
+    &.is-spread
+      width: 100%
+      margin-left: 0
+      justify-content: space-between
 
     +breakpoint(mobile)
-      gap: 1.4rem
+      gap: 1.5rem
 
     a, a:visited
       font-family: $apfel
@@ -170,11 +150,12 @@ export default {
       text-decoration: none
       transition: opacity 0.25s ease
       position: relative
+      // Toujours blanc → ombre légère pour la lisibilité sur fonds clairs
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25)
 
       &:hover
         opacity: 0.6
 
-      // Souligné animé sur la page active
       &.nuxt-link-active::after
         content: ''
         position: absolute

@@ -59,30 +59,30 @@ export default {
     sub: 'From our studio in <em>Ménilmontant</em>, eastern Paris, we dedicate our craft and technical obsession to <em>commercials</em> and <em>music videos</em> — bringing an aesthetic vision that\'s a little rough around the edges. Méchant, on purpose.'
   },
 
-  // ── Expertise : nos disciplines développées (montage, VFX, 3D, IA) ────
+  // ── Expertise : nos disciplines (montage, VFX, 3D, IA) ────────────────
   expertise: {
-    kicker: '— What we master',
-    intro: 'We don\'t just push pixels. We shape <em>stories</em>, bend <em>reality</em>, and chase the frame that makes you look twice. Four crafts, one obsession: making images that hit.',
+    kicker: '— What we do',
+    intro: 'Four things we genuinely love doing — and spend most of our days on.',
     list: [
       {
         index: '01',
         title: 'Editing',
-        body: 'Rhythm is everything. We cut for emotion — finding the pulse of a film, the beat that lands, the silence that breathes. Every transition earns its place.'
+        body: 'We cut for rhythm and feeling. Finding the right pace, the beat that lands, the moment to let a shot breathe.'
       },
       {
         index: '02',
         title: 'VFX',
-        body: 'From the invisible fix to the impossible shot. Compositing, clean-up, set extensions, simulations — we make the unreal feel inevitable, and the real feel larger than life.'
+        body: 'From a quick clean-up to a shot that couldn\'t be filmed. Compositing, retouching, set extensions — done so you don\'t notice the work.'
       },
       {
         index: '03',
         title: '3D',
-        body: 'Modeling, lighting, rendering — we build worlds that don\'t exist and drop them into yours. Photoreal or stylised, the camera believes it.'
+        body: 'Modeling, lighting and rendering to add what the camera couldn\'t catch — an object, a set, a whole environment.'
       },
       {
         index: '04',
         title: 'AI',
-        body: 'We fold generative tools into our pipeline — not as a gimmick, but as a new brush. Faster iterations, wilder ideas, frames that were impossible yesterday.'
+        body: 'We bring generative tools into the mix when they help — to test ideas faster and open up looks that weren\'t possible before.'
       }
     ]
   },
@@ -94,42 +94,46 @@ export default {
     'Dirty habits.'
   ],
 
+  // Colonne gauche du combo : ce qu'on livre (formats) — différent des
+  // disciplines de la section Expertise, donc pas de répétition
   services: {
-    kicker: '— What we do',
+    kicker: '— What we work on',
     list: [
-      { label: 'Editing',           desc: 'Story-driven cuts.' },
-      { label: 'VFX',               desc: 'Invisible to spectacular.' },
-      { label: '3D / 2D Animation', desc: 'Frame by frame, pixel by pixel.' },
-      { label: 'Motion Design',     desc: 'Make graphics move.' },
-      { label: 'Art Direction',     desc: 'Set the visual rules.' }
+      { label: 'Commercials',   desc: 'Brand films & ads.' },
+      { label: 'Music videos',  desc: 'Where we play the most.' },
+      { label: 'Brand content', desc: 'Social, launches, teasers.' },
+      { label: 'Collabs',       desc: 'Directors, agencies, artists.' }
     ]
   },
 
+  // Colonne droite du combo : façon de bosser (plus humble que des awards)
   awards: {
-    kicker: '— Distinctions',
+    kicker: '— How we work',
     titleLines: [
-      { text: 'Recognized',         italic: false },
-      { text: 'where it matters.',  italic: true }
+      { text: 'Small team,',  italic: false },
+      { text: 'big care.',    italic: true }
     ],
-    totalLabel: 'Selected',
+    totalLabel: 'Studio',
     list: [
-      { year: '2024', name: 'Cannes Lions',         tag: 'Shortlist' },
-      { year: '2023', name: 'Ciclope Festival',     tag: 'Bronze' },
-      { year: '2023', name: 'Young Directors Award', tag: 'Selection' },
-      { year: '2022', name: 'AICP Awards',          tag: 'Honor' }
+      { year: '01', name: 'Hands-on', tag: 'No middlemen' },
+      { year: '02', name: 'Flexible', tag: 'Freelancers when needed' },
+      { year: '03', name: 'Honest',   tag: 'Real deadlines, real talk' },
+      { year: '04', name: 'Close',    tag: 'You talk to the people doing the work' }
     ]
   },
 
   visit: {
     kicker: '— Come say hi',
     titleLines: [
-      { text: 'The studio', italic: false },
-      { text: 'is open.',   italic: true }
+      { text: 'Drop by', italic: false },
+      { text: 'the studio.', italic: true }
     ],
     placeholderLine: '3D studio scan',
     placeholderSub: 'Coming soon',
-    address: '27 rue des Cascades — 75020 Paris',
-    mapsUrl: 'https://www.google.fr/maps/place/27+Rue+des+Cascades,+75020+Paris'
+    address: '27 rue des Cascades — 75020 Paris, Ménilmontant',
+    mapsUrl: 'https://www.google.fr/maps/place/27+Rue+des+Cascades,+75020+Paris',
+    ctaLabel: 'Start a project',
+    ctaTo: '/contact'
   },
 
   // Palette du fond — une couleur par section, transition douce à l'entrée

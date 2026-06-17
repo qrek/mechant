@@ -68,9 +68,10 @@
 
       <ul class="AboutPage_expertise_list" ref="expertiseList">
         <li
-          v-for="item in content.expertise.list"
+          v-for="(item, i) in content.expertise.list"
           :key="item.index"
           class="AboutPage_expertise_item"
+          :class="{ 'is-right': i % 2 === 1 }"
         >
           <span class="idx">{{ item.index }}</span>
           <h3 class="title">{{ item.title }}</h3>
@@ -169,15 +170,27 @@
         </div>
       </div>
 
-      <div class="AboutPage_visit_address">
-        <a :href="content.visit.mapsUrl" target="_blank" rel="noopener">
-          {{ content.visit.address }}
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <!-- Adresse mise en avant -->
+      <a class="AboutPage_visit_address" :href="content.visit.mapsUrl" target="_blank" rel="noopener">
+        <span class="label">Find us</span>
+        <span class="value">{{ content.visit.address }}</span>
+        <span class="map">
+          Open in maps
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <line x1="7" y1="17" x2="17" y2="7"/>
             <polyline points="7,7 17,7 17,17"/>
           </svg>
-        </a>
-      </div>
+        </span>
+      </a>
+
+      <!-- CTA vers la page contact -->
+      <NuxtLink class="AboutPage_visit_cta" :to="content.visit.ctaTo">
+        {{ content.visit.ctaLabel }}
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </NuxtLink>
     </section>
 
     <SimpleFooter />
@@ -506,12 +519,17 @@ export default {
         scrollTrigger: { trigger: this.$refs.visitCanvas, start: 'top 80%' }
       }))
 
-      this._track(gsap.to(this.$refs.visit.querySelector('.AboutPage_visit_address'), {
+      const addressEl = this.$refs.visit.querySelector('.AboutPage_visit_address')
+      const ctaEl = this.$refs.visit.querySelector('.AboutPage_visit_cta')
+      gsap.set([addressEl, ctaEl], { opacity: 0, y: 20 })
+
+      this._track(gsap.to([addressEl, ctaEl], {
         opacity: 1,
         y: 0,
         duration: 0.6,
+        stagger: 0.12,
         ease: 'power2.out',
-        scrollTrigger: { trigger: this.$refs.visit.querySelector('.AboutPage_visit_address'), start: 'top 90%' }
+        scrollTrigger: { trigger: addressEl, start: 'top 90%' }
       }))
     }
   }
@@ -759,47 +777,59 @@ export default {
       +breakpoint(mobile)
         margin-bottom: 5rem
 
+    // Layout éditorial full-width : grandes lignes alternées gauche/droite
     &_list
       list-style: none
       padding: 0
       margin: 0
+
+    &_item
       display: grid
-      grid-template-columns: 1fr 1fr
-      gap: 5rem 6rem
+      grid-template-columns: 5rem minmax(auto, 9ch) 1fr
+      align-items: baseline
+      gap: 2rem 4vw
+      padding: 5vh 0
+      border-top: 1px solid rgba(0, 0, 0, 0.15)
+
+      &:last-child
+        border-bottom: 1px solid rgba(0, 0, 0, 0.15)
+
+      // Une ligne sur deux : paragraphe poussé à droite pour varier le rythme
+      &.is-right
+        .body
+          margin-left: auto
+          text-align: left
 
       +breakpoint(mobile)
         grid-template-columns: 1fr
-        gap: 4rem
+        gap: 1.2rem
+        padding: 6vh 0
 
-    &_item
       .idx
         font-family: $apfel
         font-weight: 900
-        font-size: 0.9rem
-        letter-spacing: 0.1em
+        font-size: 1rem
+        letter-spacing: 0.05em
         color: #ff4500
-        display: block
-        margin-bottom: 1.2rem
 
       .title
         font-family: $apfel
         font-weight: 900
-        font-size: clamp(2rem, 3.5vw, 3.2rem)
+        font-size: clamp(2.6rem, 6vw, 5.5rem)
         text-transform: uppercase
         letter-spacing: -0.02em
         color: $black
-        line-height: 1
-        margin: 0 0 1.2rem
-        padding-bottom: 1.2rem
-        border-bottom: 1px solid rgba(0, 0, 0, 0.15)
+        line-height: 0.95
+        margin: 0
 
       .body
         font-family: $apfel
         font-weight: 400
-        font-size: clamp(1rem, 1.2vw, 1.2rem)
-        line-height: 1.55
+        font-size: clamp(1.1rem, 1.5vw, 1.6rem)
+        line-height: 1.45
         color: rgba(0, 0, 0, 0.7)
         margin: 0
+        max-width: 36ch
 
   // ── MANIFESTO ────────────────────────────────────────────────────────
   &_manifesto
@@ -1074,23 +1104,77 @@ export default {
         text-transform: uppercase
         color: rgba(255, 255, 255, 0.25)
 
+    // Adresse mise en avant : label + grosse adresse + lien maps
     &_address
-      a
+      display: flex
+      flex-direction: column
+      align-items: center
+      gap: 0.8rem
+      text-decoration: none
+      margin-bottom: 3rem
+
+      .label
+        font-family: $apfel
+        font-size: 0.75rem
+        letter-spacing: 0.2em
+        text-transform: uppercase
+        color: rgba(0, 0, 0, 0.5)
+
+      .value
+        font-family: $apfel
+        font-weight: 900
+        font-size: clamp(1.6rem, 3.5vw, 3rem)
+        text-transform: uppercase
+        letter-spacing: -0.01em
+        color: $black
+        line-height: 1.1
+        transition: color 0.25s ease
+
+      .map
         display: inline-flex
         align-items: center
-        gap: 0.6rem
+        gap: 0.4rem
         font-family: $apfel
         font-weight: 700
-        font-size: clamp(1rem, 1.4vw, 1.4rem)
-        color: $black
-        text-decoration: none
-        border-bottom: 1px solid rgba(0, 0, 0, 0.3)
-        padding-bottom: 0.3rem
-        transition: color 0.25s ease, border-color 0.25s ease
+        font-size: 0.8rem
+        letter-spacing: 0.1em
+        text-transform: uppercase
+        color: rgba(0, 0, 0, 0.55)
+        transition: color 0.25s ease
 
-        &:hover
+      &:hover
+        .value
           color: $white
-          border-color: $white
+        .map
+          color: $black
+
+    // CTA principal vers la page contact
+    &_cta
+      display: inline-flex
+      align-items: center
+      gap: 0.7rem
+      background: $black
+      color: $white
+      border-radius: 100px
+      padding: 1.1rem 2.4rem
+      font-family: $apfel
+      font-weight: 700
+      font-size: clamp(1rem, 1.3vw, 1.3rem)
+      letter-spacing: 0.02em
+      text-transform: uppercase
+      text-decoration: none
+      transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease
+
+      svg
+        transition: transform 0.25s ease
+
+      &:hover
+        transform: translateY(-2px)
+        background: $white
+        color: $black
+
+        svg
+          transform: translateX(5px)
 
 @keyframes bounce
   0%, 100%
