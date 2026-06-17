@@ -131,7 +131,6 @@
           v-for="(award, i) in content.awards.list"
           :key="i"
           class="AboutPage_awards_card"
-          :class="{ 'is-feature': i === 0 }"
         >
           <span class="year">{{ award.year }}</span>
           <span class="name">{{ award.name }}</span>
@@ -1046,6 +1045,7 @@ export default {
       +breakpoint(mobile)
         grid-template-columns: 1fr
 
+    // Toutes les cartes ont la même taille ; hover → fond orange
     &_card
       position: relative
       display: flex
@@ -1058,36 +1058,20 @@ export default {
       border-radius: 6px
       transition: background 0.35s ease, border-color 0.35s ease, transform 0.35s ease
 
-      // Carte feature : occupe les 2 colonnes, plus grande, fond orange
-      &.is-feature
-        grid-column: 1 / -1
-        flex-direction: row
-        align-items: flex-end
-        justify-content: space-between
-        min-height: 20rem
+      &:hover
         background: #ff8600
         border-color: #ff8600
+        transform: translateY(-4px)
 
         .year
           color: rgba(0, 0, 0, 0.6)
         .name
           color: $black
-          font-size: clamp(2.6rem, 6vw, 6rem)
         .tag
           color: $black
+
           .dot
             background: $black
-
-        +breakpoint(mobile)
-          flex-direction: column
-          align-items: flex-start
-          min-height: 0
-          gap: 2rem
-
-      &:hover:not(.is-feature)
-        background: rgba(255, 255, 255, 0.04)
-        border-color: rgba(255, 255, 255, 0.4)
-        transform: translateY(-4px)
 
       .year
         font-family: $apfel
@@ -1095,6 +1079,7 @@ export default {
         font-size: 0.9rem
         letter-spacing: 0.1em
         color: rgba(255, 255, 255, 0.5)
+        transition: color 0.35s ease
 
       .name
         font-family: $apfel
@@ -1104,6 +1089,7 @@ export default {
         line-height: 0.95
         letter-spacing: -0.015em
         color: $white
+        transition: color 0.35s ease
 
       .tag
         display: inline-flex
@@ -1116,12 +1102,14 @@ export default {
         text-transform: uppercase
         color: #ff8600
         white-space: nowrap
+        transition: color 0.35s ease
 
         .dot
           width: 0.45rem
           height: 0.45rem
           border-radius: 50%
           background: #ff8600
+          transition: background 0.35s ease
 
   // ── VISIT (slot 3D) ──────────────────────────────────────────────────
   &_visit
