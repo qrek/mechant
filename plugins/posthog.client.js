@@ -16,7 +16,6 @@ import posthog from 'posthog-js'
 
 export default function (ctx, inject) {
   const key = process.env.POSTHOG_KEY
-  const host = process.env.POSTHOG_HOST || 'https://eu.i.posthog.com'
 
   // Pas de clé configurée → on injecte un no-op pour ne pas casser l'app
   if (!key) {
@@ -29,9 +28,14 @@ export default function (ctx, inject) {
     return
   }
 
+  // Reverse proxy : on route via /ingest (first-party, même domaine) au lieu
+  // de eu.i.posthog.com directement → contourne les ad-blockers qui bloquent
+  // les domaines analytics tiers. Les rewrites sont dans vercel.json.
+  // ui_host pointe vers le vrai PostHog pour que les liens du toolbar marchent.
   posthog.init(key, {
-    api_host: host,
-    person_profiles: 'identified_only', // moins de coût, on track surtout des events anonymes
+    api_host: '/ingest',
+    ui_host: 'https://eu.posthog.com',
+    person_profiles: 'identified_only',
     capture_pageview: false,            // on gère les pageviews manuellement (SPA)
     capture_pageleave: true,
     autocapture: true,                  // capture auto des clics → alimente les heatmaps
