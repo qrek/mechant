@@ -75,6 +75,8 @@
                 <polyline points="12 5 19 12 12 19"/>
               </svg>
             </button>
+
+            <p v-if="error" class="Contact_error">{{ error }}</p>
           </form>
 
           <div v-else class="Contact_confirm" key="confirm">
@@ -126,6 +128,9 @@ export default {
     return {
       sent: false,
       sending: false,
+      error: null,
+      // Clé publique Web3Forms (conçue pour être exposée côté client)
+      web3formsKey: '039a84a9-bfae-4d72-a3f7-d5d6a97184da',
       email: 'contact@mechant.tv',
       mapsUrl: 'https://www.google.fr/maps/place/27+Rue+des+Cascades,+75020+Paris',
       instagramUrl: 'https://www.instagram.com/mechant.tv/',
@@ -159,17 +164,46 @@ export default {
     },
 
     async send () {
+      if (this.sending) return
       this.sending = true
-      trackContactSubmit()
-      const subject = encodeURIComponent(`Contact — ${this.form.prenom} ${this.form.nom}`)
-      const body = encodeURIComponent(
-        `First name: ${this.form.prenom}\nLast name: ${this.form.nom}\nEmail: ${this.form.email}\n\n${this.form.message}`
-      )
-      window.location.href = `mailto:contact@mechant.tv?subject=${subject}&body=${body}`
-      setTimeout(() => {
+      this.error = null
+
+      try {
+        const res = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json'
+          },
+          body: JSON.stringify({
+            access_key: this.web3formsKey,
+            subject: `Contact — ${this.form.prenom} ${this.form.nom}`,
+            from_name: `${this.form.prenom} ${this.form.nom}`,
+            // l'email du visiteur en reply-to → tu réponds direct depuis ta boîte
+            email: this.form.email,
+            replyto: this.form.email,
+            // contenu du message
+            'First name': this.form.prenom,
+            'Last name': this.form.nom,
+            Email: this.form.email,
+            Message: this.form.message,
+            // anti-spam honeypot natif Web3Forms
+            botcheck: ''
+          })
+        })
+
+        const data = await res.json()
+        if (data.success) {
+          trackContactSubmit()
+          this.sent = true
+        } else {
+          this.error = data.message || 'Something went wrong. Please email us directly.'
+        }
+      } catch (err) {
+        this.error = 'Network error. Please email us at contact@mechant.tv.'
+      } finally {
         this.sending = false
-        this.sent = true
-      }, 800)
+      }
     }
   }
 }
@@ -393,6 +427,12 @@ export default {
     &:disabled
       opacity: 0.5
       cursor: default
+
+  &_error
+    font-family: $apfel
+    font-size: 0.85rem
+    color: #ff6b4a
+    margin: 0.5rem 0 0
 
   // ── Confirmation ────────────────────────────────────────────────────
   &_confirm
