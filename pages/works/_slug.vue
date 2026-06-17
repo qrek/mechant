@@ -231,9 +231,9 @@ export default {
     padding-bottom: 6rem
 
   &_inner
-    max-width: 1680px
+    max-width: 1840px
     margin: 0 auto
-    padding: 0 4vw
+    padding: 0 2.5vw
     display: flex
     flex-direction: column
     gap: 4.5rem
