@@ -56,29 +56,13 @@
           class="CaseStudy_extras_item"
         >
           <div class="CaseStudy_extras_frame">
-            <!-- Vidéo chargée seulement au clic sur play -->
+            <!-- Mode background Vimeo : autoplay, muet, boucle, aucun contrôle -->
             <iframe
-              v-if="playing[i]"
-              :src="`https://player.vimeo.com/video/${video.vimeo_id}?title=0&byline=0&portrait=0&dnt=1&autoplay=1`"
+              :src="`https://player.vimeo.com/video/${video.vimeo_id}?background=1&autoplay=1&loop=1&muted=1&dnt=1`"
               frameborder="0"
               allow="autoplay; fullscreen; picture-in-picture"
               allowfullscreen
             ></iframe>
-
-            <!-- Poster + bouton play -->
-            <button
-              v-else
-              class="CaseStudy_extras_play"
-              :style="video.thumbnail_url ? { backgroundImage: `url(${video.thumbnail_url})` } : null"
-              @click="playExtra(i, video)"
-              :aria-label="`Play ${video.title || 'video'}`"
-            >
-              <span class="CaseStudy_extras_play_btn">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              </span>
-            </button>
           </div>
           <p v-if="video.title" class="CaseStudy_extras_title">{{ video.title }}</p>
         </div>
@@ -117,7 +101,6 @@ export default {
     return {
       project: null,
       mainPlayerReady: false,
-      playing: {},   // { [index]: true } pour les vidéos extra lancées
       _player: null
     }
   },
@@ -202,12 +185,6 @@ export default {
   },
 
   methods: {
-    // Lance une vidéo extra : charge l'iframe Vimeo au clic (lazy)
-    playExtra(i, video) {
-      this.$set(this.playing, i, true)
-      trackCaseStudyVideoPlay(this.project, video && video.vimeo_id)
-    },
-
     _initMainPlayer() {
       if (!this.project?.vimeo_id || typeof window === 'undefined' || !window.Vimeo) return
       const frame = this.$refs.mainFrame
@@ -413,52 +390,6 @@ export default {
         width: 100%
         height: 100%
         border: 0
-
-    // Bouton play (poster) — couvre le frame, charge la vidéo au clic
-    &_play
-      position: absolute
-      inset: 0
-      width: 100%
-      height: 100%
-      border: 0
-      padding: 0
-      cursor: pointer
-      background-color: #050505
-      background-size: cover
-      background-position: center
-      display: flex
-      align-items: center
-      justify-content: center
-      overflow: hidden
-
-      &::after
-        content: ''
-        position: absolute
-        inset: 0
-        background: rgba(0, 0, 0, 0.25)
-        transition: background 0.3s ease
-
-      &:hover::after
-        background: rgba(0, 0, 0, 0.1)
-
-      &_btn
-        position: relative
-        z-index: 1
-        width: 4.5rem
-        height: 4.5rem
-        border-radius: 50%
-        background: rgba(255, 255, 255, 0.92)
-        color: #0a0a0a
-        display: flex
-        align-items: center
-        justify-content: center
-        padding-left: 0.2rem
-        transition: transform 0.3s $easeOutBack, background 0.3s ease
-
-      &:hover &_btn
-        transform: scale(1.12)
-        background: #ff4500
-        color: $white
 
     &_title
       font-family: $apfel
