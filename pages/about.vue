@@ -624,6 +624,7 @@ export default {
   &_intro
     padding: 12vh 6vw 12vh
     max-width: 1500px
+    margin: 0 auto   // aligne la colonne de contenu avec les autres sections
 
     +breakpoint(mobile)
       padding: 8vh 5vw
@@ -726,8 +727,7 @@ export default {
       line-height: 1.5
       color: rgba(0, 0, 0, 0.78)
       max-width: 60ch
-      margin: 0
-      margin-left: auto
+      margin: 0   // aligné à gauche, bord commun avec le titre au-dessus
 
       em
         font-weight: 700
@@ -968,7 +968,7 @@ export default {
 
   // ── DISTINCTIONS (trophy case : grille de cartes, fond noir) ─────────
   &_awards
-    padding: 18vh 5vw
+    padding: 18vh 6vw
     max-width: 1500px
     margin: 0 auto
     color: $white
@@ -1125,8 +1125,8 @@ export default {
 
   // ── VISIT (slot 3D) ──────────────────────────────────────────────────
   &_visit
-    padding: 12vh 5vw 10vh
-    max-width: 1600px
+    padding: 12vh 6vw 10vh
+    max-width: 1500px
     margin: 0 auto
     text-align: center
 
