@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Helper de tracking — pousse des events custom dans le dataLayer Piwik Pro
+// Helper de tracking — envoie des events custom à PostHog
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // Utilisation :
@@ -7,25 +7,21 @@
 //   track('project_click', { client: 'Renault', slug: 'campaign-x' })
 //
 // Best practices :
-// - event name : snake_case, verbe au passé ("project_clicked", "form_submitted")
-//   ou descriptif court ("project_hover")
+// - event name : snake_case, descriptif ("project_hover", "project_click")
 // - Pas de PII dans les params (pas d'email, pas de nom personnel hors entreprise)
 // - Garde les params plats (string/number/boolean), pas d'objets imbriqués
 //
-// L'event est silencieusement ignoré si le dataLayer n'existe pas (SSR, blocage
-// du tracking par l'utilisateur, ad-blocker, etc.) — pas d'erreur côté app.
+// L'event est silencieusement ignoré si PostHog n'est pas chargé (SSR, clé
+// absente, ad-blocker, etc.) — ne casse jamais l'app.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function track (eventName, params = {}) {
   if (typeof window === 'undefined') return
-  if (!window.dataLayer || !Array.isArray(window.dataLayer)) return
   try {
-    window.dataLayer.push({
-      event: eventName,
-      ...params
-    })
+    if (window.posthog && typeof window.posthog.capture === 'function') {
+      window.posthog.capture(eventName, params)
+    }
   } catch (err) {
-    // Ne casse jamais l'app pour un event tracking
     if (typeof console !== 'undefined') {
       console.warn('[track] failed:', err)
     }

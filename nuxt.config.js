@@ -145,6 +145,7 @@ export default {
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
+    '~/plugins/posthog.client.js'
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -160,7 +161,9 @@ export default {
 
   env: {
     SUPABASE_URL: process.env.SUPABASE_URL,
-    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+    POSTHOG_KEY: process.env.POSTHOG_KEY,
+    POSTHOG_HOST: process.env.POSTHOG_HOST
   },
 
   publicRuntimeConfig: {
@@ -206,7 +209,7 @@ export default {
       config.resolve.alias.vue = 'vue/dist/vue.common'
     },
 
-    transpile: ['three', 'lenis', '@dimforge/rapier3d-compat']
+    transpile: ['three', 'lenis', '@dimforge/rapier3d-compat', 'posthog-js']
   },
   pageTransition: {
     name: 'page',
