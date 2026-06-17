@@ -356,22 +356,11 @@ export default {
     height: 100%
     object-fit: cover
     display: block
-    transition: opacity 0.35s ease
+    transition: transform 0.4s ease
 
-  &_video
-    position: absolute
-    inset: 0
-    width: 100%
-    height: 100%
-    object-fit: cover
-    opacity: 0
-    transition: opacity 0.35s ease
-
-    &.is-active
-      opacity: 1
-
+  // La miniature reste visible au hover ; léger zoom pour le feedback
   .AllWork_row.is-hovered &_thumb
-    opacity: 0
+    transform: scale(1.04)
 
   &_cat
     font-family: $apfel
