@@ -1,6 +1,8 @@
 <template>
   <section class="WorksPage" @mousemove="onMouseMove">
 
+    <h1 class="sr-only">Works — Méchant post-production studio Paris</h1>
+
     <div class="WorksPage_bg" ref="bg" />
 
     <div class="WorksPage_float" ref="float">
@@ -36,6 +38,7 @@ import { mapGetters, mapActions } from 'vuex'
 import { gsap } from '@/vendor/gsap'
 import { SplitText } from '@/vendor/gsap/SplitText'
 import { supabase } from '@/utils/supabase'
+import { trackProjectHover, trackProjectClick } from '@/utils/track'
 import SimpleFooter from '@/components/SimpleFooter'
 
 export default {
@@ -43,9 +46,19 @@ export default {
   components: { SimpleFooter },
 
   head () {
+    const title = 'Works — Méchant post-production studio Paris'
+    const desc = 'Selected works by Méchant — post-production video studio in Paris. Commercials, music videos, VFX, motion design, 3D animation.'
     return {
-      title: this.data?.projectsPage?.meta_title || 'Works — Méchant',
-      meta: [{ hid: 'description', name: 'description', content: this.data?.projectsPage?.meta_description || '' }]
+      title,
+      meta: [
+        { hid: 'description', name: 'description', content: desc },
+        { hid: 'og:title', property: 'og:title', content: title },
+        { hid: 'og:description', property: 'og:description', content: desc },
+        { hid: 'og:url', property: 'og:url', content: 'https://mechant.tv/works' },
+        { hid: 'twitter:title', name: 'twitter:title', content: title },
+        { hid: 'twitter:description', name: 'twitter:description', content: desc }
+      ],
+      link: [{ hid: 'canonical', rel: 'canonical', href: 'https://mechant.tv/works' }]
     }
   },
 
@@ -232,6 +245,7 @@ export default {
 
     onHover (project) {
       this.setId(project.id)
+      trackProjectHover(project, 'works_home')
       const url = project.preview_video || project.video_home
       if (!url) return
       const video = this.$refs.floatVideo
@@ -264,6 +278,7 @@ export default {
     },
 
     openProject (project) {
+      trackProjectClick(project, 'works_home')
       if (project.has_case_study && project.slug) {
         this.$router.push(`/works/${project.slug}`)
         return

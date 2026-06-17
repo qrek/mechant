@@ -13,7 +13,7 @@
         <img
           v-if="!mainPlayerReady && project.thumbnail_url"
           :src="project.thumbnail_url"
-          alt=""
+          :alt="`${project.client || project.title} — Méchant post-production`"
           class="CaseStudy_player_poster"
         />
       </div>
@@ -70,6 +70,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import { supabase } from '@/utils/supabase'
+import { trackCaseStudyView, trackCaseStudyVideoPlay } from '@/utils/track'
 
 export default {
   name: 'CaseStudy',
@@ -100,11 +101,48 @@ export default {
   },
 
   head() {
+    const p = this.project
+    if (!p) return { title: 'Méchant — Post-production Paris' }
+    const clientPart = p.client ? `${p.client} — ` : ''
+    const title = `${clientPart}${p.title} — Méchant post-production Paris`
+    const desc = p.description || `${p.title} — case study by Méchant, post-production video studio in Paris.`
+    const url = `https://mechant.tv/works/${p.slug || ''}`
+    const og = p.thumbnail_url || p.poster || 'https://mechant.tv/mechantshare.png'
+    // JSON-LD CreativeWork pour rich results sur Google
+    const ldjson = {
+      '@context': 'https://schema.org',
+      '@type': 'CreativeWork',
+      name: p.title,
+      headline: title,
+      description: desc,
+      image: og,
+      url,
+      author: { '@type': 'Organization', name: 'MÉCHANT', url: 'https://mechant.tv' },
+      creator: { '@type': 'Organization', name: 'MÉCHANT', url: 'https://mechant.tv' },
+      producer: p.client ? { '@type': 'Organization', name: p.client } : undefined
+    }
     return {
-      title: this.project ? `${this.project.title} — Méchant` : 'Méchant',
+      title,
       meta: [
-        { hid: 'description', name: 'description', content: this.project?.description || '' }
-      ]
+        { hid: 'description', name: 'description', content: desc },
+        { hid: 'og:title', property: 'og:title', content: title },
+        { hid: 'og:description', property: 'og:description', content: desc },
+        { hid: 'og:url', property: 'og:url', content: url },
+        { hid: 'og:image', property: 'og:image', content: og },
+        { hid: 'og:type', property: 'og:type', content: 'article' },
+        { hid: 'twitter:title', name: 'twitter:title', content: title },
+        { hid: 'twitter:description', name: 'twitter:description', content: desc },
+        { hid: 'twitter:image', name: 'twitter:image', content: og }
+      ],
+      link: [{ hid: 'canonical', rel: 'canonical', href: url }],
+      script: [{
+        hid: 'ldjson-project',
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify(ldjson)
+      }],
+      __dangerouslyDisableSanitizersByTagID: {
+        'ldjson-project': ['innerHTML']
+      }
     }
   },
 
@@ -130,6 +168,7 @@ export default {
   },
 
   mounted() {
+    trackCaseStudyView(this.project)
     this._initMainPlayer()
   },
 
@@ -159,6 +198,14 @@ export default {
 
       this._player.ready().then(() => {
         this.mainPlayerReady = true
+      })
+
+      // Track video play (une fois par session de view)
+      let played = false
+      this._player.on('play', () => {
+        if (played) return
+        played = true
+        trackCaseStudyVideoPlay(this.project, this.project.vimeo_id)
       })
     }
   }

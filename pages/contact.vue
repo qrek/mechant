@@ -1,6 +1,8 @@
 <template>
   <section class="ContactPage">
 
+    <h1 class="sr-only">Contact Méchant — Post-production studio Paris</h1>
+
     <!-- Logo -->
     <div class="ContactPage_hero" ref="hero">
       <img src="~assets/images/MECHANT_TRANSPARENT.png" alt="Méchant" class="ContactPage_hero_logo" />
@@ -93,15 +95,26 @@
 <script>
 import { gsap } from '@/vendor/gsap'
 import SimpleFooter from '@/components/SimpleFooter'
+import { trackContactSubmit } from '@/utils/track'
 
 export default {
   name: 'ContactPage',
   components: { SimpleFooter },
 
   head() {
+    const title = 'Contact — Méchant post-production studio Paris'
+    const desc = 'Get in touch with Méchant — post-production video studio based in Paris, France. Email contact@mechant.tv or visit our studio at 27 rue des Cascades, 75020 Paris.'
     return {
-      title: 'Contact — Méchant',
-      meta: [{ hid: 'description', name: 'description', content: 'Get in touch with Méchant post-production studio.' }]
+      title,
+      meta: [
+        { hid: 'description', name: 'description', content: desc },
+        { hid: 'og:title', property: 'og:title', content: title },
+        { hid: 'og:description', property: 'og:description', content: desc },
+        { hid: 'og:url', property: 'og:url', content: 'https://mechant.tv/contact' },
+        { hid: 'twitter:title', name: 'twitter:title', content: title },
+        { hid: 'twitter:description', name: 'twitter:description', content: desc }
+      ],
+      link: [{ hid: 'canonical', rel: 'canonical', href: 'https://mechant.tv/contact' }]
     }
   },
 
@@ -132,6 +145,7 @@ export default {
 
     async send() {
       this.sending = true
+      trackContactSubmit()
       const subject = encodeURIComponent(`Contact — ${this.form.prenom} ${this.form.nom}`)
       const body = encodeURIComponent(
         `Prénom : ${this.form.prenom}\nNom : ${this.form.nom}\nEmail : ${this.form.email}\n\n${this.form.message}`

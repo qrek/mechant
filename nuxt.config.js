@@ -1,19 +1,72 @@
 import webpack from 'webpack'
 
-const imageShare = 'https://mechant.tv/mechantshare.png'
-const siteTitle = 'MÉCHANT'
-const siteDesc = 'Creative post-production studio'
+const siteUrl = 'https://mechant.tv'
+const imageShare = `${siteUrl}/mechantshare.png`
+const siteTitle = 'MÉCHANT — Post-production video studio in Paris, France'
+const siteDesc = 'Méchant is a creative post-production video studio in Paris, France. Editing, VFX, 3D & 2D animation, motion design and art direction for commercials and music videos.'
+const siteKeywords = 'post-production video Paris France, post-production studio Paris, VFX Paris, motion design Paris, video editing Paris, 3D animation Paris, music video post-production, commercial post-production'
+
+// JSON-LD Organization + LocalBusiness — affiché sur toutes les pages,
+// permet à Google d'afficher des rich results (logo, adresse, contact)
+const jsonLdOrganization = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  '@id': `${siteUrl}/#organization`,
+  name: 'MÉCHANT',
+  legalName: 'Méchant',
+  url: siteUrl,
+  logo: `${siteUrl}/favicon.png`,
+  image: imageShare,
+  description: siteDesc,
+  email: 'contact@mechant.tv',
+  telephone: '',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: '27 rue des Cascades',
+    addressLocality: 'Paris',
+    postalCode: '75020',
+    addressCountry: 'FR',
+    addressRegion: 'Île-de-France'
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: 48.8701,
+    longitude: 2.3906
+  },
+  sameAs: [
+    'https://www.instagram.com/mechant.tv/'
+  ],
+  founder: [
+    { '@type': 'Person', name: 'Théo Bacholier' },
+    { '@type': 'Person', name: 'Ronan Fourreau' }
+  ],
+  foundingDate: '2019',
+  founders: 'Théo Bacholier & Ronan Fourreau',
+  knowsAbout: [
+    'Post-production',
+    'Video editing',
+    'VFX',
+    '3D animation',
+    '2D animation',
+    'Motion design',
+    'Art direction',
+    'Commercial production',
+    'Music video production'
+  ],
+  areaServed: {
+    '@type': 'Country',
+    name: 'France'
+  }
+}
 
 export default {
-  // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
   ssr: false,
-  server: {
-    port: 3000,
-    host: '0.0.0.0'
-  },
-  // Global page headers: https://go.nuxtjs.dev/config-head
+  server: { port: 3000, host: '0.0.0.0' },
+
+  // Global page headers
   head: {
     title: siteTitle,
+    titleTemplate: '%s',
     htmlAttrs: {
       lang: 'en'
     },
@@ -21,28 +74,57 @@ export default {
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { name: 'format-detection', content: 'telephone=no' },
+      { name: 'theme-color', content: '#ff4500' },
+      { name: 'robots', content: 'index, follow' },
+      { name: 'author', content: 'MÉCHANT' },
+      { name: 'keywords', content: siteKeywords },
       { hid: 'description', name: 'description', content: siteDesc },
+
+      // Open Graph
+      { hid: 'og:type', property: 'og:type', content: 'website' },
+      { hid: 'og:site_name', property: 'og:site_name', content: 'MÉCHANT' },
+      { hid: 'og:title', property: 'og:title', content: siteTitle },
       { hid: 'og:description', property: 'og:description', content: siteDesc },
+      { hid: 'og:url', property: 'og:url', content: siteUrl },
       { hid: 'og:image', property: 'og:image', content: imageShare },
       { hid: 'og:image:type', property: 'og:image:type', content: 'image/png' },
-      { hid: 'og:site_name', property: 'og:site_name', content: siteTitle },
-      { hid: 'og:title', property: 'og:title', content: siteTitle },
-      { hid: 'og:type', property: 'og:type', content: 'website' },
+      { hid: 'og:image:width', property: 'og:image:width', content: '1200' },
+      { hid: 'og:image:height', property: 'og:image:height', content: '630' },
+      { hid: 'og:locale', property: 'og:locale', content: 'en_US' },
+      { hid: 'og:locale:alternate', property: 'og:locale:alternate', content: 'fr_FR' },
+
+      // Twitter
       { hid: 'twitter:card', name: 'twitter:card', content: 'summary_large_image' },
-      { hid: 'twitter:site', name: 'twitter:site', content: siteTitle },
+      { hid: 'twitter:site', name: 'twitter:site', content: '@mechant_tv' },
       { hid: 'twitter:title', name: 'twitter:title', content: siteTitle },
-      { hid: 'twitter:image:src', name: 'twitter:image:src', content: imageShare },
+      { hid: 'twitter:description', name: 'twitter:description', content: siteDesc },
+      { hid: 'twitter:image', name: 'twitter:image', content: imageShare },
+
+      // Geo SEO (signaux pour le local search Paris)
+      { name: 'geo.region', content: 'FR-75' },
+      { name: 'geo.placename', content: 'Paris' },
+      { name: 'geo.position', content: '48.8701;2.3906' },
+      { name: 'ICBM', content: '48.8701, 2.3906' }
     ],
     link: [
       { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+      { hid: 'canonical', rel: 'canonical', href: siteUrl },
       { rel: 'preconnect', href: 'https://player.vimeo.com' },
       { rel: 'preconnect', href: 'https://f.vimeocdn.com' },
       { rel: 'preconnect', href: 'https://i.vimeocdn.com' },
       { rel: 'preconnect', href: 'https://fresnel.vimeocdn.com' }
     ],
     script: [
-      { src: 'https://player.vimeo.com/api/player.js' }
-    ]
+      { src: 'https://player.vimeo.com/api/player.js' },
+      {
+        hid: 'ldjson-schema',
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify(jsonLdOrganization)
+      }
+    ],
+    __dangerouslyDisableSanitizersByTagID: {
+      'ldjson-schema': ['innerHTML']
+    }
   },
 
   // Global CSS: https://go.nuxtjs.dev/config-css

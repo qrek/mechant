@@ -17,8 +17,8 @@
 
 export default {
   meta: {
-    title: 'About — MÉCHANT',
-    description: 'Méchant is a creative post-production studio in Paris, founded in 2019 by Théo Bacholier and Ronan Fourreau.'
+    title: 'About — Méchant post-production video studio in Paris',
+    description: 'Méchant is a creative post-production video studio in Paris, France, founded in 2019 by Théo Bacholier and Ronan Fourreau. Editing, VFX, 3D/2D animation, motion design, art direction.'
   },
 
   hero: {

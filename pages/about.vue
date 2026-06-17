@@ -182,13 +182,19 @@ export default {
   mixins: [smoothScroll],
 
   head () {
+    const title = this.content.meta.title
+    const desc = this.content.meta.description
     return {
-      title: this.content.meta.title,
-      meta: [{
-        hid: 'description',
-        name: 'description',
-        content: this.content.meta.description
-      }]
+      title,
+      meta: [
+        { hid: 'description', name: 'description', content: desc },
+        { hid: 'og:title', property: 'og:title', content: title },
+        { hid: 'og:description', property: 'og:description', content: desc },
+        { hid: 'og:url', property: 'og:url', content: 'https://mechant.tv/about' },
+        { hid: 'twitter:title', name: 'twitter:title', content: title },
+        { hid: 'twitter:description', name: 'twitter:description', content: desc }
+      ],
+      link: [{ hid: 'canonical', rel: 'canonical', href: 'https://mechant.tv/about' }]
     }
   },
 

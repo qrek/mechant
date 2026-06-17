@@ -710,6 +710,10 @@ export default {
       for (const seg of this._ragdoll.segments) {
         seg.body.setBodyType(this._RAPIER.RigidBodyType.Dynamic, true)
       }
+      // Tracking : première interaction avec le perso
+      if (typeof window !== 'undefined' && window.dataLayer) {
+        window.dataLayer.push({ event: 'playground_first_interaction' })
+      }
     },
 
     // ── Mouse picking ───────────────────────────────────────────────
@@ -837,6 +841,9 @@ export default {
     // ── Reset : re-fige le perso en kinematic à la pose initiale ───
     resetCharacter () {
       if (!this._ragdoll) return
+      if (typeof window !== 'undefined' && window.dataLayer) {
+        window.dataLayer.push({ event: 'playground_reset' })
+      }
       for (const seg of this._ragdoll.segments) {
         // Repasse en kinematic pour figer
         seg.body.setBodyType(this._RAPIER.RigidBodyType.KinematicPositionBased, true)

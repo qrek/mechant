@@ -3,7 +3,7 @@
     <div class="SimpleFooter_inner">
       <div class="SimpleFooter_col">
         <span class="SimpleFooter_label">Email</span>
-        <a class="SimpleFooter_value" :href="`mailto:${email}`">{{ email }}</a>
+        <a class="SimpleFooter_value" :href="`mailto:${email}`" @click="onEmailClick">{{ email }}</a>
       </div>
 
       <div class="SimpleFooter_col">
@@ -13,6 +13,7 @@
           :href="mapsUrl"
           target="_blank"
           rel="noopener"
+          @click="onMapsClick"
         >
           27 rue des Cascades<br/>75020 Paris
         </a>
@@ -27,6 +28,8 @@
 </template>
 
 <script>
+import { trackContactEmail, trackContactMaps } from '@/utils/track'
+
 export default {
   name: 'SimpleFooter',
   data () {
@@ -38,6 +41,14 @@ export default {
   computed: {
     year () {
       return new Date().getFullYear()
+    }
+  },
+  methods: {
+    onEmailClick () {
+      trackContactEmail()
+    },
+    onMapsClick () {
+      trackContactMaps()
     }
   }
 }

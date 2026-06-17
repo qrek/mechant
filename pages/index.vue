@@ -1,6 +1,9 @@
 <template>
   <section class="HomePage">
 
+    <!-- H1 caché visuellement mais lu par les bots/screen readers (SEO + a11y) -->
+    <h1 class="HomePage_h1 sr-only">MÉCHANT — Post-production video studio in Paris, France</h1>
+
     <!-- Fond vidéo / image full-screen -->
     <div class="HomePage_bg">
       <transition name="bg-fade">
@@ -14,11 +17,12 @@
             loop
             playsinline
             class="HomePage_bg_video"
+            :aria-label="currentProject ? `Showreel: ${currentProject.client || currentProject.title}` : 'Showreel'"
           />
           <img
             v-else-if="currentImageUrl"
             :src="currentImageUrl"
-            alt=""
+            :alt="currentProject ? `${currentProject.client || currentProject.title} — Méchant post-production` : 'Méchant showreel'"
             class="HomePage_bg_img"
           />
         </div>
@@ -52,14 +56,20 @@ export default {
   name: 'HomePage',
 
   head() {
+    const title = 'MÉCHANT — Post-production video studio in Paris, France'
+    const desc = 'Méchant is a creative post-production video studio in Paris. We craft VFX, editing, 3D & 2D animation and motion design for commercials and music videos.'
     return {
-      title: this.data?.homepage?.meta_title || 'Méchant',
+      title,
       meta: [
-        {
-          hid: 'description',
-          name: 'description',
-          content: this.data?.homepage?.meta_description || ''
-        }
+        { hid: 'description', name: 'description', content: desc },
+        { hid: 'og:title', property: 'og:title', content: title },
+        { hid: 'og:description', property: 'og:description', content: desc },
+        { hid: 'og:url', property: 'og:url', content: 'https://mechant.tv/' },
+        { hid: 'twitter:title', name: 'twitter:title', content: title },
+        { hid: 'twitter:description', name: 'twitter:description', content: desc }
+      ],
+      link: [
+        { hid: 'canonical', rel: 'canonical', href: 'https://mechant.tv/' }
       ]
     }
   },

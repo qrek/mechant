@@ -1,6 +1,8 @@
 <template>
   <section class="AllWork">
 
+    <h1 class="sr-only">All Works — Méchant post-production studio Paris</h1>
+
     <!-- Fond vidéo plein écran au hover -->
     <div class="AllWork_bg" :class="{ 'is-visible': hoveredId }">
       <video ref="bgVideo" muted loop playsinline preload="none" class="AllWork_bg_video" />
@@ -40,7 +42,7 @@
             v-if="project.thumbnail_url || project.poster"
             :src="project.thumbnail_url || project.poster"
             loading="lazy"
-            alt=""
+            :alt="`${project.client || project.title} — Méchant post-production`"
             class="AllWork_row_thumb"
           />
           <!-- Vidéo de row supprimée pour économiser la bande passante :
@@ -66,6 +68,7 @@
 import { mapGetters, mapActions } from 'vuex'
 import { gsap } from '@/vendor/gsap'
 import { supabase } from '@/utils/supabase'
+import { trackProjectHover, trackProjectClick } from '@/utils/track'
 import SimpleFooter from '@/components/SimpleFooter'
 import smoothScroll from '@/mixins/smoothScroll'
 
@@ -75,9 +78,19 @@ export default {
   mixins: [smoothScroll],
 
   head() {
+    const title = 'All Works — Méchant post-production Paris'
+    const desc = 'Full catalog of post-production work by Méchant studio in Paris — VFX, motion design, editing, 3D animation for commercials and music videos.'
     return {
-      title: 'All Work — Méchant',
-      meta: [{ hid: 'description', name: 'description', content: '' }]
+      title,
+      meta: [
+        { hid: 'description', name: 'description', content: desc },
+        { hid: 'og:title', property: 'og:title', content: title },
+        { hid: 'og:description', property: 'og:description', content: desc },
+        { hid: 'og:url', property: 'og:url', content: 'https://mechant.tv/works/all' },
+        { hid: 'twitter:title', name: 'twitter:title', content: title },
+        { hid: 'twitter:description', name: 'twitter:description', content: desc }
+      ],
+      link: [{ hid: 'canonical', rel: 'canonical', href: 'https://mechant.tv/works/all' }]
     }
   },
 
@@ -143,6 +156,7 @@ export default {
     onHover(project) {
       this.hoveredId = project.id
       this.setId(project.id)
+      trackProjectHover(project, 'works_all')
       clearTimeout(this.__bgTimer)
 
       // Vidéo fond plein écran (seule vidéo qu'on charge maintenant)
@@ -173,6 +187,7 @@ export default {
     },
 
     openProject(project) {
+      trackProjectClick(project, 'works_all')
       if (project.has_case_study && project.slug) {
         this.$router.push(`/works/${project.slug}`)
         return
