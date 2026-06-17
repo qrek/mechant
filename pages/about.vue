@@ -59,6 +59,26 @@
       <p class="AboutPage_intro_sub" ref="introSub" v-html="content.intro.sub"></p>
     </section>
 
+    <!-- ── EXPERTISE : disciplines développées (montage/VFX/3D/IA) ─────── -->
+    <section class="AboutPage_expertise" ref="expertise">
+      <div class="AboutPage_expertise_head" ref="expertiseHead">
+        <p class="AboutPage_expertise_kicker">{{ content.expertise.kicker }}</p>
+        <p class="AboutPage_expertise_intro" v-html="content.expertise.intro"></p>
+      </div>
+
+      <ul class="AboutPage_expertise_list" ref="expertiseList">
+        <li
+          v-for="item in content.expertise.list"
+          :key="item.index"
+          class="AboutPage_expertise_item"
+        >
+          <span class="idx">{{ item.index }}</span>
+          <h3 class="title">{{ item.title }}</h3>
+          <p class="body">{{ item.body }}</p>
+        </li>
+      </ul>
+    </section>
+
     <!-- ── MANIFESTO : sweep horizontal au scroll ──────────────────────── -->
     <section class="AboutPage_manifesto" ref="manifesto">
       <div
@@ -223,6 +243,7 @@ export default {
       this._animateHero()
       this._animateBgColors()
       this._animateIntro()
+      this._animateExpertise()
       this._animateManifesto()
       this._animateCapa()
       this._animateVisit()
@@ -276,7 +297,8 @@ export default {
       // + couleur de retour si on remonte au-dessus
       const stops = [
         { trigger: this.$refs.intro,     enter: c.intro,     back: c.hero      },
-        { trigger: this.$refs.manifesto, enter: c.manifesto, back: c.intro     },
+        { trigger: this.$refs.expertise, enter: c.expertise, back: c.intro     },
+        { trigger: this.$refs.manifesto, enter: c.manifesto, back: c.expertise },
         { trigger: this.$refs.capa,      enter: c.capa,      back: c.manifesto },
         { trigger: this.$refs.visit,     enter: c.visit,     back: c.capa      }
       ]
@@ -347,6 +369,39 @@ export default {
         ease: 'power3.out',
         scrollTrigger: { trigger: this.$refs.introSub, start: 'top 85%' }
       }))
+    },
+
+    // ── Expertise : intro + items qui se révèlent en cascade ───────────
+    _animateExpertise () {
+      const head = this.$refs.expertiseHead
+      const kicker = head.querySelector('.AboutPage_expertise_kicker')
+      const introEl = head.querySelector('.AboutPage_expertise_intro')
+      const items = this.$refs.expertiseList.querySelectorAll('.AboutPage_expertise_item')
+
+      const introSplit = new SplitText(introEl, { type: 'words,lines' })
+      this._splits.push(introSplit)
+
+      gsap.set(kicker, { opacity: 0, x: -20 })
+      gsap.set(introSplit.words, { yPercent: 110, opacity: 0 })
+      gsap.set(items, { opacity: 0, y: 50 })
+
+      this._track(gsap.to(kicker, {
+        opacity: 1, x: 0, duration: 0.6, ease: 'power2.out',
+        scrollTrigger: { trigger: this.$refs.expertise, start: 'top 75%' }
+      }))
+
+      this._track(gsap.to(introSplit.words, {
+        yPercent: 0, opacity: 1, stagger: 0.02, duration: 0.7, ease: 'power3.out',
+        scrollTrigger: { trigger: introEl, start: 'top 80%' }
+      }))
+
+      // Chaque discipline se révèle une par une au scroll
+      items.forEach((item) => {
+        this._track(gsap.to(item, {
+          opacity: 1, y: 0, duration: 0.8, ease: 'power3.out',
+          scrollTrigger: { trigger: item, start: 'top 85%' }
+        }))
+      })
     },
 
     // ── Manifesto : sweep horizontal — chaque ligne traverse l'écran ───
@@ -664,6 +719,87 @@ export default {
 
       ::v-deep .word
         display: inline-block
+
+  // ── EXPERTISE (fond blanc, texte noir, disciplines développées) ──────
+  &_expertise
+    padding: 16vh 6vw
+    max-width: 1500px
+    margin: 0 auto
+    color: $black
+
+    +breakpoint(mobile)
+      padding: 12vh 5vw
+
+    &_kicker
+      font-family: $apfel
+      font-size: 0.8rem
+      letter-spacing: 0.2em
+      text-transform: uppercase
+      color: rgba(0, 0, 0, 0.5)
+      margin: 0 0 2.5rem
+
+    &_intro
+      font-family: $apfel
+      font-weight: 900
+      font-size: clamp(1.8rem, 3.6vw, 3.6rem)
+      line-height: 1.1
+      letter-spacing: -0.015em
+      color: $black
+      max-width: 22ch
+      margin: 0 0 8rem
+
+      ::v-deep em
+        font-style: italic
+        font-weight: 400
+        color: #ff4500
+
+      ::v-deep .word
+        display: inline-block
+
+      +breakpoint(mobile)
+        margin-bottom: 5rem
+
+    &_list
+      list-style: none
+      padding: 0
+      margin: 0
+      display: grid
+      grid-template-columns: 1fr 1fr
+      gap: 5rem 6rem
+
+      +breakpoint(mobile)
+        grid-template-columns: 1fr
+        gap: 4rem
+
+    &_item
+      .idx
+        font-family: $apfel
+        font-weight: 900
+        font-size: 0.9rem
+        letter-spacing: 0.1em
+        color: #ff4500
+        display: block
+        margin-bottom: 1.2rem
+
+      .title
+        font-family: $apfel
+        font-weight: 900
+        font-size: clamp(2rem, 3.5vw, 3.2rem)
+        text-transform: uppercase
+        letter-spacing: -0.02em
+        color: $black
+        line-height: 1
+        margin: 0 0 1.2rem
+        padding-bottom: 1.2rem
+        border-bottom: 1px solid rgba(0, 0, 0, 0.15)
+
+      .body
+        font-family: $apfel
+        font-weight: 400
+        font-size: clamp(1rem, 1.2vw, 1.2rem)
+        line-height: 1.55
+        color: rgba(0, 0, 0, 0.7)
+        margin: 0
 
   // ── MANIFESTO ────────────────────────────────────────────────────────
   &_manifesto

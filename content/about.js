@@ -56,7 +56,35 @@ export default {
         { text: 'Ronan Fourreau.',   variant: 'name' }
       ]
     ],
-    sub: 'We dedicate our craft and technical obsession to <em>commercials</em> and <em>music videos</em> — bringing an aesthetic vision that\'s a little rough around the edges. Méchant, on purpose.'
+    sub: 'From our studio in <em>Ménilmontant</em>, eastern Paris, we dedicate our craft and technical obsession to <em>commercials</em> and <em>music videos</em> — bringing an aesthetic vision that\'s a little rough around the edges. Méchant, on purpose.'
+  },
+
+  // ── Expertise : nos disciplines développées (montage, VFX, 3D, IA) ────
+  expertise: {
+    kicker: '— What we master',
+    intro: 'We don\'t just push pixels. We shape <em>stories</em>, bend <em>reality</em>, and chase the frame that makes you look twice. Four crafts, one obsession: making images that hit.',
+    list: [
+      {
+        index: '01',
+        title: 'Editing',
+        body: 'Rhythm is everything. We cut for emotion — finding the pulse of a film, the beat that lands, the silence that breathes. Every transition earns its place.'
+      },
+      {
+        index: '02',
+        title: 'VFX',
+        body: 'From the invisible fix to the impossible shot. Compositing, clean-up, set extensions, simulations — we make the unreal feel inevitable, and the real feel larger than life.'
+      },
+      {
+        index: '03',
+        title: '3D',
+        body: 'Modeling, lighting, rendering — we build worlds that don\'t exist and drop them into yours. Photoreal or stylised, the camera believes it.'
+      },
+      {
+        index: '04',
+        title: 'AI',
+        body: 'We fold generative tools into our pipeline — not as a gimmick, but as a new brush. Faster iterations, wilder ideas, frames that were impossible yesterday.'
+      }
+    ]
   },
 
   manifesto: [
@@ -105,10 +133,10 @@ export default {
   },
 
   // Palette du fond — une couleur par section, transition douce à l'entrée
-  // 4 couleurs de marque : orange / bleu clair / vert / dark
   bgColors: {
     hero:      '#ff4500', // orange Méchant
     intro:     '#b5daff', // bleu clair
+    expertise: '#ffffff', // blanc — section éditoriale "ce qu'on maîtrise"
     manifesto: '#14914f', // vert profond
     capa:      '#2a2a2a', // dark (services + awards combinés)
     visit:     '#ff4500'  // retour orange
