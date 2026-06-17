@@ -777,59 +777,70 @@ export default {
       +breakpoint(mobile)
         margin-bottom: 5rem
 
-    // Layout éditorial full-width : grandes lignes alternées gauche/droite
+    // Layout éditorial : chaque discipline en bloc vertical pleine largeur.
+    // Titre XL sur sa propre ligne (jamais contraint → pas de chevauchement),
+    // paragraphe en dessous, aligné à droite une ligne sur deux pour varier.
     &_list
       list-style: none
       padding: 0
       margin: 0
 
     &_item
-      display: grid
-      grid-template-columns: 5rem minmax(auto, 9ch) 1fr
-      align-items: baseline
-      gap: 2rem 4vw
-      padding: 5vh 0
+      padding: 6vh 0
       border-top: 1px solid rgba(0, 0, 0, 0.15)
 
       &:last-child
         border-bottom: 1px solid rgba(0, 0, 0, 0.15)
 
-      // Une ligne sur deux : paragraphe poussé à droite pour varier le rythme
-      &.is-right
-        .body
-          margin-left: auto
-          text-align: left
-
-      +breakpoint(mobile)
-        grid-template-columns: 1fr
-        gap: 1.2rem
-        padding: 6vh 0
-
+      // Header de l'item : numéro + titre XL sur une ligne propre
       .idx
         font-family: $apfel
         font-weight: 900
         font-size: 1rem
         letter-spacing: 0.05em
         color: #ff4500
+        display: block
+        margin-bottom: 1.5rem
 
       .title
         font-family: $apfel
         font-weight: 900
-        font-size: clamp(2.6rem, 6vw, 5.5rem)
+        font-size: clamp(3rem, 11vw, 9rem)
         text-transform: uppercase
-        letter-spacing: -0.02em
+        letter-spacing: -0.03em
         color: $black
-        line-height: 0.95
-        margin: 0
+        line-height: 0.9
+        margin: 0 0 2rem
+        display: block
 
       .body
         font-family: $apfel
         font-weight: 400
-        font-size: clamp(1.1rem, 1.5vw, 1.6rem)
+        font-size: clamp(1.1rem, 1.6vw, 1.7rem)
         line-height: 1.45
-        color: rgba(0, 0, 0, 0.7)
+        color: rgba(0, 0, 0, 0.65)
         margin: 0
-        max-width: 36ch
+        max-width: 32ch
+
+      // Une discipline sur deux : paragraphe poussé à droite
+      &.is-right
+        text-align: right
+
+        .idx
+          color: #ff4500
+
+        .body
+          margin-left: auto
+          text-align: left
+
+      +breakpoint(mobile)
+        padding: 7vh 0
+
+        &.is-right
+          text-align: left
+
+          .body
+            margin-left: 0
 
   // ── MANIFESTO ────────────────────────────────────────────────────────
   &_manifesto
