@@ -799,62 +799,75 @@ export default {
       padding: 0
       margin: 0
 
+    // Chaque discipline : grille 2 colonnes (titre d'un côté, texte de
+    // l'autre) qui occupe toute la largeur — alternance gauche/droite.
     &_item
-      padding: 6vh 0
+      display: grid
+      grid-template-columns: 1fr 1fr
+      column-gap: 8vw
+      align-items: center
+      padding: 7vh 0
       border-top: 1px solid rgba(0, 0, 0, 0.15)
 
       &:last-child
         border-bottom: 1px solid rgba(0, 0, 0, 0.15)
 
-      // Header de l'item : numéro + titre XL sur une ligne propre
       .idx
+        grid-column: 1
+        grid-row: 1
         font-family: $apfel
         font-weight: 900
-        font-size: 1rem
+        font-size: 0.95rem
         letter-spacing: 0.05em
         color: #ff4500
-        display: block
-        margin-bottom: 1.5rem
+        align-self: end
 
       .title
+        grid-column: 1
+        grid-row: 2
         font-family: $apfel
         font-weight: 900
-        font-size: clamp(3rem, 11vw, 9rem)
+        font-size: clamp(2.4rem, 5.5vw, 5rem)
         text-transform: uppercase
-        letter-spacing: -0.03em
+        letter-spacing: -0.02em
         color: $black
-        line-height: 0.9
-        margin: 0 0 2rem
-        display: block
+        line-height: 0.95
+        margin: 0.6rem 0 0
 
       .body
+        grid-column: 2
+        grid-row: 1 / span 2
         font-family: $apfel
         font-weight: 400
-        font-size: clamp(1.1rem, 1.6vw, 1.7rem)
-        line-height: 1.45
+        font-size: clamp(1.05rem, 1.4vw, 1.5rem)
+        line-height: 1.5
         color: rgba(0, 0, 0, 0.65)
         margin: 0
-        max-width: 32ch
+        max-width: 40ch
 
-      // Une discipline sur deux : paragraphe poussé à droite
+      // Une discipline sur deux : on inverse les colonnes (texte à gauche)
       &.is-right
-        text-align: right
-
-        .idx
-          color: #ff4500
-
+        .idx, .title
+          grid-column: 2
         .body
-          margin-left: auto
-          text-align: left
+          grid-column: 1
+          justify-self: start
 
       +breakpoint(mobile)
-        padding: 7vh 0
+        grid-template-columns: 1fr
+        column-gap: 0
+        padding: 6vh 0
 
-        &.is-right
-          text-align: left
+        .idx, .title, .body
+          grid-column: 1 !important
 
-          .body
-            margin-left: 0
+        .idx
+          grid-row: 1
+        .title
+          grid-row: 2
+          margin-bottom: 1.5rem
+        .body
+          grid-row: 3
 
   // ── MANIFESTO ────────────────────────────────────────────────────────
   &_manifesto
