@@ -95,26 +95,23 @@
       </div>
     </section>
 
-    <!-- ── SERVICES : ce sur quoi on bosse (formats) ───────────────────── -->
+    <!-- ── SERVICES : bande typographique des formats ──────────────────── -->
     <section class="AboutPage_services" ref="services">
-      <div class="AboutPage_services_head">
-        <span class="kicker">{{ content.services.kicker }}</span>
-        <span class="count" ref="serviceCounter">{{ String(content.services.list.length).padStart(2, '0') }}</span>
-      </div>
-      <ul class="AboutPage_services_list" ref="servicesList">
-        <li
+      <p class="AboutPage_services_kicker">{{ content.services.kicker }}</p>
+      <div class="AboutPage_services_band" ref="servicesList">
+        <span
           v-for="(s, i) in content.services.list"
           :key="s.label"
-          class="AboutPage_services_item"
+          class="AboutPage_services_format"
         >
-          <span class="idx">{{ String(i + 1).padStart(2, '0') }}</span>
-          <span class="label">{{ s.label }}</span>
-          <span class="desc">{{ s.desc }}</span>
-        </li>
-      </ul>
+          <span class="word">{{ s.label }}</span>
+          <span class="note">{{ s.desc }}</span>
+          <span v-if="i < content.services.list.length - 1" class="sep" aria-hidden="true">/</span>
+        </span>
+      </div>
     </section>
 
-    <!-- ── DISTINCTIONS : showcase pleine largeur ──────────────────────── -->
+    <!-- ── DISTINCTIONS : grille de cartes (trophy case) ───────────────── -->
     <section class="AboutPage_awards" ref="awards">
       <div class="AboutPage_awards_head" ref="awardsHead">
         <p class="AboutPage_awards_kicker">{{ content.awards.kicker }}</p>
@@ -129,16 +126,16 @@
         <span class="AboutPage_awards_total">{{ content.awards.totalLabel }}</span>
       </div>
 
-      <ul class="AboutPage_awards_list" ref="awardsList">
+      <ul class="AboutPage_awards_grid" ref="awardsList">
         <li
           v-for="(award, i) in content.awards.list"
           :key="i"
-          class="AboutPage_awards_item"
+          class="AboutPage_awards_card"
+          :class="{ 'is-feature': i === 0 }"
         >
           <span class="year">{{ award.year }}</span>
           <span class="name">{{ award.name }}</span>
-          <span class="tag">{{ award.tag }}</span>
-          <span class="arrow" aria-hidden="true">↗</span>
+          <span class="tag"><span class="dot"></span>{{ award.tag }}</span>
         </li>
       </ul>
     </section>
@@ -445,48 +442,36 @@ export default {
       })
     },
 
-    // ── Services : ce sur quoi on bosse (formats) ──────────────────────
+    // ── Services : bande de formats qui se révèle ──────────────────────
     _animateServices () {
-      const head = this.$refs.services.querySelector('.AboutPage_services_head')
-      const items = this.$refs.servicesList.querySelectorAll('.AboutPage_services_item')
+      const kicker = this.$refs.services.querySelector('.AboutPage_services_kicker')
+      const formats = this.$refs.servicesList.querySelectorAll('.AboutPage_services_format')
 
-      gsap.set(head, { opacity: 0, y: 20 })
-      gsap.set(items, { x: -30, opacity: 0 })
+      gsap.set(kicker, { opacity: 0, y: 20 })
+      gsap.set(formats, { opacity: 0, y: 30 })
 
-      this._track(gsap.to(head, {
+      this._track(gsap.to(kicker, {
         opacity: 1, y: 0, duration: 0.6, ease: 'power2.out',
         scrollTrigger: { trigger: this.$refs.services, start: 'top 80%' }
       }))
 
-      this._track(gsap.to(items, {
-        x: 0, opacity: 1, stagger: 0.08, duration: 0.6, ease: 'power3.out',
+      this._track(gsap.to(formats, {
+        opacity: 1, y: 0, stagger: 0.1, duration: 0.7, ease: 'power3.out',
         scrollTrigger: { trigger: this.$refs.servicesList, start: 'top 85%' }
-      }))
-
-      const counter = { val: 0 }
-      this._track(gsap.to(counter, {
-        val: this.content.services.list.length,
-        duration: 1.2, ease: 'power2.out',
-        scrollTrigger: { trigger: this.$refs.services, start: 'top 80%' },
-        onUpdate: () => {
-          if (this.$refs.serviceCounter) {
-            this.$refs.serviceCounter.textContent = String(Math.round(counter.val)).padStart(2, '0')
-          }
-        }
       }))
     },
 
-    // ── Distinctions : titre showcase + rangées qui se révèlent ────────
+    // ── Distinctions : titre showcase + cartes qui se révèlent ─────────
     _animateAwards () {
       const head = this.$refs.awardsHead
       const titleLines = head.querySelectorAll('.AboutPage_awards_title .line')
       const kicker = head.querySelector('.AboutPage_awards_kicker')
       const total = head.querySelector('.AboutPage_awards_total')
-      const items = this.$refs.awardsList.querySelectorAll('.AboutPage_awards_item')
+      const cards = this.$refs.awardsList.querySelectorAll('.AboutPage_awards_card')
 
       gsap.set(titleLines, { yPercent: 110, opacity: 0 })
       gsap.set([kicker, total], { opacity: 0, y: 20 })
-      gsap.set(items, { y: 30, opacity: 0 })
+      gsap.set(cards, { y: 40, opacity: 0, scale: 0.96 })
 
       this._track(gsap.to(kicker, {
         opacity: 1, y: 0, duration: 0.6, ease: 'power2.out',
@@ -503,9 +488,9 @@ export default {
         scrollTrigger: { trigger: head, start: 'top 80%' }
       }))
 
-      this._track(gsap.to(items, {
-        y: 0, opacity: 1, stagger: 0.1, duration: 0.7, ease: 'power3.out',
-        scrollTrigger: { trigger: this.$refs.awardsList, start: 'top 85%' }
+      this._track(gsap.to(cards, {
+        y: 0, opacity: 1, scale: 1, stagger: 0.1, duration: 0.7, ease: 'power3.out',
+        scrollTrigger: { trigger: this.$refs.awardsList, start: 'top 82%' }
       }))
     },
 
@@ -773,11 +758,11 @@ export default {
     &_intro
       font-family: $apfel
       font-weight: 900
-      font-size: clamp(1.8rem, 3.6vw, 3.6rem)
-      line-height: 1.1
+      font-size: clamp(1.7rem, 3.2vw, 3.2rem)
+      line-height: 1.15
       letter-spacing: -0.015em
       color: $black
-      max-width: 22ch
+      max-width: 34ch
       margin: 0 0 8rem
 
       ::v-deep em
@@ -919,92 +904,72 @@ export default {
         background: $white
         margin: 0 0.4em 0 0.4em
 
-  // ── SERVICES (ce sur quoi on bosse — formats) ───────────────────────
+  // ── SERVICES (bande typographique des formats, fond pink) ───────────
   &_services
     padding: 16vh 6vw
-    max-width: 1400px
+    max-width: 1500px
     margin: 0 auto
-    color: $black
+    color: $white
 
     +breakpoint(mobile)
       padding: 12vh 5vw
 
-    &_head
+    &_kicker
+      font-family: $apfel
+      font-size: 0.8rem
+      letter-spacing: 0.2em
+      text-transform: uppercase
+      color: rgba(255, 255, 255, 0.7)
+      margin: 0 0 4rem
+
+    // Bande : grands mots qui wrappent, séparés par un slash
+    &_band
       display: flex
-      justify-content: space-between
+      flex-wrap: wrap
       align-items: baseline
-      margin-bottom: 4rem
-      padding-bottom: 1.2rem
-      border-bottom: 1px solid rgba(0, 0, 0, 0.2)
+      gap: 0 1.5rem
 
-      .kicker
-        font-family: $apfel
-        font-size: 0.8rem
-        letter-spacing: 0.2em
-        text-transform: uppercase
-        color: rgba(0, 0, 0, 0.6)
-
-      .count
-        font-family: $apfel
-        font-weight: 900
-        font-size: 1rem
-        color: rgba(0, 0, 0, 0.4)
-
-    &_list
-      list-style: none
-      padding: 0
-      margin: 0
-
-    &_item
-      display: grid
-      grid-template-columns: 4rem 1fr 1.4fr
+    &_format
+      display: inline-flex
       align-items: baseline
       gap: 1.5rem
-      padding: 2.2rem 0
-      border-bottom: 1px solid rgba(0, 0, 0, 0.12)
-      transition: padding-left 0.4s $easeOutQuart
+      cursor: default
 
-      &:hover
-        padding-left: 1.2rem
-
-        .label
-          color: $white
-
-      +breakpoint(mobile)
-        grid-template-columns: 2.5rem 1fr
-        gap: 0.5rem 1rem
-
-        .desc
-          grid-column: 2
-
-      .idx
-        font-family: $apfel
-        font-weight: 400
-        font-size: 0.85rem
-        letter-spacing: 0.1em
-        color: rgba(0, 0, 0, 0.4)
-
-      .label
+      .word
         font-family: $apfel
         font-weight: 900
-        font-size: clamp(1.8rem, 3.5vw, 3.4rem)
+        font-size: clamp(2.4rem, 6vw, 5.5rem)
         text-transform: uppercase
         letter-spacing: -0.02em
-        color: $black
-        line-height: 1
-        transition: color 0.4s $easeOutQuart
+        line-height: 1.05
+        color: $white
+        transition: color 0.3s ease
 
-      .desc
+      .note
         font-family: $apfel
         font-weight: 400
         font-style: italic
-        font-size: clamp(0.95rem, 1.1vw, 1.2rem)
-        color: rgba(0, 0, 0, 0.6)
+        font-size: clamp(0.85rem, 1vw, 1.05rem)
+        color: rgba(255, 255, 255, 0.65)
+        white-space: nowrap
 
-  // ── DISTINCTIONS (showcase pleine largeur, fond noir) ───────────────
+        +breakpoint(mobile)
+          display: none
+
+      .sep
+        font-family: $apfel
+        font-weight: 300
+        font-size: clamp(2rem, 5vw, 4.5rem)
+        color: rgba(255, 255, 255, 0.4)
+        line-height: 1
+
+      &:hover .word
+        color: $black
+
+  // ── DISTINCTIONS (trophy case : grille de cartes, fond noir) ─────────
   &_awards
     padding: 18vh 5vw
-    max-width: 1600px
+    max-width: 1500px
     margin: 0 auto
     color: $white
 
@@ -1016,13 +981,13 @@ export default {
       grid-template-columns: 1fr auto
       align-items: end
       gap: 1.5rem
-      margin-bottom: 6rem
+      margin-bottom: 5rem
       padding-bottom: 2rem
       border-bottom: 2px solid rgba(255, 255, 255, 0.15)
 
       +breakpoint(mobile)
         grid-template-columns: 1fr
-        margin-bottom: 4rem
+        margin-bottom: 3.5rem
 
     &_kicker
       grid-column: 1
@@ -1039,7 +1004,7 @@ export default {
       grid-row: 2
       font-family: $apfel
       font-weight: 900
-      font-size: clamp(2.8rem, 7vw, 7rem)
+      font-size: clamp(2.6rem, 6.5vw, 6.5rem)
       line-height: 0.92
       text-transform: uppercase
       letter-spacing: -0.02em
@@ -1069,89 +1034,94 @@ export default {
         grid-column: 1
         grid-row: 3
 
-    &_list
+    // Grille de cartes asymétrique : la 1re carte est mise en avant (feature)
+    &_grid
       list-style: none
       padding: 0
       margin: 0
-
-    // Grandes rangées showcase : year · NAME XL · tag · arrow, hover fill orange
-    &_item
-      position: relative
       display: grid
-      grid-template-columns: 7rem 1fr auto 2.5rem
-      align-items: center
-      gap: 2.5rem
-      padding: 2.6rem 1.5rem
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1)
-      transition: padding-left 0.5s $easeOutQuart
-
-      &::before
-        content: ''
-        position: absolute
-        inset: 0
-        width: 0
-        background: #ff8600
-        transition: width 0.5s $easeOutQuart
-        z-index: 0
-
-      > *
-        position: relative
-        z-index: 1
-
-      &:hover
-        padding-left: 3rem
-
-        &::before
-          width: 100%
-
-        .year, .name, .tag, .arrow
-          color: $black
-
-        .arrow
-          transform: translate(4px, -4px)
+      grid-template-columns: repeat(2, 1fr)
+      gap: 1.5rem
 
       +breakpoint(mobile)
-        grid-template-columns: 4rem 1fr
-        gap: 0.5rem 1rem
-        padding: 1.8rem 0.5rem
+        grid-template-columns: 1fr
 
+    &_card
+      position: relative
+      display: flex
+      flex-direction: column
+      justify-content: space-between
+      gap: 2.5rem
+      min-height: 16rem
+      padding: 2rem 2.2rem
+      border: 1px solid rgba(255, 255, 255, 0.15)
+      border-radius: 6px
+      transition: background 0.35s ease, border-color 0.35s ease, transform 0.35s ease
+
+      // Carte feature : occupe les 2 colonnes, plus grande, fond orange
+      &.is-feature
+        grid-column: 1 / -1
+        flex-direction: row
+        align-items: flex-end
+        justify-content: space-between
+        min-height: 20rem
+        background: #ff8600
+        border-color: #ff8600
+
+        .year
+          color: rgba(0, 0, 0, 0.6)
+        .name
+          color: $black
+          font-size: clamp(2.6rem, 6vw, 6rem)
         .tag
-          grid-column: 2
-        .arrow
-          display: none
+          color: $black
+          .dot
+            background: $black
+
+        +breakpoint(mobile)
+          flex-direction: column
+          align-items: flex-start
+          min-height: 0
+          gap: 2rem
+
+      &:hover:not(.is-feature)
+        background: rgba(255, 255, 255, 0.04)
+        border-color: rgba(255, 255, 255, 0.4)
+        transform: translateY(-4px)
 
       .year
         font-family: $apfel
         font-weight: 400
         font-size: 0.9rem
-        letter-spacing: 0.08em
+        letter-spacing: 0.1em
         color: rgba(255, 255, 255, 0.5)
-        transition: color 0.4s ease
 
       .name
         font-family: $apfel
         font-weight: 900
-        font-size: clamp(1.8rem, 4vw, 4rem)
+        font-size: clamp(1.8rem, 2.8vw, 2.8rem)
         text-transform: uppercase
         line-height: 0.95
         letter-spacing: -0.015em
         color: $white
-        transition: color 0.4s ease
 
       .tag
+        display: inline-flex
+        align-items: center
+        gap: 0.6rem
         font-family: $apfel
         font-weight: 700
-        font-size: 0.8rem
+        font-size: 0.78rem
         letter-spacing: 0.15em
         text-transform: uppercase
         color: #ff8600
         white-space: nowrap
-        transition: color 0.4s ease
 
-      .arrow
-        font-size: 1.3rem
-        color: rgba(255, 255, 255, 0.4)
-        transition: transform 0.5s $easeOutQuart, color 0.4s ease
+        .dot
+          width: 0.45rem
+          height: 0.45rem
+          border-radius: 50%
+          background: #ff8600
 
   // ── VISIT (slot 3D) ──────────────────────────────────────────────────
   &_visit

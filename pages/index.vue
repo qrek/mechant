@@ -236,7 +236,7 @@ export default {
     pointer-events: none
     z-index: 3
     user-select: none
-    opacity: 0.9
+    opacity: 0.8
 
     img
       display: block
