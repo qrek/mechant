@@ -44,20 +44,41 @@
         <p v-if="project.case_study_body" class="CaseStudy_text_body">{{ project.case_study_body }}</p>
       </div>
 
-      <!-- Vidéos supplémentaires -->
-      <div class="CaseStudy_extras" v-if="extraVideos.length">
+      <!-- Vidéos supplémentaires — grille adaptative + play à la demande -->
+      <div
+        v-if="extraVideos.length"
+        class="CaseStudy_extras"
+        :class="`is-count-${extraVideos.length}`"
+      >
         <div
           v-for="(video, i) in extraVideos"
           :key="`${i}-${video.vimeo_id}`"
           class="CaseStudy_extras_item"
         >
           <div class="CaseStudy_extras_frame">
+            <!-- Vidéo chargée seulement au clic sur play -->
             <iframe
-              :src="`https://player.vimeo.com/video/${video.vimeo_id}?title=0&byline=0&portrait=0&dnt=1`"
+              v-if="playing[i]"
+              :src="`https://player.vimeo.com/video/${video.vimeo_id}?title=0&byline=0&portrait=0&dnt=1&autoplay=1`"
               frameborder="0"
               allow="autoplay; fullscreen; picture-in-picture"
               allowfullscreen
             ></iframe>
+
+            <!-- Poster + bouton play -->
+            <button
+              v-else
+              class="CaseStudy_extras_play"
+              :style="video.thumbnail_url ? { backgroundImage: `url(${video.thumbnail_url})` } : null"
+              @click="playExtra(i, video)"
+              :aria-label="`Play ${video.title || 'video'}`"
+            >
+              <span class="CaseStudy_extras_play_btn">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </span>
+            </button>
           </div>
           <p v-if="video.title" class="CaseStudy_extras_title">{{ video.title }}</p>
         </div>
@@ -96,6 +117,7 @@ export default {
     return {
       project: null,
       mainPlayerReady: false,
+      playing: {},   // { [index]: true } pour les vidéos extra lancées
       _player: null
     }
   },
@@ -180,6 +202,12 @@ export default {
   },
 
   methods: {
+    // Lance une vidéo extra : charge l'iframe Vimeo au clic (lazy)
+    playExtra(i, video) {
+      this.$set(this.playing, i, true)
+      trackCaseStudyVideoPlay(this.project, video && video.vimeo_id)
+    },
+
     _initMainPlayer() {
       if (!this.project?.vimeo_id || typeof window === 'undefined' || !window.Vimeo) return
       const frame = this.$refs.mainFrame
@@ -334,11 +362,36 @@ export default {
       font-weight: 500
       color: rgba(255,255,255,0.95) !important
 
-  // ── Vidéos supplémentaires ────────────────────────────────────────────
+  // ── Vidéos supplémentaires : grille adaptative ───────────────────────
   &_extras
-    display: flex
-    flex-direction: column
-    gap: 3rem
+    display: grid
+    gap: 2rem
+    // Défaut : 1 colonne (1 vidéo, ou fallback)
+    grid-template-columns: 1fr
+
+    // 2 vidéos → 2 colonnes (1 ligne)
+    &.is-count-2
+      grid-template-columns: repeat(2, 1fr)
+
+    // 3 vidéos → 3 colonnes (1 ligne)
+    &.is-count-3
+      grid-template-columns: repeat(3, 1fr)
+
+    // 4 vidéos → 2 colonnes (2 lignes)
+    &.is-count-4
+      grid-template-columns: repeat(2, 1fr)
+
+    // 5+ vidéos → 3 colonnes, bien ordonnées
+    &.is-count-5,
+    &.is-count-6,
+    &.is-count-7,
+    &.is-count-8
+      grid-template-columns: repeat(3, 1fr)
+
+    // Mobile : tout en 1 colonne, ordonné verticalement
+    +breakpoint(mobile)
+      grid-template-columns: 1fr !important
+      gap: 1.5rem
 
     &_item
       display: flex
@@ -348,10 +401,10 @@ export default {
     &_frame
       position: relative
       width: 100%
-      aspect-ratio: 16 / 9
+      aspect-ratio: 4 / 3   // vidéos 1440×1080
       border-radius: 10px
       overflow: hidden
-      background: $black
+      background: #050505
       box-shadow: 0 20px 60px rgba(0,0,0,0.4)
 
       iframe
@@ -360,6 +413,52 @@ export default {
         width: 100%
         height: 100%
         border: 0
+
+    // Bouton play (poster) — couvre le frame, charge la vidéo au clic
+    &_play
+      position: absolute
+      inset: 0
+      width: 100%
+      height: 100%
+      border: 0
+      padding: 0
+      cursor: pointer
+      background-color: #050505
+      background-size: cover
+      background-position: center
+      display: flex
+      align-items: center
+      justify-content: center
+      overflow: hidden
+
+      &::after
+        content: ''
+        position: absolute
+        inset: 0
+        background: rgba(0, 0, 0, 0.25)
+        transition: background 0.3s ease
+
+      &:hover::after
+        background: rgba(0, 0, 0, 0.1)
+
+      &_btn
+        position: relative
+        z-index: 1
+        width: 4.5rem
+        height: 4.5rem
+        border-radius: 50%
+        background: rgba(255, 255, 255, 0.92)
+        color: #0a0a0a
+        display: flex
+        align-items: center
+        justify-content: center
+        padding-left: 0.2rem
+        transition: transform 0.3s $easeOutBack, background 0.3s ease
+
+      &:hover &_btn
+        transform: scale(1.12)
+        background: #ff4500
+        color: $white
 
     &_title
       font-family: $apfel
