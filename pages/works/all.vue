@@ -79,7 +79,7 @@ export default {
 
   head() {
     const title = 'All Works — Méchant post-production Paris'
-    const desc = 'Full catalog of post-production work by Méchant studio in Paris — VFX, motion design, editing, 3D animation for commercials and music videos.'
+    const desc = 'Full catalog of post-production work by Méchant studio in Paris. VFX, motion design, editing, 3D animation for commercials and music videos.'
     return {
       title,
       meta: [

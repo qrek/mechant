@@ -89,7 +89,7 @@ export default {
   data () {
     return {
       // URL du modèle — éditable via query string ?model=/scan/autre.glb
-      modelUrl: '/scan/studio.glb',
+      modelUrl: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/scan/18_06_2026.glb',
       loading: true,
       progress: 0,
       error: null,

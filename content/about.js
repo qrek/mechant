@@ -33,7 +33,7 @@ export default {
   },
 
   intro: {
-    kicker: '— The studio',
+    kicker: 'The studio',
     meta: 'Paris / FR',
     lines: [
       [
@@ -61,7 +61,7 @@ export default {
 
   // ── Expertise : nos disciplines (montage, VFX, 3D, IA) ────────────────
   expertise: {
-    kicker: '— What we do',
+    kicker: 'What we do',
     intro: 'These are the <em>four crafts</em> we spend most of our days on, sometimes one at a time, often all at once on the same film.',
     list: [
       {
@@ -96,7 +96,7 @@ export default {
 
   // Distinctions / awards — section showcased
   awards: {
-    kicker: '— Distinctions',
+    kicker: 'Distinctions',
     titleLines: [
       { text: 'Recognized',        italic: false },
       { text: 'where it matters.', italic: true }
@@ -111,14 +111,16 @@ export default {
   },
 
   visit: {
-    kicker: '— Come say hi',
+    kicker: 'Come say hi',
     titleLines: [
       { text: 'Pull up a chair,', italic: false },
       { text: 'stay a while.',    italic: true }
     ],
-    placeholderLine: '3D studio scan',
-    placeholderSub: 'Coming soon',
-    address: '27 rue des Cascades — 75020 Paris, Ménilmontant',
+    placeholderLine: 'Studio scan',
+    placeholderSub: 'Loading…',
+    // Scan 3D hébergé sur Cloudflare R2 (hors git, egress gratuite)
+    scanUrl: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/scan/18_06_2026.glb',
+    address: '27 rue des Cascades, 75020 Paris, Ménilmontant',
     mapsUrl: 'https://www.google.fr/maps/place/27+Rue+des+Cascades,+75020+Paris',
     ctaLabel: 'Start a project',
     ctaTo: '/contact'

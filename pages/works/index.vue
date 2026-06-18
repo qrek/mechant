@@ -43,7 +43,7 @@ export default {
 
   head () {
     const title = 'Works — Méchant post-production studio Paris'
-    const desc = 'Selected works by Méchant — post-production video studio in Paris. Commercials, music videos, VFX, motion design, 3D animation.'
+    const desc = 'Selected works by Méchant, post-production video studio in Paris. Commercials, music videos, VFX, motion design, 3D animation.'
     return {
       title,
       meta: [

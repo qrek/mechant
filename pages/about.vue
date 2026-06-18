@@ -219,7 +219,10 @@ export default {
     this._splits = []
     this._triggers = []
     await this._fetchAwards()
-    this.$nextTick(() => this._initAnimations())
+    this.$nextTick(() => {
+      this._initAnimations()
+      this._initStudioScan()
+    })
   },
 
   beforeDestroy () {
@@ -228,6 +231,7 @@ export default {
     this._splits = []
     this._triggers = []
     // Lenis cleanup est géré par le mixin smoothScroll
+    this._destroyStudioScan()
   },
 
   methods: {
@@ -247,6 +251,143 @@ export default {
       } catch (_) {
         // garde le fallback statique
       }
+    },
+
+    // ── Scan studio 3D : lazy-load (IntersectionObserver) quand la section
+    //    approche du viewport — évite de tirer les 22 Mo au chargement.
+    _initStudioScan () {
+      const canvas = this.$refs.visitCanvas
+      if (!canvas || typeof window === 'undefined' || !('IntersectionObserver' in window)) return
+
+      this._scanIO = new IntersectionObserver((entries) => {
+        if (entries.some(e => e.isIntersecting)) {
+          this._scanIO.disconnect()
+          this._scanIO = null
+          this._loadStudioScan()
+        }
+      }, { rootMargin: '400px 0px' })
+      this._scanIO.observe(canvas)
+    },
+
+    async _loadStudioScan () {
+      const canvas = this.$refs.visitCanvas
+      if (!canvas) return
+
+      const THREE = await import('three')
+      const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js')
+      const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js')
+      this._scanTHREE = THREE
+
+      const width = canvas.clientWidth
+      const height = canvas.clientHeight
+
+      const scene = new THREE.Scene()
+      scene.background = null // transparent → s'intègre au fond noir de la section
+      this._scanScene = scene
+
+      const camera = new THREE.PerspectiveCamera(45, width / height, 0.01, 1000)
+      camera.position.set(3, 2, 4)
+      this._scanCamera = camera
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+      renderer.setSize(width, height)
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      renderer.outputEncoding = THREE.sRGBEncoding
+      renderer.toneMapping = THREE.ACESFilmicToneMapping
+      renderer.toneMappingExposure = 1.0
+      canvas.appendChild(renderer.domElement)
+      this._scanRenderer = renderer
+
+      // Lumières douces
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x404040, 0.9))
+      const key = new THREE.DirectionalLight(0xffffff, 1.1)
+      key.position.set(5, 8, 4)
+      scene.add(key)
+
+      const controls = new OrbitControls(camera, renderer.domElement)
+      controls.enableDamping = true
+      controls.dampingFactor = 0.08
+      controls.enablePan = false
+      controls.minDistance = 1
+      controls.maxDistance = 30
+      controls.autoRotate = true
+      controls.autoRotateSpeed = 0.6
+      this._scanControls = controls
+
+      const loader = new GLTFLoader()
+      loader.load(this.content.visit.scanUrl, (gltf) => {
+        const model = gltf.scene
+        scene.add(model)
+        // Auto-frame : centre + cadre la caméra sur la bounding box
+        const box = new THREE.Box3().setFromObject(model)
+        const size = box.getSize(new THREE.Vector3())
+        const center = box.getCenter(new THREE.Vector3())
+        model.position.sub(center)
+        const maxDim = Math.max(size.x, size.y, size.z)
+        const dist = (maxDim / 2) / Math.tan((camera.fov * Math.PI / 180) / 2) * 1.3
+        camera.position.set(dist, dist * 0.6, dist)
+        camera.near = dist / 100
+        camera.far = dist * 100
+        camera.updateProjectionMatrix()
+        controls.target.set(0, 0, 0)
+        controls.update()
+        // Cache le placeholder
+        const ph = canvas.querySelector('.AboutPage_visit_placeholder')
+        if (ph) ph.style.display = 'none'
+      }, undefined, (err) => {
+        console.warn('[about] studio scan load error', err)
+      })
+
+      // Resize
+      this._scanResize = () => {
+        const w = canvas.clientWidth
+        const h = canvas.clientHeight
+        camera.aspect = w / h
+        camera.updateProjectionMatrix()
+        renderer.setSize(w, h)
+      }
+      window.addEventListener('resize', this._scanResize)
+
+      // Loop
+      this._scanTick = () => {
+        controls.update()
+        renderer.render(scene, camera)
+        this._scanRaf = requestAnimationFrame(this._scanTick)
+      }
+      this._scanTick()
+    },
+
+    _destroyStudioScan () {
+      if (this._scanIO) { this._scanIO.disconnect(); this._scanIO = null }
+      if (this._scanRaf) cancelAnimationFrame(this._scanRaf)
+      if (this._scanResize) window.removeEventListener('resize', this._scanResize)
+      if (this._scanControls) this._scanControls.dispose()
+      if (this._scanScene && this._scanTHREE) {
+        this._scanScene.traverse((obj) => {
+          if (obj.isMesh) {
+            if (obj.geometry) obj.geometry.dispose()
+            if (obj.material) {
+              const mats = Array.isArray(obj.material) ? obj.material : [obj.material]
+              mats.forEach((m) => {
+                Object.keys(m).forEach((k) => { if (m[k] && m[k].isTexture) m[k].dispose() })
+                m.dispose()
+              })
+            }
+          }
+        })
+      }
+      if (this._scanRenderer) {
+        this._scanRenderer.dispose()
+        this._scanRenderer.forceContextLoss && this._scanRenderer.forceContextLoss()
+        if (this._scanRenderer.domElement && this._scanRenderer.domElement.parentNode) {
+          this._scanRenderer.domElement.parentNode.removeChild(this._scanRenderer.domElement)
+        }
+      }
+      this._scanScene = null
+      this._scanRenderer = null
+      this._scanCamera = null
+      this._scanControls = null
+      this._scanTHREE = null
     },
 
     _initAnimations () {
@@ -1093,6 +1234,18 @@ export default {
 
       +breakpoint(mobile)
         aspect-ratio: 4 / 3
+
+      // Canvas Three.js injecté → remplit le bloc
+      ::v-deep canvas
+        position: absolute
+        inset: 0
+        width: 100% !important
+        height: 100% !important
+        display: block
+        cursor: grab
+
+        &:active
+          cursor: grabbing
 
     &_placeholder
       display: flex

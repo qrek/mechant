@@ -7,7 +7,7 @@
 
       <!-- ── Colonne gauche : accroche + infos ──────────────────────── -->
       <div class="Contact_left">
-        <p class="Contact_eyebrow" ref="eyebrow">— Reach us</p>
+        <p class="Contact_eyebrow" ref="eyebrow">Reach us</p>
 
         <h2 class="Contact_headline" ref="headline">
           <span class="line">Let's make</span>
@@ -17,7 +17,7 @@
 
         <p class="Contact_intro" ref="intro">
           A project in mind, a film to finish, an idea to push further?
-          Tell us about it — we reply fast.
+          Tell us about it. We reply fast.
         </p>
 
         <div class="Contact_info" ref="info">
@@ -28,7 +28,7 @@
           <div class="Contact_info_block">
             <span class="label">Studio</span>
             <a :href="mapsUrl" target="_blank" rel="noopener" class="value">
-              27 rue des Cascades<br/>75020 Paris — Ménilmontant
+              27 rue des Cascades<br/>75020 Paris, Ménilmontant
             </a>
           </div>
           <div class="Contact_info_block">
@@ -109,7 +109,7 @@ export default {
 
   head () {
     const title = 'Contact — Méchant post-production studio Paris'
-    const desc = 'Get in touch with Méchant — post-production video studio in Ménilmontant, Paris. Email contact@mechant.tv or visit 27 rue des Cascades, 75020 Paris.'
+    const desc = 'Get in touch with Méchant, post-production video studio in Ménilmontant, Paris. Email contact@mechant.tv or visit 27 rue des Cascades, 75020 Paris.'
     return {
       title,
       meta: [

@@ -120,7 +120,7 @@ export default {
     if (!p) return { title: 'Méchant — Post-production Paris' }
     const clientPart = p.client ? `${p.client} — ` : ''
     const title = `${clientPart}${p.title} — Méchant post-production Paris`
-    const desc = p.description || `${p.title} — case study by Méchant, post-production video studio in Paris.`
+    const desc = p.description || `${p.title}, case study by Méchant, post-production video studio in Paris.`
     const url = `https://mechant.tv/works/${p.slug || ''}`
     const og = p.thumbnail_url || p.poster || 'https://mechant.tv/mechantshare.png'
     // JSON-LD CreativeWork pour rich results sur Google
