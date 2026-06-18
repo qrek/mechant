@@ -3,7 +3,14 @@
     <template v-if="!isWorksPage">
       <div class="Preloader_panel" ref="panel" />
       <div class="Preloader_center" ref="centerEl">
-        <img src="~assets/images/logo.png" alt="Méchant" class="Preloader_logo" />
+        <div class="Preloader_logoWrap">
+          <!-- Logo en fond, très légère opacité -->
+          <img src="~assets/images/logo.png" alt="" aria-hidden="true" class="Preloader_logo Preloader_logo--ghost" />
+          <!-- Vrai logo révélé de gauche à droite (remplissage du chargement) -->
+          <div class="Preloader_fillClip" ref="fillClip">
+            <img src="~assets/images/logo.png" alt="Méchant" class="Preloader_logo Preloader_logo--fill" />
+          </div>
+        </div>
       </div>
     </template>
   </div>
@@ -41,6 +48,7 @@ export default {
   },
   async mounted () {
     this._mountTime = Date.now()
+    this._initFill()
     await this.loadData()
     this.registerLoaders()
     this.setupResourceLoader()
@@ -147,12 +155,46 @@ export default {
     },
     setupEventListeners () {
       this.resourceLoader.addEventListener('complete', this.loadResourcesCompleteHandler)
+      this.resourceLoader.addEventListener('progress', this.loadResourcesProgressHandler)
     },
     removeEventListeners () {
       this.resourceLoader.removeEventListener('complete', this.loadResourcesCompleteHandler)
+      this.resourceLoader.removeEventListener('progress', this.loadResourcesProgressHandler)
+    },
+
+    // ── Remplissage du logo gauche → droite ──────────────────────────────
+    _initFill () {
+      this._fillTarget = 0   // 0 → 1
+      // Avance "douce" de base (au cas où il y a peu de ressources) pour que
+      // le remplissage démarre tout de suite, puis se cale sur le vrai %.
+      if (this.$refs.fillClip) {
+        gsap.set(this.$refs.fillClip, { width: '0%' })
+        // petite avance initiale pour amorcer visuellement
+        this._setFill(0.08)
+      }
+    },
+    _setFill (value) {
+      this._fillTarget = Math.max(this._fillTarget || 0, Math.min(1, value))
+      if (!this.$refs.fillClip) return
+      gsap.to(this.$refs.fillClip, {
+        width: (this._fillTarget * 100) + '%',
+        duration: 0.6,
+        ease: 'power2.out',
+        overwrite: true
+      })
+    },
+    loadResourcesProgressHandler (progress) {
+      // progress = 0 → 1 (réel). On ne dépasse pas 0.9 avant le complete
+      // pour garder une marge de remplissage final propre.
+      this._setFill(0.08 + (progress || 0) * 0.82)
     },
     loadResourcesCompleteHandler () {
       this.setLoadingCompleted()
+      // Remplissage final jusqu'à 100% (gauche → droite)
+      if (this.$refs.fillClip) {
+        this._fillTarget = 1
+        gsap.to(this.$refs.fillClip, { width: '100%', duration: 0.5, ease: 'power2.inOut', overwrite: true })
+      }
       if (this.isWorksPage) {
         this.hideLoader = true
         return
@@ -210,6 +252,15 @@ export default {
     z-index: 2
     pointer-events: none
 
+  // Wrapper : superpose le logo fantôme + le logo de remplissage
+  &_logoWrap
+    position: relative
+    display: inline-block
+    width: 22rem
+
+    +breakpoint(mobile)
+      width: 14rem
+
   &_logo
     display: block
     width: 22rem
@@ -217,4 +268,23 @@ export default {
 
     +breakpoint(mobile)
       width: 14rem
+
+    // Fond très léger (le logo "vide")
+    &--ghost
+      opacity: 0.15
+
+    // Logo plein (révélé par le clip)
+    &--fill
+      position: absolute
+      top: 0
+      left: 0
+
+  // Conteneur qui révèle le logo plein de gauche à droite (width animée)
+  &_fillClip
+    position: absolute
+    top: 0
+    left: 0
+    height: 100%
+    width: 0
+    overflow: hidden
 </style>
