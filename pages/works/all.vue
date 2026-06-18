@@ -269,6 +269,10 @@ export default {
     text-transform: uppercase
     color: rgba(255,255,255,0.2)
 
+    // Tablette : colonnes fixes trop larges → on resserre (media seul)
+    +breakpoint(tabletDown)
+      grid-template-columns: 3rem 1fr 14rem
+
     +breakpoint(mobile)
       display: none
 
@@ -296,6 +300,11 @@ export default {
   border-bottom: 1px solid rgba(255,255,255,0.06)
   cursor: pointer
   transition: opacity 0.3s ease
+
+  // Tablette : on retire cat/type, on garde num · titre · media
+  +breakpoint(tabletDown)
+    grid-template-columns: 3rem 1fr 14rem
+    gap: 0 1.5rem
 
   +breakpoint(mobile)
     grid-template-columns: 2.5rem 1fr 8rem
@@ -370,7 +379,7 @@ export default {
     text-transform: uppercase
     color: rgba(255,255,255,0.35)
 
-    +breakpoint(mobile)
+    +breakpoint(tabletDown)
       display: none
 
   &_type
@@ -381,7 +390,7 @@ export default {
     text-transform: uppercase
     color: rgba(255,255,255,0.35)
 
-    +breakpoint(mobile)
+    +breakpoint(tabletDown)
       display: none
 
 @keyframes spin

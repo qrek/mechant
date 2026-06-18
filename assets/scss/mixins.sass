@@ -32,6 +32,12 @@
   @if $point == tablet
     @media only screen and (min-device-width : 768px) and (max-device-width : 1024px) and (orientation : landscape)
       @content
+  // <= 1024px : tablettes (paysage + portrait) + grands téléphones paysage.
+  // Dégrade les layouts desktop trop serrés sur la bande 835-1024px que
+  // le breakpoint mobile (<=834px) ne couvrait pas.
+  @if $point == tabletDown
+    @media only screen and (max-width: 1024px)
+      @content
   @if $point == mobile
     @media only screen and (max-width: 834px), only screen and (min-width: 1024px) and (max-height: 1366px) and (orientation: portrait) and (-webkit-min-device-pixel-ratio: 1.5)
       @content

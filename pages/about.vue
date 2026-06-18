@@ -783,6 +783,10 @@ export default {
           white-space: nowrap
           line-height: 1.05
 
+          // Sur tablette/mobile : autorise le retour à la ligne (sinon clip)
+          +breakpoint(tabletDown)
+            white-space: normal
+
         &--small
           font-weight: 400
           font-size: clamp(1.6rem, 3vw, 3.6rem)
@@ -977,12 +981,12 @@ export default {
         text-align: right
         transition: transform 0.5s $easeOutQuart, color 0.4s ease
 
-      +breakpoint(mobile)
+      // Tablette + mobile : on empile (titre puis texte), pas de fill au tap
+      +breakpoint(tabletDown)
         grid-template-columns: 2.5rem 1fr
         gap: 1rem
         padding: 4vh 0
 
-        // Pas de fill orange au tap sur mobile, juste l'empilement
         &:hover
           padding-left: 0
           &::before

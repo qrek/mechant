@@ -224,9 +224,14 @@ export default {
     max-width: 1500px
     margin: 0 auto
 
-    +breakpoint(mobile)
+    // Tablette : une seule colonne (les 2 colonnes deviennent trop serrées)
+    +breakpoint(tabletDown)
       grid-template-columns: 1fr
-      gap: 4rem
+      gap: 3rem
+      padding: 15vh 6vw 10vh
+
+    +breakpoint(mobile)
+      gap: 2.5rem
       padding: 13vh 6vw 8vh
 
   // ── Colonne gauche ──────────────────────────────────────────────────
@@ -234,7 +239,7 @@ export default {
     position: sticky
     top: 16vh
 
-    +breakpoint(mobile)
+    +breakpoint(tabletDown)
       position: static
       top: auto
 

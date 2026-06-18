@@ -434,6 +434,11 @@ export default {
     &.is-count-8
       grid-template-columns: repeat(3, 1fr)
 
+    // Tablette : max 2 colonnes (3 vidéos côte à côte = trop petit)
+    +breakpoint(tabletDown)
+      grid-template-columns: repeat(2, 1fr) !important
+      gap: 1.5rem
+
     // Mobile : tout en 1 colonne, ordonné verticalement
     +breakpoint(mobile)
       grid-template-columns: 1fr !important

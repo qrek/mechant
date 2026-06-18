@@ -1,7 +1,18 @@
 <template>
   <section class="Playground">
 
-    <div class="Playground_canvas" ref="canvas" @mousedown="onMouseDown" @mousemove="onMouseMove" @mouseup="onMouseUp" @mouseleave="onMouseUp"></div>
+    <div
+      class="Playground_canvas"
+      ref="canvas"
+      @mousedown="onMouseDown"
+      @mousemove="onMouseMove"
+      @mouseup="onMouseUp"
+      @mouseleave="onMouseUp"
+      @touchstart="onTouchStart"
+      @touchmove="onTouchMove"
+      @touchend="onMouseUp"
+      @touchcancel="onMouseUp"
+    ></div>
 
     <header class="Playground_hud Playground_hud--top">
       <div class="Playground_label">
@@ -721,6 +732,20 @@ export default {
     },
 
     // ── Mouse picking ───────────────────────────────────────────────
+    // Support tactile : on mappe les touch events sur les handlers souris
+    onTouchStart (event) {
+      const t = event.touches && event.touches[0]
+      if (!t) return
+      event.preventDefault()
+      this.onMouseDown({ clientX: t.clientX, clientY: t.clientY })
+    },
+    onTouchMove (event) {
+      const t = event.touches && event.touches[0]
+      if (!t) return
+      event.preventDefault()
+      this.onMouseMove({ clientX: t.clientX, clientY: t.clientY })
+    },
+
     onMouseDown (event) {
       if (!this.ragdollReady) return
       const THREE = this._THREE
@@ -977,6 +1002,7 @@ export default {
     width: 100%
     height: 100%
     user-select: none
+    touch-action: none   // le drag du perso ne scrolle pas la page (tactile)
 
     ::v-deep canvas
       display: block
