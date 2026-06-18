@@ -105,6 +105,7 @@ export default {
     if (float) gsap.killTweensOf(float)
     ;(this._itemParallax || []).forEach(({ el }) => gsap.killTweensOf(el))
     this._itemParallax = []
+    if (this._cacheFloatSize) window.removeEventListener('resize', this._cacheFloatSize)
   },
 
   methods: {
@@ -212,6 +213,14 @@ export default {
       if (float) {
         this._floatQuickX = gsap.quickTo(float, 'x', { duration: 1.4, ease: 'power3.out' })
         this._floatQuickY = gsap.quickTo(float, 'y', { duration: 1.4, ease: 'power3.out' })
+        // Cache les dimensions une fois (évite un forced layout à chaque mousemove)
+        this._floatW = float.offsetWidth
+        this._floatH = float.offsetHeight
+        this._cacheFloatSize = () => {
+          this._floatW = float.offsetWidth
+          this._floatH = float.offsetHeight
+        }
+        window.addEventListener('resize', this._cacheFloatSize)
       }
 
       this._itemParallax = []
@@ -221,8 +230,8 @@ export default {
       const float = this.$refs.float
       if (!float) return
 
-      const w = float.offsetWidth
-      const h = float.offsetHeight
+      const w = this._floatW || float.offsetWidth
+      const h = this._floatH || float.offsetHeight
       const x = Math.max(0, Math.min(e.clientX - w / 2, window.innerWidth - w))
       const y = Math.max(0, Math.min(e.clientY - h / 2, window.innerHeight - h))
 

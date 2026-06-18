@@ -282,11 +282,13 @@ export default {
         // qui aurait posé les bones dans un autre état au load
         skinnedMesh.pose()
 
-        // DEBUG : log tous les noms de bones
-        console.log('[playground] Skeleton bones (' + skinnedMesh.skeleton.bones.length + ') :')
-        skinnedMesh.skeleton.bones.forEach((b, i) => {
-          console.log(`  [${i}] ${b.name}`)
-        })
+        // DEBUG : log des bones uniquement en dev
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[playground] Skeleton bones (' + skinnedMesh.skeleton.bones.length + ') :')
+          skinnedMesh.skeleton.bones.forEach((b, i) => {
+            console.log(`  [${i}] ${b.name}`)
+          })
+        }
       }
 
       // Scale à 1.7m
@@ -343,11 +345,13 @@ export default {
         rFoot:     findBone(sk, 'rightfoot', 'foot_r', 'r_foot')
       }
 
-      // DEBUG : log de la résolution des bones (utile pour les rigs non-standard)
-      console.log('[playground] Bones detected for ragdoll :')
-      Object.entries(bones).forEach(([key, b]) => {
-        console.log(`  ${key.padEnd(12)} : ${b ? b.name : '✗ NOT FOUND'}`)
-      })
+      // DEBUG : log de la résolution des bones (dev uniquement)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[playground] Bones detected for ragdoll :')
+        Object.entries(bones).forEach(([key, b]) => {
+          console.log(`  ${key.padEnd(12)} : ${b ? b.name : '✗ NOT FOUND'}`)
+        })
+      }
 
       // Évite qu'un bone soit utilisé pour 2 slots (peut arriver si naming non-standard)
       const seen = new Set()

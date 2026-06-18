@@ -16,13 +16,10 @@ export default {
   name: 'Header',
 
   mounted () {
+    // Animation d'entrée jouée UNE seule fois — le Header est persistant
+    // (monté dans le layout), donc pas de ré-animation au changement de page
+    // (c'était la cause du "saut" du menu au clic).
     this.$nextTick(() => this._animateIn())
-  },
-
-  watch: {
-    $route () {
-      this.$nextTick(() => this._animateIn())
-    }
   },
 
   methods: {

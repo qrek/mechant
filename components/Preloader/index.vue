@@ -108,13 +108,10 @@ export default {
       Object.keys(mixProjects).forEach(p => {
         const project = mixProjects[p]
 
-        if (project.preview_video && ids.indexOf(project.id) < 0 && !this.isMobile) {
-          sources.push({
-            name: `${project.id}_preview_video`,
-            type: 'video',
-            path: project.preview_video
-          })
-        }
+        // NOTE : on ne précharge PLUS les preview_video ici. Elles ne servent
+        // qu'au survol des pages works (qui les chargent à la demande avec
+        // preload="none"). Les précharger toutes au boot tirait ~10 Mo × N
+        // projets avant même d'afficher le site.
 
         if (project.video_home && ids.indexOf(project.id) < 0 && !this.isMobile) {
           sources.push({

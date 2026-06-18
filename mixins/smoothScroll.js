@@ -62,6 +62,14 @@ export default {
       this._lenisRaf = (time) => this._lenis.raf(time * 1000)
       gsap.ticker.add(this._lenisRaf)
       gsap.ticker.lagSmoothing(0)
+
+      // Recalcule les positions des ScrollTriggers une fois Lenis monté +
+      // les polices custom chargées (sinon les triggers sont mesurés sur une
+      // mise en page pré-font → décalages). refresh() après fonts.ready.
+      ScrollTrigger.refresh()
+      if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => ScrollTrigger.refresh()).catch(() => {})
+      }
     },
 
     _destroyLenis () {
