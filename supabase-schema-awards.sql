@@ -7,11 +7,15 @@ create table if not exists awards (
   id uuid primary key default uuid_generate_v4(),
   year text not null,
   name text not null,
+  project text,
   tag text,
   order_index integer default 0,
   published boolean default true,
   created_at timestamptz default now()
 );
+
+-- Si la table existe déjà sans la colonne project, l'ajouter :
+alter table awards add column if not exists project text;
 
 alter table awards enable row level security;
 

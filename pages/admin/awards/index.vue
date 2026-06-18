@@ -18,13 +18,14 @@
         <span></span>
         <span>Année</span>
         <span>Nom / Festival</span>
+        <span>Projet</span>
         <span>Mention</span>
         <span></span>
       </div>
 
       <div
         v-for="(a, index) in awards"
-        :key="a.id || a._tmp"
+        :key="a.id || a.tmp"
         class="awards-row"
         :class="{ 'is-dragging': dragIndex === index, 'is-over': dropIndex === index && dragIndex !== index }"
         draggable="true"
@@ -36,6 +37,7 @@
         <span class="drag-handle" title="Réordonner">⠿</span>
         <input v-model="a.year" type="text" placeholder="2024" class="cell-input" />
         <input v-model="a.name" type="text" placeholder="Cannes Lions" class="cell-input" />
+        <input v-model="a.project" type="text" placeholder="Nom du projet" class="cell-input" />
         <input v-model="a.tag" type="text" placeholder="Shortlist" class="cell-input" />
         <button class="btn-sm btn-danger" @click="removeRow(index)">Supprimer</button>
       </div>
@@ -68,7 +70,7 @@ export default {
       errorMsg: '',
       dragIndex: null,
       dropIndex: null,
-      _deletedIds: []
+      deletedIds: []
     }
   },
 
@@ -90,16 +92,17 @@ export default {
 
     addRow () {
       this.awards.unshift({
-        _tmp: Date.now() + Math.random(),
+        tmp: Date.now() + Math.random(),
         year: '',
         name: '',
+        project: '',
         tag: ''
       })
     },
 
     removeRow (index) {
       const row = this.awards[index]
-      if (row && row.id) this._deletedIds.push(row.id)
+      if (row && row.id) this.deletedIds.push(row.id)
       this.awards.splice(index, 1)
     },
 
@@ -124,10 +127,10 @@ export default {
 
       try {
         // Supprime les lignes retirées
-        if (this._deletedIds.length) {
-          const { error: delErr } = await supabase.from('awards').delete().in('id', this._deletedIds)
+        if (this.deletedIds.length) {
+          const { error: delErr } = await supabase.from('awards').delete().in('id', this.deletedIds)
           if (delErr) throw delErr
-          this._deletedIds = []
+          this.deletedIds = []
         }
 
         // Validation simple
@@ -142,6 +145,7 @@ export default {
           const base = {
             year: (a.year || '').trim(),
             name: (a.name || '').trim(),
+            project: (a.project || '').trim(),
             tag: (a.tag || '').trim(),
             order_index: total - i,
             published: true
@@ -191,7 +195,7 @@ export default {
 
 .awards-row {
   display: grid;
-  grid-template-columns: 2rem 6rem 1fr 1fr 6rem;
+  grid-template-columns: 2rem 5rem 1fr 1fr 9rem 6rem;
   align-items: center;
   gap: 1rem;
   padding: 0.6rem 0.8rem;

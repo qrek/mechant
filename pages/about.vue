@@ -117,7 +117,10 @@
           class="AboutPage_awards_card"
         >
           <span class="year">{{ award.year }}</span>
-          <span class="name">{{ award.name }}</span>
+          <span class="mid">
+            <span class="name">{{ award.name }}</span>
+            <span v-if="award.project" class="project">{{ award.project }}</span>
+          </span>
           <span class="tag"><span class="dot"></span>{{ award.tag }}</span>
         </li>
       </ul>
@@ -242,7 +245,7 @@ export default {
         const { supabase } = await import('@/utils/supabase')
         const { data, error } = await supabase
           .from('awards')
-          .select('year, name, tag')
+          .select('year, name, project, tag')
           .eq('published', true)
           .order('order_index', { ascending: false })
         if (!error && data && data.length) {
@@ -1147,6 +1150,8 @@ export default {
           color: rgba(0, 0, 0, 0.6)
         .name
           color: $black
+        .project
+          color: rgba(0, 0, 0, 0.7)
         .tag
           color: $black
 
@@ -1161,6 +1166,11 @@ export default {
         color: rgba(255, 255, 255, 0.5)
         transition: color 0.35s ease
 
+      .mid
+        display: flex
+        flex-direction: column
+        gap: 0.5rem
+
       .name
         font-family: $apfel
         font-weight: 900
@@ -1169,6 +1179,14 @@ export default {
         line-height: 0.95
         letter-spacing: -0.015em
         color: $white
+        transition: color 0.35s ease
+
+      .project
+        font-family: $apfel
+        font-weight: 400
+        font-style: italic
+        font-size: clamp(0.95rem, 1.1vw, 1.15rem)
+        color: rgba(255, 255, 255, 0.55)
         transition: color 0.35s ease
 
       .tag
