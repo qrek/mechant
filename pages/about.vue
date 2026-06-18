@@ -1213,10 +1213,12 @@ export default {
     // Scan : bord transparent (même noir que la section) → s'intègre direct
     &_canvas
       position: relative
-      width: 100%
-      max-width: 1200px
-      margin: 0 auto 4rem
-      aspect-ratio: 16 / 10
+      // Déborde le padding 6vw de la section → box pleine largeur
+      width: calc(100% + 12vw)
+      margin-left: -6vw
+      margin-right: -6vw
+      margin-bottom: 4rem
+      aspect-ratio: 16 / 9
       background: transparent
       overflow: hidden
       display: flex
@@ -1224,7 +1226,10 @@ export default {
       justify-content: center
 
       +breakpoint(mobile)
-        aspect-ratio: 4 / 3
+        width: calc(100% + 10vw)
+        margin-left: -5vw
+        margin-right: -5vw
+        aspect-ratio: 1 / 1
 
       // Canvas Three.js injecté → remplit le bloc
       ::v-deep canvas
