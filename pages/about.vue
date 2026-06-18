@@ -253,20 +253,11 @@ export default {
       }
     },
 
-    // ── Scan studio 3D : lazy-load (IntersectionObserver) quand la section
-    //    approche du viewport — évite de tirer les 22 Mo au chargement.
+    // ── Scan studio 3D : chargé en avance (dès le montage) pour qu'il soit
+    //    déjà prêt quand l'utilisateur arrive en bas de page.
     _initStudioScan () {
-      const canvas = this.$refs.visitCanvas
-      if (!canvas || typeof window === 'undefined' || !('IntersectionObserver' in window)) return
-
-      this._scanIO = new IntersectionObserver((entries) => {
-        if (entries.some(e => e.isIntersecting)) {
-          this._scanIO.disconnect()
-          this._scanIO = null
-          this._loadStudioScan()
-        }
-      }, { rootMargin: '400px 0px' })
-      this._scanIO.observe(canvas)
+      if (typeof window === 'undefined') return
+      this._loadStudioScan()
     },
 
     async _loadStudioScan () {
@@ -308,8 +299,7 @@ export default {
       controls.enableDamping = true
       controls.dampingFactor = 0.08
       controls.enablePan = false
-      controls.minDistance = 1
-      controls.maxDistance = 30
+      controls.enableZoom = false    // rotation seule, pas de zoom
       controls.autoRotate = true
       controls.autoRotateSpeed = 0.6
       this._scanControls = controls
@@ -318,15 +308,16 @@ export default {
       loader.load(this.content.visit.scanUrl, (gltf) => {
         const model = gltf.scene
         scene.add(model)
-        // Auto-frame : centre + cadre la caméra sur la bounding box
+        // Auto-frame : centre + cadre la caméra sur la bounding box.
+        // Facteur 0.43 (= 1.3 / 3) → le modèle apparaît ~3× plus gros.
         const box = new THREE.Box3().setFromObject(model)
         const size = box.getSize(new THREE.Vector3())
         const center = box.getCenter(new THREE.Vector3())
         model.position.sub(center)
         const maxDim = Math.max(size.x, size.y, size.z)
-        const dist = (maxDim / 2) / Math.tan((camera.fov * Math.PI / 180) / 2) * 1.3
+        const dist = (maxDim / 2) / Math.tan((camera.fov * Math.PI / 180) / 2) * 0.43
         camera.position.set(dist, dist * 0.6, dist)
-        camera.near = dist / 100
+        camera.near = Math.max(0.001, dist / 100)
         camera.far = dist * 100
         camera.updateProjectionMatrix()
         controls.target.set(0, 0, 0)
