@@ -88,23 +88,11 @@ export default {
   },
 
   manifesto: [
-    'Pretty pictures.',
-    'Bad influence.',
-    'Clean cuts.',
-    'Dirty habits.'
+    'Mean cuts',
+    'Polygon crimes',
+    'No sweat',
+    'Charming menace'
   ],
-
-  // Colonne gauche du combo : ce qu'on livre (formats) — différent des
-  // disciplines de la section Expertise, donc pas de répétition
-  services: {
-    kicker: '— What we work on',
-    list: [
-      { label: 'Commercials',   desc: 'Brand films & ads.' },
-      { label: 'Music videos',  desc: 'Where we play the most.' },
-      { label: 'Brand content', desc: 'Social, launches, teasers.' },
-      { label: 'Collabs',       desc: 'Directors, agencies, artists.' }
-    ]
-  },
 
   // Distinctions / awards — section showcased
   awards: {
@@ -125,8 +113,8 @@ export default {
   visit: {
     kicker: '— Come say hi',
     titleLines: [
-      { text: 'Drop by', italic: false },
-      { text: 'the studio.', italic: true }
+      { text: 'Pull up a chair,', italic: false },
+      { text: 'stay a while.',    italic: true }
     ],
     placeholderLine: '3D studio scan',
     placeholderSub: 'Coming soon',
@@ -142,8 +130,7 @@ export default {
     intro:     '#b5daff', // bleu clair
     expertise: '#ffffff', // blanc — disciplines
     manifesto: '#14914f', // vert profond
-    services:  '#fe82ae', // pink — ce sur quoi on bosse
     awards:    '#0a0a0a', // noir — showcase des distinctions
-    visit:     '#ff4500'  // retour orange
+    visit:     '#0a0a0a'  // noir — pour intégrer le scan studio
   }
 }

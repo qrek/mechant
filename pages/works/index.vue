@@ -28,8 +28,6 @@
         </NuxtLink>
       </div>
     </div>
-
-    <SimpleFooter />
   </section>
 </template>
 
@@ -39,11 +37,9 @@ import { gsap } from '@/vendor/gsap'
 import { SplitText } from '@/vendor/gsap/SplitText'
 import { supabase } from '@/utils/supabase'
 import { trackProjectHover, trackProjectClick } from '@/utils/track'
-import SimpleFooter from '@/components/SimpleFooter'
 
 export default {
   name: 'Works',
-  components: { SimpleFooter },
 
   head () {
     const title = 'Works — Méchant post-production studio Paris'

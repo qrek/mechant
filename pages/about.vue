@@ -68,14 +68,14 @@
 
       <ul class="AboutPage_expertise_list" ref="expertiseList">
         <li
-          v-for="(item, i) in content.expertise.list"
+          v-for="item in content.expertise.list"
           :key="item.index"
           class="AboutPage_expertise_item"
-          :class="{ 'is-right': i % 2 === 1 }"
         >
           <span class="idx">{{ item.index }}</span>
           <h3 class="title">{{ item.title }}</h3>
           <p class="body">{{ item.body }}</p>
+          <span class="arrow" aria-hidden="true">↗</span>
         </li>
       </ul>
     </section>
@@ -91,22 +91,6 @@
       >
         <span class="text">
           <span v-for="n in 4" :key="n" class="text_unit">{{ line }}<span class="dot">●</span></span>
-        </span>
-      </div>
-    </section>
-
-    <!-- ── SERVICES : bande typographique des formats ──────────────────── -->
-    <section class="AboutPage_services" ref="services">
-      <p class="AboutPage_services_kicker">{{ content.services.kicker }}</p>
-      <div class="AboutPage_services_band" ref="servicesList">
-        <span
-          v-for="(s, i) in content.services.list"
-          :key="s.label"
-          class="AboutPage_services_format"
-        >
-          <span class="word">{{ s.label }}</span>
-          <span class="note">{{ s.desc }}</span>
-          <span v-if="i < content.services.list.length - 1" class="sep" aria-hidden="true">/</span>
         </span>
       </div>
     </section>
@@ -139,21 +123,14 @@
       </ul>
     </section>
 
-    <!-- ── VISIT US (slot pour scan 3D) ────────────────────────────────── -->
+    <!-- ── VISIT US : scan studio puis accroche (fond noir) ────────────── -->
     <section class="AboutPage_visit" ref="visit">
       <p class="AboutPage_visit_kicker">{{ content.visit.kicker }}</p>
-
-      <h2 class="AboutPage_visit_title">
-        <span
-          v-for="(line, i) in content.visit.titleLines"
-          :key="i"
-          :class="{ italic: line.italic }"
-        >{{ line.text }}</span>
-      </h2>
 
       <!--
         Slot 3D scan : remplacer ce placeholder par un canvas Three.js
         avec GLTFLoader quand le scan sera prêt (export GLB optimisé).
+        Fond noir → le scan s'intègre directement, sans bord.
       -->
       <div class="AboutPage_visit_canvas" ref="visitCanvas">
         <div class="AboutPage_visit_placeholder">
@@ -162,7 +139,16 @@
         </div>
       </div>
 
-      <!-- Adresse mise en avant -->
+      <!-- Accroche sous le scan -->
+      <h2 class="AboutPage_visit_title">
+        <span
+          v-for="(line, i) in content.visit.titleLines"
+          :key="i"
+          :class="{ italic: line.italic }"
+        >{{ line.text }}</span>
+      </h2>
+
+      <!-- Adresse + CTA -->
       <a class="AboutPage_visit_address" :href="content.visit.mapsUrl" target="_blank" rel="noopener">
         <span class="label">Find us</span>
         <span class="value">{{ content.visit.address }}</span>
@@ -175,7 +161,6 @@
         </span>
       </a>
 
-      <!-- CTA vers la page contact -->
       <NuxtLink class="AboutPage_visit_cta" :to="content.visit.ctaTo">
         {{ content.visit.ctaLabel }}
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -250,7 +235,6 @@ export default {
       this._animateIntro()
       this._animateExpertise()
       this._animateManifesto()
-      this._animateServices()
       this._animateAwards()
       this._animateVisit()
     },
@@ -305,8 +289,7 @@ export default {
         { trigger: this.$refs.intro,     enter: c.intro,     back: c.hero      },
         { trigger: this.$refs.expertise, enter: c.expertise, back: c.intro     },
         { trigger: this.$refs.manifesto, enter: c.manifesto, back: c.expertise },
-        { trigger: this.$refs.services,  enter: c.services,  back: c.manifesto },
-        { trigger: this.$refs.awards,    enter: c.awards,    back: c.services  },
+        { trigger: this.$refs.awards,    enter: c.awards,    back: c.manifesto },
         { trigger: this.$refs.visit,     enter: c.visit,     back: c.awards    }
       ]
 
@@ -441,25 +424,6 @@ export default {
       })
     },
 
-    // ── Services : bande de formats qui se révèle ──────────────────────
-    _animateServices () {
-      const kicker = this.$refs.services.querySelector('.AboutPage_services_kicker')
-      const formats = this.$refs.servicesList.querySelectorAll('.AboutPage_services_format')
-
-      gsap.set(kicker, { opacity: 0, y: 20 })
-      gsap.set(formats, { opacity: 0, y: 30 })
-
-      this._track(gsap.to(kicker, {
-        opacity: 1, y: 0, duration: 0.6, ease: 'power2.out',
-        scrollTrigger: { trigger: this.$refs.services, start: 'top 80%' }
-      }))
-
-      this._track(gsap.to(formats, {
-        opacity: 1, y: 0, stagger: 0.1, duration: 0.7, ease: 'power3.out',
-        scrollTrigger: { trigger: this.$refs.servicesList, start: 'top 85%' }
-      }))
-    },
-
     // ── Distinctions : titre showcase + cartes qui se révèlent ─────────
     _animateAwards () {
       const head = this.$refs.awardsHead
@@ -500,13 +464,15 @@ export default {
       gsap.set(this.$refs.visitCanvas, { scale: 0.85, opacity: 0 })
       gsap.set(this.$refs.visit.querySelector('.AboutPage_visit_address'), { opacity: 0, y: 20 })
 
+      // Le titre est sous le scan → on déclenche sur le titre lui-même
+      const titleEl = this.$refs.visit.querySelector('.AboutPage_visit_title')
       this._track(gsap.to(titleSpans, {
         yPercent: 0,
         opacity: 1,
         stagger: 0.12,
         duration: 0.8,
         ease: 'power4.out',
-        scrollTrigger: { trigger: this.$refs.visit, start: 'top 70%' }
+        scrollTrigger: { trigger: titleEl, start: 'top 85%' }
       }))
 
       this._track(gsap.to(this.$refs.visitCanvas, {
@@ -775,83 +741,107 @@ export default {
       +breakpoint(mobile)
         margin-bottom: 5rem
 
-    // Layout éditorial : chaque discipline en bloc vertical pleine largeur.
-    // Titre XL sur sa propre ligne (jamais contraint → pas de chevauchement),
-    // paragraphe en dessous, aligné à droite une ligne sur deux pour varier.
+    // Rangées interactives : numéro · TITRE · description · flèche.
+    // Au survol, la rangée se remplit d'orange (cohérent avec les distinctions).
     &_list
       list-style: none
       padding: 0
       margin: 0
 
-    // Chaque discipline : grille 2 colonnes (titre d'un côté, texte de
-    // l'autre) qui occupe toute la largeur — alternance gauche/droite.
     &_item
+      position: relative
       display: grid
-      grid-template-columns: 1fr 1fr
-      column-gap: 8vw
+      grid-template-columns: 3.5rem minmax(7rem, 0.9fr) 1.5fr 2rem
       align-items: center
-      padding: 7vh 0
+      gap: 2rem 3vw
+      padding: 3.2vh 1.5rem
       border-top: 1px solid rgba(0, 0, 0, 0.15)
+      transition: padding-left 0.5s $easeOutQuart
 
       &:last-child
         border-bottom: 1px solid rgba(0, 0, 0, 0.15)
 
+      // Remplissage orange au survol
+      &::before
+        content: ''
+        position: absolute
+        inset: 0
+        width: 0
+        background: #ff4500
+        transition: width 0.5s $easeOutQuart
+        z-index: 0
+
+      > *
+        position: relative
+        z-index: 1
+
+      &:hover
+        padding-left: 3rem
+
+        &::before
+          width: 100%
+
+        .idx, .title, .body, .arrow
+          color: $white
+
+        .arrow
+          transform: translate(4px, -4px)
+
       .idx
-        grid-column: 1
-        grid-row: 1
         font-family: $apfel
         font-weight: 900
         font-size: 0.95rem
         letter-spacing: 0.05em
         color: #ff4500
-        align-self: end
+        transition: color 0.4s ease
 
       .title
-        grid-column: 1
-        grid-row: 2
         font-family: $apfel
         font-weight: 900
-        font-size: clamp(2.4rem, 5.5vw, 5rem)
+        font-size: clamp(2rem, 3.8vw, 3.8rem)
         text-transform: uppercase
         letter-spacing: -0.02em
         color: $black
         line-height: 0.95
-        margin: 0.6rem 0 0
+        margin: 0
+        transition: color 0.4s ease
 
       .body
-        grid-column: 2
-        grid-row: 1 / span 2
         font-family: $apfel
         font-weight: 400
-        font-size: clamp(1.05rem, 1.4vw, 1.5rem)
-        line-height: 1.5
-        color: rgba(0, 0, 0, 0.65)
+        font-size: clamp(1rem, 1.25vw, 1.35rem)
+        line-height: 1.45
+        color: rgba(0, 0, 0, 0.6)
         margin: 0
-        max-width: 40ch
+        max-width: 42ch
+        transition: color 0.4s ease
 
-      // Une discipline sur deux : on inverse les colonnes (texte à gauche)
-      &.is-right
-        .idx, .title
-          grid-column: 2
-        .body
-          grid-column: 1
-          justify-self: start
+      .arrow
+        font-size: 1.3rem
+        color: rgba(0, 0, 0, 0.35)
+        text-align: right
+        transition: transform 0.5s $easeOutQuart, color 0.4s ease
 
       +breakpoint(mobile)
-        grid-template-columns: 1fr
-        column-gap: 0
-        padding: 6vh 0
+        grid-template-columns: 2.5rem 1fr
+        gap: 1rem
+        padding: 4vh 0
 
-        .idx, .title, .body
-          grid-column: 1 !important
+        // Pas de fill orange au tap sur mobile, juste l'empilement
+        &:hover
+          padding-left: 0
+          &::before
+            width: 0
+          .title, .body, .idx
+            color: inherit
 
-        .idx
-          grid-row: 1
         .title
-          grid-row: 2
-          margin-bottom: 1.5rem
+          grid-column: 2
         .body
-          grid-row: 3
+          grid-column: 1 / -1
+          margin-top: 1rem
+        .arrow
+          display: none
 
   // ── MANIFESTO ────────────────────────────────────────────────────────
   &_manifesto
@@ -902,68 +892,6 @@ export default {
         border-radius: 50%
         background: $white
         margin: 0 0.4em 0 0.4em
-
-  // ── SERVICES (bande typographique des formats, fond pink) ───────────
-  &_services
-    padding: 16vh 6vw
-    max-width: 1500px
-    margin: 0 auto
-    color: $white
-
-    +breakpoint(mobile)
-      padding: 12vh 5vw
-
-    &_kicker
-      font-family: $apfel
-      font-size: 0.8rem
-      letter-spacing: 0.2em
-      text-transform: uppercase
-      color: rgba(255, 255, 255, 0.7)
-      margin: 0 0 4rem
-
-    // Bande : grands mots qui wrappent, séparés par un slash
-    &_band
-      display: flex
-      flex-wrap: wrap
-      align-items: baseline
-      gap: 0 1.5rem
-
-    &_format
-      display: inline-flex
-      align-items: baseline
-      gap: 1.5rem
-      cursor: default
-
-      .word
-        font-family: $apfel
-        font-weight: 900
-        font-size: clamp(2.4rem, 6vw, 5.5rem)
-        text-transform: uppercase
-        letter-spacing: -0.02em
-        line-height: 1.05
-        color: $white
-        transition: color 0.3s ease
-
-      .note
-        font-family: $apfel
-        font-weight: 400
-        font-style: italic
-        font-size: clamp(0.85rem, 1vw, 1.05rem)
-        color: rgba(255, 255, 255, 0.65)
-        white-space: nowrap
-
-        +breakpoint(mobile)
-          display: none
-
-      .sep
-        font-family: $apfel
-        font-weight: 300
-        font-size: clamp(2rem, 5vw, 4.5rem)
-        color: rgba(255, 255, 255, 0.4)
-        line-height: 1
-
-      &:hover .word
-        color: $black
 
   // ── DISTINCTIONS (trophy case : grille de cartes, fond noir) ─────────
   &_awards
@@ -1111,50 +1039,33 @@ export default {
           background: #ff8600
           transition: background 0.35s ease
 
-  // ── VISIT (slot 3D) ──────────────────────────────────────────────────
+  // ── VISIT : fond noir, scan studio intégré puis accroche ─────────────
   &_visit
-    padding: 12vh 6vw 10vh
+    padding: 14vh 6vw 12vh
     max-width: 1500px
     margin: 0 auto
     text-align: center
+    color: $white
 
     +breakpoint(mobile)
-      padding: 8vh 5vw
+      padding: 10vh 5vw
 
     &_kicker
       font-family: $apfel
       font-size: 0.8rem
       letter-spacing: 0.2em
       text-transform: uppercase
-      color: rgba(0, 0, 0, 0.5)
+      color: rgba(255, 255, 255, 0.5)
       margin: 0 0 3rem
 
-    &_title
-      font-family: $apfel
-      font-weight: 900
-      font-size: clamp(3rem, 8vw, 9rem)
-      line-height: 0.95
-      text-transform: uppercase
-      color: $black
-      letter-spacing: -0.02em
-      margin: 0 0 6rem
-
-      span
-        display: block
-        overflow: hidden
-
-        &.italic
-          font-weight: 400
-          font-style: italic
-
+    // Scan : bord transparent (même noir que la section) → s'intègre direct
     &_canvas
       position: relative
       width: 100%
-      max-width: 1100px
+      max-width: 1200px
       margin: 0 auto 4rem
       aspect-ratio: 16 / 10
-      background: rgba(0, 0, 0, 0.85)
-      border-radius: 6px
+      background: transparent
       overflow: hidden
       display: flex
       align-items: center
@@ -1168,7 +1079,12 @@ export default {
       flex-direction: column
       align-items: center
       gap: 0.8rem
-      color: rgba(255, 255, 255, 0.4)
+      color: rgba(255, 255, 255, 0.35)
+      border: 1px dashed rgba(255, 255, 255, 0.12)
+      border-radius: 6px
+      width: 100%
+      height: 100%
+      justify-content: center
 
       .placeholderLine
         font-family: $apfel
@@ -1185,7 +1101,27 @@ export default {
         text-transform: uppercase
         color: rgba(255, 255, 255, 0.25)
 
-    // Adresse mise en avant : label + grosse adresse + lien maps
+    // Accroche sous le scan
+    &_title
+      font-family: $apfel
+      font-weight: 900
+      font-size: clamp(3rem, 8vw, 9rem)
+      line-height: 0.95
+      text-transform: uppercase
+      color: $white
+      letter-spacing: -0.02em
+      margin: 0 0 5rem
+
+      span
+        display: block
+        overflow: hidden
+
+        &.italic
+          font-weight: 400
+          font-style: italic
+          color: #ff4500
+
+    // Adresse : label + grosse adresse + lien maps
     &_address
       display: flex
       flex-direction: column
@@ -1199,7 +1135,7 @@ export default {
         font-size: 0.75rem
         letter-spacing: 0.2em
         text-transform: uppercase
-        color: rgba(0, 0, 0, 0.5)
+        color: rgba(255, 255, 255, 0.5)
 
       .value
         font-family: $apfel
@@ -1207,7 +1143,7 @@ export default {
         font-size: clamp(1.6rem, 3.5vw, 3rem)
         text-transform: uppercase
         letter-spacing: -0.01em
-        color: $black
+        color: $white
         line-height: 1.1
         transition: color 0.25s ease
 
@@ -1220,22 +1156,22 @@ export default {
         font-size: 0.8rem
         letter-spacing: 0.1em
         text-transform: uppercase
-        color: rgba(0, 0, 0, 0.55)
+        color: rgba(255, 255, 255, 0.5)
         transition: color 0.25s ease
 
       &:hover
         .value
-          color: $white
+          color: #ff4500
         .map
-          color: $black
+          color: $white
 
     // CTA principal vers la page contact
     &_cta
       display: inline-flex
       align-items: center
       gap: 0.7rem
-      background: $black
-      color: $white
+      background: $white
+      color: $black
       border-radius: 100px
       padding: 1.1rem 2.4rem
       font-family: $apfel
@@ -1251,8 +1187,8 @@ export default {
 
       &:hover
         transform: translateY(-2px)
-        background: $white
-        color: $black
+        background: #ff4500
+        color: $white
 
         svg
           transform: translateX(5px)
