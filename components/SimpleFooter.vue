@@ -21,7 +21,12 @@
 
       <div class="SimpleFooter_col SimpleFooter_col--right">
         <span class="SimpleFooter_label">© {{ year }}</span>
-        <span class="SimpleFooter_value">MÉCHANT</span>
+        <a
+          class="SimpleFooter_value"
+          :href="instagramUrl"
+          target="_blank"
+          rel="noopener"
+        >MÉCHANT</a>
       </div>
     </div>
   </footer>
@@ -35,7 +40,8 @@ export default {
   data () {
     return {
       email: 'contact@mechant.tv',
-      mapsUrl: 'https://www.google.fr/maps/place/27+Rue+des+Cascades,+75020+Paris'
+      mapsUrl: 'https://www.google.fr/maps/place/27+Rue+des+Cascades,+75020+Paris',
+      instagramUrl: 'https://www.instagram.com/mechant.tv/'
     }
   },
   computed: {

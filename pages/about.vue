@@ -112,7 +112,7 @@
 
       <ul class="AboutPage_awards_grid" ref="awardsList">
         <li
-          v-for="(award, i) in content.awards.list"
+          v-for="(award, i) in awardsList"
           :key="i"
           class="AboutPage_awards_card"
         >
@@ -123,9 +123,17 @@
       </ul>
     </section>
 
-    <!-- ── VISIT US : scan studio puis accroche (fond noir) ────────────── -->
+    <!-- ── VISIT US : accroche puis scan studio (fond noir) ────────────── -->
     <section class="AboutPage_visit" ref="visit">
-      <p class="AboutPage_visit_kicker">{{ content.visit.kicker }}</p>
+
+      <!-- Accroche au-dessus du scan -->
+      <h2 class="AboutPage_visit_title">
+        <span
+          v-for="(line, i) in content.visit.titleLines"
+          :key="i"
+          :class="{ italic: line.italic }"
+        >{{ line.text }}</span>
+      </h2>
 
       <!--
         Slot 3D scan : remplacer ce placeholder par un canvas Three.js
@@ -139,18 +147,9 @@
         </div>
       </div>
 
-      <!-- Accroche sous le scan -->
-      <h2 class="AboutPage_visit_title">
-        <span
-          v-for="(line, i) in content.visit.titleLines"
-          :key="i"
-          :class="{ italic: line.italic }"
-        >{{ line.text }}</span>
-      </h2>
-
       <!-- Adresse + CTA -->
       <a class="AboutPage_visit_address" :href="content.visit.mapsUrl" target="_blank" rel="noopener">
-        <span class="label">Find us</span>
+        <span class="label">Come say hi</span>
         <span class="value">{{ content.visit.address }}</span>
         <span class="map">
           Open in maps
@@ -210,13 +209,16 @@ export default {
 
   data () {
     return {
-      content: aboutContent
+      content: aboutContent,
+      // Récompenses : défaut = statique, écrasé par Supabase si dispo
+      awardsList: aboutContent.awards.list
     }
   },
 
-  mounted () {
+  async mounted () {
     this._splits = []
     this._triggers = []
+    await this._fetchAwards()
     this.$nextTick(() => this._initAnimations())
   },
 
@@ -229,6 +231,24 @@ export default {
   },
 
   methods: {
+    // Récupère les récompenses depuis Supabase (éditables via /admin/awards).
+    // Fallback silencieux sur la liste statique si table vide / erreur.
+    async _fetchAwards () {
+      try {
+        const { supabase } = await import('@/utils/supabase')
+        const { data, error } = await supabase
+          .from('awards')
+          .select('year, name, tag')
+          .eq('published', true)
+          .order('order_index', { ascending: false })
+        if (!error && data && data.length) {
+          this.awardsList = data
+        }
+      } catch (_) {
+        // garde le fallback statique
+      }
+    },
+
     _initAnimations () {
       this._animateHero()
       this._animateBgColors()

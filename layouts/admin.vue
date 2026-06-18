@@ -4,6 +4,7 @@
       <NuxtLink to="/admin/projects" class="admin-nav_logo">MÉCHANT Admin</NuxtLink>
       <div class="admin-nav_links">
         <NuxtLink to="/admin/projects">Projets</NuxtLink>
+        <NuxtLink to="/admin/awards">Récompenses</NuxtLink>
         <button @click="logout">Déconnexion</button>
       </div>
     </nav>

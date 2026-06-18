@@ -37,13 +37,13 @@ export default {
     meta: 'Paris / FR',
     lines: [
       [
-        { text: 'We are',     variant: 'lead' },
-        { text: 'creative.',  variant: 'accent' }
+        { text: 'We are a',  variant: 'lead' },
+        { text: 'creative',  variant: 'accent' }
       ],
       [
-        { text: 'A post-production', variant: '' },
-        { text: 'studio',            variant: 'italic' },
-        { text: 'based in Paris,',   variant: '' }
+        { text: 'post-production', variant: '' },
+        { text: 'studio',          variant: 'italic' },
+        { text: 'based in Paris,', variant: '' }
       ],
       [
         { text: 'founded in', variant: '' },
@@ -56,13 +56,13 @@ export default {
         { text: 'Ronan Fourreau.',   variant: 'name' }
       ]
     ],
-    sub: 'From our studio in <em>Ménilmontant</em>, we put our craft and our technical obsession at the service of <em>commercials</em> and <em>music videos</em>. We like images with a bit of edge — clean enough to work, rough enough to feel alive. We follow a film from the first cut to the last frame, and we care as much about the idea as about the pixel. <em>Méchant</em>, on purpose.'
+    sub: 'From our studio in <em>Ménilmontant</em>, we put our craft and our technical obsession at the service of <em>commercials</em> and <em>music videos</em>. We like images with a bit of edge, clean enough to work, rough enough to feel alive. We follow a film from the first cut to the last frame, and we care as much about the idea as about the pixel.'
   },
 
   // ── Expertise : nos disciplines (montage, VFX, 3D, IA) ────────────────
   expertise: {
     kicker: '— What we do',
-    intro: 'These are the <em>four crafts</em> we spend most of our days on — sometimes one at a time, often all at once on the same film. We mix them freely, because a good image rarely comes from a <em>single</em> tool.',
+    intro: 'These are the <em>four crafts</em> we spend most of our days on, sometimes one at a time, often all at once on the same film.',
     list: [
       {
         index: '01',
@@ -72,17 +72,17 @@ export default {
       {
         index: '02',
         title: 'VFX',
-        body: 'From a quick clean-up to a shot that couldn\'t be filmed. Compositing, retouching, set extensions — done so you don\'t notice the work.'
+        body: 'From a quick clean-up to a shot that couldn\'t be filmed. Compositing, retouching, set extensions, done so you don\'t notice the work.'
       },
       {
         index: '03',
         title: '3D',
-        body: 'Modeling, lighting and rendering to add what the camera couldn\'t catch — an object, a set, a whole environment.'
+        body: 'Modeling, lighting and rendering to add what the camera couldn\'t catch: an object, a set, a whole environment.'
       },
       {
         index: '04',
         title: 'AI',
-        body: 'We bring generative tools into the mix when they help — to test ideas faster and open up looks that weren\'t possible before.'
+        body: 'We bring generative tools into the mix when they help, to test ideas faster and open up looks that weren\'t possible before.'
       }
     ]
   },
