@@ -49,20 +49,29 @@
         v-if="extraVideos.length"
         class="CaseStudy_extras"
         :class="`is-count-${extraVideos.length}`"
+        ref="extras"
       >
         <div
           v-for="(video, i) in extraVideos"
           :key="`${i}-${video.vimeo_id}`"
           class="CaseStudy_extras_item"
         >
-          <div class="CaseStudy_extras_frame">
-            <!-- Mode background Vimeo : autoplay, muet, boucle, aucun contrôle -->
+          <div class="CaseStudy_extras_frame" :data-idx="i">
+            <!-- Mode background Vimeo : autoplay, muet, boucle, aucun contrôle.
+                 Chargé en avance via IntersectionObserver (rootMargin) → déjà
+                 en lecture quand la vidéo arrive à l'écran, pas de pause. -->
             <iframe
+              v-if="loaded[i]"
               :src="`https://player.vimeo.com/video/${video.vimeo_id}?background=1&autoplay=1&loop=1&muted=1&dnt=1`"
               frameborder="0"
               allow="autoplay; fullscreen; picture-in-picture"
               allowfullscreen
             ></iframe>
+            <div
+              v-else
+              class="CaseStudy_extras_holder"
+              :style="video.thumbnail_url ? { backgroundImage: `url(${video.thumbnail_url})` } : null"
+            ></div>
           </div>
           <p v-if="video.title" class="CaseStudy_extras_title">{{ video.title }}</p>
         </div>
@@ -101,6 +110,7 @@ export default {
     return {
       project: null,
       mainPlayerReady: false,
+      loaded: {},   // { [index]: true } : vidéos extra dont l'iframe est montée
       _player: null
     }
   },
@@ -175,6 +185,7 @@ export default {
   mounted() {
     trackCaseStudyView(this.project)
     this._initMainPlayer()
+    this.$nextTick(() => this._initLazyVideos())
   },
 
   beforeDestroy() {
@@ -182,9 +193,45 @@ export default {
       try { this._player.destroy() } catch (_) {}
       this._player = null
     }
+    if (this._io) {
+      this._io.disconnect()
+      this._io = null
+    }
   },
 
   methods: {
+    // Charge chaque vidéo extra EN AVANCE (rootMargin 600px) → elle a le
+    // temps de buffer avant d'être visible, donc aucune pause perçue.
+    _initLazyVideos() {
+      if (!this.extraVideos.length || typeof window === 'undefined') return
+      const root = this.$refs.extras
+      if (!root) return
+
+      // Fallback : pas d'IntersectionObserver → on charge tout direct
+      if (!('IntersectionObserver' in window)) {
+        this.extraVideos.forEach((_, i) => this.$set(this.loaded, i, true))
+        return
+      }
+
+      this._io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const idx = parseInt(entry.target.dataset.idx, 10)
+            this.$set(this.loaded, idx, true)
+            this._io.unobserve(entry.target)
+          }
+        })
+      }, {
+        root: null,
+        rootMargin: '600px 0px',  // déclenche ~1 écran avant l'entrée en vue
+        threshold: 0
+      })
+
+      root.querySelectorAll('.CaseStudy_extras_frame').forEach((el) => {
+        this._io.observe(el)
+      })
+    },
+
     _initMainPlayer() {
       if (!this.project?.vimeo_id || typeof window === 'undefined' || !window.Vimeo) return
       const frame = this.$refs.mainFrame
@@ -390,6 +437,16 @@ export default {
         width: 100%
         height: 100%
         border: 0
+
+    // Placeholder avant chargement (poster ou fond sombre) — pas de flash
+    &_holder
+      position: absolute
+      inset: 0
+      width: 100%
+      height: 100%
+      background-color: #050505
+      background-size: cover
+      background-position: center
 
     &_title
       font-family: $apfel
