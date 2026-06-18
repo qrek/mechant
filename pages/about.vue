@@ -674,7 +674,7 @@ export default {
           background: $black
           padding: 0 0.2em 0.05em
           border-radius: 4px
-          margin-left: 0.15em
+          margin-left: -0.05em
           line-height: 0.9
 
         &--italic
