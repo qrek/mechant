@@ -38,10 +38,10 @@
         </div>
       </div>
 
-      <!-- Paragraphes -->
+      <!-- Paragraphes — texte normal, seuls les @pseudo en gras + lien Insta -->
       <div class="CaseStudy_text" v-if="project.case_study_intro || project.case_study_body">
-        <p v-if="project.case_study_intro" class="CaseStudy_text_intro">{{ project.case_study_intro }}</p>
-        <p v-if="project.case_study_body" class="CaseStudy_text_body">{{ project.case_study_body }}</p>
+        <p v-if="project.case_study_intro" class="CaseStudy_text_intro" v-html="linkifyMentions(project.case_study_intro)"></p>
+        <p v-if="project.case_study_body" class="CaseStudy_text_body" v-html="linkifyMentions(project.case_study_body)"></p>
       </div>
 
       <!-- Vidéos supplémentaires — grille adaptative + play à la demande -->
@@ -200,6 +200,21 @@ export default {
   },
 
   methods: {
+    // Transforme les @pseudo en liens Instagram en gras (même logique que
+    // la bulle info des vidéos plein écran). Le reste du texte reste normal.
+    linkifyMentions (text) {
+      if (!text) return ''
+      // Échappe le HTML pour éviter toute injection, puis linkifie les @pseudo
+      const escaped = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+      return escaped.replace(
+        /@(\w+)/g,
+        '<a class="mention" href="https://instagram.com/$1" target="_blank" rel="noopener noreferrer">@$1</a>'
+      )
+    },
+
     // Charge chaque vidéo extra EN AVANCE (rootMargin 600px) → elle a le
     // temps de buffer avant d'être visible, donc aucune pause perçue.
     _initLazyVideos() {
@@ -376,15 +391,22 @@ export default {
 
     p
       font-family: $apfel
+      font-weight: 400          // les deux paragraphes en normal
       font-size: clamp(1rem, 1.25vw, 1.35rem)
       line-height: 1.55
       color: rgba(255,255,255,0.78)
       margin: 0
       white-space: pre-line
 
-    &_intro
-      font-weight: 500
-      color: rgba(255,255,255,0.95) !important
+      // Seuls les @pseudo sont en gras + lien Instagram
+      ::v-deep .mention
+        font-weight: 700
+        color: $white
+        text-decoration: none
+        transition: opacity 0.2s ease
+
+        &:hover
+          opacity: 0.6
 
   // ── Vidéos supplémentaires : grille adaptative ───────────────────────
   &_extras
