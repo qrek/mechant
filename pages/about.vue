@@ -682,6 +682,14 @@ export default {
     flex-direction: column
     justify-content: space-between
 
+    // Mobile : on rapproche eyebrow + titre (gap court) au lieu de
+    // répartir l'espace libre en grands vides, et le scroll reste en bas.
+    +breakpoint(mobile)
+      min-height: 88vh
+      padding: 7rem 6vw 2.5rem
+      justify-content: flex-start
+      gap: 1.5rem
+
     &_eyebrow
       display: flex
       align-items: center
@@ -695,6 +703,10 @@ export default {
       .dot
         font-size: 0.5rem
         opacity: 0.5
+
+      +breakpoint(mobile)
+        font-size: 0.85rem
+        letter-spacing: 0.15em
 
     &_title
       font-family: $apfel
@@ -739,6 +751,10 @@ export default {
 
       svg
         animation: bounce 2s ease-in-out infinite
+
+      // Reste collé en bas malgré le justify-content: flex-start du hero
+      +breakpoint(mobile)
+        margin-top: auto
 
   // ── INTRO ────────────────────────────────────────────────────────────
   &_intro
