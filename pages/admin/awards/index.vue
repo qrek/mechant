@@ -28,13 +28,18 @@
         :key="a.id || a.tmp"
         class="awards-row"
         :class="{ 'is-dragging': dragIndex === index, 'is-over': dropIndex === index && dragIndex !== index }"
-        draggable="true"
-        @dragstart="onDragStart(index, $event)"
         @dragover.prevent="onDragOver(index)"
         @dragend="onDragEnd"
         @drop.prevent="onDrop(index)"
       >
-        <span class="drag-handle" title="Réordonner">⠿</span>
+        <!-- Seule la poignée est draggable → la sélection de texte dans les
+             inputs ne déclenche plus de drag de la ligne -->
+        <span
+          class="drag-handle"
+          title="Glisser pour réordonner"
+          draggable="true"
+          @dragstart="onDragStart(index, $event)"
+        >⠿</span>
         <input v-model="a.year" type="text" placeholder="2024" class="cell-input" />
         <input v-model="a.name" type="text" placeholder="Cannes Lions" class="cell-input" />
         <input v-model="a.project" type="text" placeholder="Nom du projet" class="cell-input" />

@@ -747,7 +747,7 @@ export default {
     margin: 0 auto   // aligne la colonne de contenu avec les autres sections
 
     +breakpoint(mobile)
-      padding: 8vh 5vw
+      padding: 6vh 6vw
 
     &_meta
       display: flex
@@ -756,6 +756,9 @@ export default {
       margin-bottom: 5rem
       padding-bottom: 1.2rem
       border-bottom: 1px solid rgba(0, 0, 0, 0.18)
+
+      +breakpoint(mobile)
+        margin-bottom: 2.5rem
 
       .kicker, .meta
         font-family: $apfel
@@ -869,7 +872,7 @@ export default {
     color: $black
 
     +breakpoint(mobile)
-      padding: 12vh 5vw
+      padding: 7vh 6vw
 
     &_kicker
       font-family: $apfel
@@ -898,7 +901,7 @@ export default {
         display: inline-block
 
       +breakpoint(mobile)
-        margin-bottom: 5rem
+        margin-bottom: 2.5rem
 
     // Rangées interactives : numéro · TITRE · description · flèche.
     // Au survol, la rangée se remplit d'orange (cohérent avec les distinctions).
@@ -1013,8 +1016,8 @@ export default {
     overflow: hidden
 
     +breakpoint(mobile)
-      min-height: 80vh
-      padding: 10vh 0
+      min-height: 55vh
+      padding: 5vh 0
 
     &_line
       width: 100%
@@ -1060,7 +1063,7 @@ export default {
     color: $white
 
     +breakpoint(mobile)
-      padding: 13vh 5vw
+      padding: 8vh 6vw
 
     &_head
       display: grid
@@ -1222,7 +1225,7 @@ export default {
     color: $white
 
     +breakpoint(mobile)
-      padding: 10vh 5vw
+      padding: 7vh 6vw 8vh
 
     &_kicker
       font-family: $apfel

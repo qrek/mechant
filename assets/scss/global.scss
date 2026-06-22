@@ -1,8 +1,12 @@
 :root {
   font-size: .6945vw;
 
-  @media screen and (max-width: 450px) {
-    font-size: 2.575vw;
+  // Mobile + petites tablettes : base lisible sur toute la plage.
+  // clamp() borne le bas (≥11px sur petits écrans) et le haut (≤15px),
+  // ce qui agrandit le texte iPhone (avant ~10px) et comble le trou
+  // 451-834px où la base retombait à ~4px.
+  @media screen and (max-width: 834px) {
+    font-size: clamp(11px, 3.25vw, 15px);
   }
 }
 

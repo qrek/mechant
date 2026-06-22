@@ -84,5 +84,7 @@ export default {
 
     +breakpoint(mobile)
       a, a:visited
-        font-size: 0.82rem
+        font-size: 1.05rem
+        letter-spacing: 0.1em
+        opacity: 0.95
 </style>
