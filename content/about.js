@@ -30,8 +30,26 @@ export default {
       { text: 'was born.', variant: 'bold' }
     ],
     scrollLabel: 'Scroll',
-    // Perso 3D animé (Mixamo) rendu façon PS1 à côté du titre, hébergé sur R2
-    characterUrl: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo.glb'
+    // Persos 3D animés (Mixamo) rendus façon PS1 à côté du titre, hébergés R2.
+    // UN perso est tiré au hasard à chaque chargement de la page.
+    // Ajouter un perso : optimise le GLB (textures 512 + simplify), uploade
+    // dans characters/ sur R2, puis ajoute son URL ici. On peut surcharger un
+    // réglage par perso, ex : { url: '...', faceDeg: 10, offsetY: 0.2 }
+    characters: [
+      { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo.glb' },
+      { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo2.glb' }
+    ],
+    // Réglages PS1 communs (surchageables par perso ci-dessus)
+    characterPreset: {
+      clip: 'mixamo.com',
+      pixelHeight: 275,
+      wobble: 400,
+      colorDepth: 30,
+      faceDeg: -5,
+      framing: 1,
+      offsetY: 0.34,
+      autoRotate: 0.05
+    }
   },
 
   intro: {
