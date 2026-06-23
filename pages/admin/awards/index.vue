@@ -19,6 +19,7 @@
         <span>Année</span>
         <span>Nom / Festival</span>
         <span>Projet</span>
+        <span>Réalisateur</span>
         <span>Mention</span>
         <span></span>
       </div>
@@ -43,6 +44,7 @@
         <input v-model="a.year" type="text" placeholder="2024" class="cell-input" />
         <input v-model="a.name" type="text" placeholder="Cannes Lions" class="cell-input" />
         <input v-model="a.project" type="text" placeholder="Nom du projet" class="cell-input" />
+        <input v-model="a.director" type="text" placeholder="Réalisateur" class="cell-input" />
         <input v-model="a.tag" type="text" placeholder="Shortlist" class="cell-input" />
         <button class="btn-sm btn-danger" @click="removeRow(index)">Supprimer</button>
       </div>
@@ -101,6 +103,7 @@ export default {
         year: '',
         name: '',
         project: '',
+        director: '',
         tag: ''
       })
     },
@@ -151,6 +154,7 @@ export default {
           year: (a.year || '').trim(),
           name: (a.name || '').trim(),
           project: (a.project || '').trim(),
+          director: (a.director || '').trim(),
           tag: (a.tag || '').trim(),
           order_index: total - i,
           published: true
@@ -209,7 +213,7 @@ export default {
 
 .awards-row {
   display: grid;
-  grid-template-columns: 2rem 5rem 1fr 1fr 9rem 6rem;
+  grid-template-columns: 2rem 5rem 1fr 1fr 1fr 9rem 6rem;
   align-items: center;
   gap: 1rem;
   padding: 0.6rem 0.8rem;

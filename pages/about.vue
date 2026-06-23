@@ -120,6 +120,7 @@
           <span class="mid">
             <span class="name">{{ award.name }}</span>
             <span v-if="award.project" class="project">{{ award.project }}</span>
+            <span v-if="award.director" class="director">dir. {{ award.director }}</span>
           </span>
           <span class="tag"><span class="dot"></span>{{ award.tag }}</span>
         </li>
@@ -221,7 +222,24 @@ export default {
   async mounted () {
     this._splits = []
     this._triggers = []
-    await this._fetchAwards()
+
+    // Awards en arrière-plan : ne pas bloquer les animations derrière la
+    // requête réseau (sinon le hero peut "flasher" si elle est lente).
+    // On rafraîchit ScrollTrigger une fois les cartes rendues.
+    this._fetchAwards().then(() => {
+      this.$nextTick(() => ScrollTrigger.refresh())
+    })
+
+    // Attendre le chargement des polices AVANT d'initialiser les animations :
+    // SplitText mesure les coupures de ligne, et si la police n'est pas encore
+    // prête le texte se recalcule à son arrivée -> lignes qui sautent / se
+    // chevauchent (le bug d'animation intermittent observé au chargement).
+    try {
+      if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+        await document.fonts.ready
+      }
+    } catch (_) { /* garde-fou : on initialise quand même */ }
+
     this.$nextTick(() => {
       this._initAnimations()
       this._initStudioScan()
@@ -245,7 +263,7 @@ export default {
         const { supabase } = await import('@/utils/supabase')
         const { data, error } = await supabase
           .from('awards')
-          .select('year, name, project, tag')
+          .select('year, name, project, director, tag')
           .eq('published', true)
           .order('order_index', { ascending: false })
         if (!error && data && data.length) {
@@ -1175,6 +1193,8 @@ export default {
           color: $black
         .project
           color: rgba(0, 0, 0, 0.7)
+        .director
+          color: rgba(0, 0, 0, 0.55)
         .tag
           color: $black
 
@@ -1210,6 +1230,14 @@ export default {
         font-style: italic
         font-size: clamp(0.95rem, 1.1vw, 1.15rem)
         color: rgba(255, 255, 255, 0.55)
+        transition: color 0.35s ease
+
+      .director
+        font-family: $apfel
+        font-weight: 400
+        font-size: clamp(0.78rem, 0.9vw, 0.92rem)
+        letter-spacing: 0.04em
+        color: rgba(255, 255, 255, 0.4)
         transition: color 0.35s ease
 
       .tag

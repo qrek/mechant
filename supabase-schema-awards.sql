@@ -8,14 +8,16 @@ create table if not exists awards (
   year text not null,
   name text not null,
   project text,
+  director text,
   tag text,
   order_index integer default 0,
   published boolean default true,
   created_at timestamptz default now()
 );
 
--- Si la table existe déjà sans la colonne project, l'ajouter :
+-- Si la table existe déjà sans ces colonnes, les ajouter :
 alter table awards add column if not exists project text;
+alter table awards add column if not exists director text;
 
 alter table awards enable row level security;
 
