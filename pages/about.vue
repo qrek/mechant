@@ -722,8 +722,8 @@ export default {
   // ── Bouton discret "mode nuit" ───────────────────────────────────────
   &_night
     position: absolute
-    left: 5vw
-    bottom: 2.2rem
+    right: 5vw
+    top: 6rem
     z-index: 5
     display: inline-flex
     align-items: center
