@@ -35,22 +35,26 @@ export default {
     // Ajouter un perso : optimise le GLB (textures 512 + simplify), uploade
     // dans characters/ sur R2, puis ajoute son URL ici. On peut surcharger un
     // réglage par perso, ex : { url: '...', faceDeg: 10, offsetY: 0.2 }
+    // Duo fondateurs, côte à côte (gauche → droite). scale par perso si le
+    // scan Meshy a normalisé la taille (Ronan est un peu plus grand).
     characters: [
       { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo.glb' },
-      { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo2.glb' }
+      { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/ronan.glb', scale: 1.08 }
     ],
-    // Réglages PS1 communs (surchageables par perso ci-dessus)
+    // Réglages PS1 + mise en scène communs
     characterPreset: {
       clip: 'mixamo.com',
+      faceDeg: -5,
       pixelHeight: 305,
       wobble: 160,
       colorDepth: 30,
-      faceDeg: -5,
-      framing: 1.05,
+      framing: 1.15,
       offsetY: 0,
-      autoRotate: 0,
+      cameraPitch: 10,
+      spacing: 0.35,
       shadowStrength: 0.8,
-      shadowScale: 0.75
+      shadowScale: 0.75,
+      autoRotate: 0
     }
   },
 

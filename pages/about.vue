@@ -23,10 +23,10 @@
           >{{ line.text }}</span>
         </h1>
 
-        <!-- Perso 3D façon PS1 (scan Meshy rigué Mixamo, hébergé R2).
-             Un perso de la liste est tiré au hasard au chargement. -->
+        <!-- Duo fondateurs façon PS1 (scans Meshy rigués Mixamo, hébergés R2),
+             posés au sol côte à côte avec ombres de contact. -->
         <div class="AboutPage_hero_char">
-          <Ps1Character v-bind="heroCharacterProps" />
+          <Ps1Character :characters="content.hero.characters" v-bind="content.hero.characterPreset" />
         </div>
       </div>
 
@@ -227,18 +227,7 @@ export default {
     return {
       content: aboutContent,
       // Récompenses : défaut = statique, écrasé par Supabase si dispo
-      awardsList: aboutContent.awards.list,
-      // Perso hero tiré au hasard, une fois au montage (SPA → client-side)
-      heroCharIndex: Math.floor(Math.random() * aboutContent.hero.characters.length)
-    }
-  },
-
-  computed: {
-    // Props du perso PS1 : réglages communs + surcharges du perso tiré
-    heroCharacterProps () {
-      const list = this.content.hero.characters
-      const chosen = list[this.heroCharIndex] || list[0]
-      return { ...this.content.hero.characterPreset, ...chosen }
+      awardsList: aboutContent.awards.list
     }
   },
 

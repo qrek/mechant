@@ -1,89 +1,82 @@
 <template>
   <div ref="root" class="Ps1Character">
-    <div v-if="shadow" ref="shadow" class="Ps1Character_shadow" />
     <canvas ref="canvas" class="Ps1Character_canvas" />
   </div>
 </template>
 
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
-// Personnage 3D façon PlayStation 1 (Three.js, même moteur que /scan /playground).
+// Persos 3D façon PlayStation 1 (Three.js) — UN ou PLUSIEURS côte à côte.
 //
-// Look PS1 = vertex snapping (tremblement) + basse résolution upscalée (gros
-// pixels) + textures nearest + éclairage par sommet + banding couleur (dither).
+// Look PS1 = vertex snapping + basse résolution upscalée + textures nearest +
+// éclairage par sommet + banding couleur.
 //
-// RÉGLAGES LIVE : en local (localhost) un petit panneau de sliders s'affiche
-// en haut à droite pour ajuster le rendu en direct. Une fois la bonne combine
-// trouvée, on fige les valeurs en props sur la balise <Ps1Character>.
+// Mise en scène : tous les persos sont posés sur un même sol (pieds à y=0),
+// alignés de gauche à droite à leur ÉCHELLE RÉELLE (on ne recale pas chacun à
+// la même hauteur → les différences de taille/carrure se voient). Chaque perso
+// a une ombre de contact au sol. La caméra cadre le groupe avec une légère
+// plongée pour que les ombres se lisent.
 //
-// Props (toutes ajustables) :
-//   pixelHeight : hauteur du buffer interne en px — PLUS BAS = plus pixelisé
-//   wobble      : finesse grille de snapping — PLUS BAS = plus tremblant
-//   colorDepth  : niveaux de couleur par canal — PLUS BAS = plus de banding
-//   faceDeg     : rotation Y du perso (180 s'il est de dos)
-//   framing     : marge de cadrage (1 = serré, 1.6 = plus d'air)
-//   offsetY     : décalage vertical du cadrage (+ monte, - descend)
-//   autoRotate  : vitesse de rotation auto (0 = figé)
+// RÉGLAGES LIVE (panneau en local) : pixelHeight, wobble, colorDepth, framing,
+// offsetY, cameraPitch, spacing, shadowStrength, shadowScale.
 // ─────────────────────────────────────────────────────────────────────────────
 export default {
   name: 'Ps1Character',
 
   props: {
-    url: { type: String, required: true },
+    // Liste [{ url, clip?, faceDeg?, scale? }] — gauche → droite
+    characters: { type: Array, default: () => [] },
+    // Fallback perso unique
+    url: { type: String, default: '' },
     clip: { type: String, default: '' },
-    pixelHeight: { type: Number, default: 150 },
-    wobble: { type: Number, default: 120 },
-    colorDepth: { type: Number, default: 14 },
     faceDeg: { type: Number, default: 0 },
-    framing: { type: Number, default: 1.55 },
+    // Rendu PS1
+    pixelHeight: { type: Number, default: 200 },
+    wobble: { type: Number, default: 160 },
+    colorDepth: { type: Number, default: 30 },
+    // Cadrage / compo
+    framing: { type: Number, default: 1.15 },
     offsetY: { type: Number, default: 0 },
+    cameraPitch: { type: Number, default: 10 }, // plongée caméra en degrés
+    spacing: { type: Number, default: 0.35 },   // écart entre persos (unités monde)
     autoRotate: { type: Number, default: 0 },
+    // Ombre de contact au sol
     shadow: { type: Boolean, default: true },
-    shadowStrength: { type: Number, default: 0.35 },
-    shadowScale: { type: Number, default: 1 },
+    shadowStrength: { type: Number, default: 0.8 },
+    shadowScale: { type: Number, default: 0.75 },
     debug: { type: Boolean, default: false }
   },
 
   mounted () {
     if (typeof window === 'undefined') return
     this._raf = null
+    this._chars = []
+    this._shadows = []
     this._snapUniforms = []
     this._levelUniforms = []
-    // Valeurs de travail (modifiables en live par le panneau debug)
     this._p = {
-      pixelHeight: this.pixelHeight,
-      wobble: this.wobble,
-      colorDepth: this.colorDepth,
-      faceDeg: this.faceDeg,
-      framing: this.framing,
-      offsetY: this.offsetY,
-      autoRotate: this.autoRotate,
-      shadowStrength: this.shadowStrength,
-      shadowScale: this.shadowScale
+      pixelHeight: this.pixelHeight, wobble: this.wobble, colorDepth: this.colorDepth,
+      framing: this.framing, offsetY: this.offsetY, cameraPitch: this.cameraPitch,
+      spacing: this.spacing, autoRotate: this.autoRotate,
+      shadowStrength: this.shadowStrength, shadowScale: this.shadowScale
     }
-    this._applyShadowStyle()
     this._boot()
   },
 
-  beforeDestroy () {
-    this._teardown()
-  },
+  beforeDestroy () { this._teardown() },
 
   methods: {
     async _boot () {
       const THREE = await import('three')
       const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js')
       this._THREE = THREE
-
       const canvas = this.$refs.canvas
       if (!canvas) return
 
       const scene = new THREE.Scene()
       this._scene = scene
-
       const camera = new THREE.PerspectiveCamera(32, 1, 0.01, 1000)
       this._camera = camera
-
       const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false })
       renderer.setClearColor(0x000000, 0)
       this._renderer = renderer
@@ -93,125 +86,154 @@ export default {
       dir.position.set(1, 2, 2)
       scene.add(dir)
 
+      const list = (this.characters && this.characters.length)
+        ? this.characters
+        : (this.url ? [{ url: this.url }] : [])
+
       const loader = new GLTFLoader()
-      loader.load(this.url, (gltf) => {
-        const model = gltf.scene
-        this._model = model
-        model.rotation.y = this._p.faceDeg * Math.PI / 180
+      try {
+        const gltfs = await Promise.all(list.map(c => loader.loadAsync(c.url)))
+        gltfs.forEach((gltf, i) => this._setupChar(gltf, list[i]))
+      } catch (e) { this.$emit('error'); return }
 
-        model.traverse((o) => {
-          if (!o.isMesh && !o.isSkinnedMesh) return
-          o.frustumCulled = false
-          const src = o.material
-          const map = src && src.map ? src.map : null
-          if (map) {
-            map.magFilter = THREE.NearestFilter
-            map.minFilter = THREE.NearestFilter
-            map.generateMipmaps = false
-            map.needsUpdate = true
-          }
-          const mat = new THREE.MeshLambertMaterial({
-            map,
-            color: src && src.color ? src.color : 0xffffff,
-            skinning: !!o.isSkinnedMesh
-          })
-          this._applyPs1(mat)
-          o.material = mat
-        })
-
-        scene.add(model)
-
-        // Animation d'abord, pour pouvoir échantillonner ses bornes
-        let clip = null
-        if (gltf.animations && gltf.animations.length) {
-          this._mixer = new THREE.AnimationMixer(model)
-          clip = this.clip ? gltf.animations.find(a => a.name === this.clip) : null
-          if (!clip) clip = gltf.animations[0]
-          this._action = this._mixer.clipAction(clip)
-          this._action.play()
-        }
-
-        // Bornes calculées sur TOUTE l'anim (sinon la tête/les bras sortent
-        // du cadre sur certaines poses). On échantillonne le clip.
-        this._computeBounds(clip)
-        this._frameCamera()
-
-        this._resize()
-        this._maybeDebugPanel()
-        this.$emit('ready')
-      }, undefined, () => this.$emit('error'))
+      if (this.shadow) this._buildShadows()
+      this._layout()
+      this._resize()
+      this._maybeDebugPanel()
+      this.$emit('ready')
 
       this._onResize = () => this._resize()
       window.addEventListener('resize', this._onResize)
-      this._resize()
-
       this._clock = new THREE.Clock()
       this._animate()
     },
 
-    _computeBounds (clip) {
+    _setupChar (gltf, entry) {
+      const THREE = this._THREE
+      const model = gltf.scene
+      const faceDeg = entry.faceDeg != null ? entry.faceDeg : this.faceDeg
+      model.rotation.y = faceDeg * Math.PI / 180
+      const scale = entry.scale != null ? entry.scale : 1
+      if (scale !== 1) model.scale.setScalar(scale)
+
+      model.traverse((o) => {
+        if (!o.isMesh && !o.isSkinnedMesh) return
+        o.frustumCulled = false
+        const src = o.material
+        const map = src && src.map ? src.map : null
+        if (map) { map.magFilter = THREE.NearestFilter; map.minFilter = THREE.NearestFilter; map.generateMipmaps = false; map.needsUpdate = true }
+        const mat = new THREE.MeshLambertMaterial({ map, color: src && src.color ? src.color : 0xffffff, skinning: !!o.isSkinnedMesh })
+        this._applyPs1(mat)
+        o.material = mat
+      })
+
+      this._scene.add(model)
+
+      let mixer = null, action = null, clip = null
+      if (gltf.animations && gltf.animations.length) {
+        mixer = new THREE.AnimationMixer(model)
+        const name = entry.clip || this.clip
+        clip = name ? gltf.animations.find(a => a.name === name) : null
+        if (!clip) clip = gltf.animations[0]
+        action = mixer.clipAction(clip); action.play()
+      }
+
+      const { center, size } = this._charBounds(model, mixer, action, clip)
+      // Pose au sol : pieds (min.y) à y = 0
+      const feetY = center.y - size.y / 2
+      model.position.y -= feetY
+      center.y = size.y / 2
+
+      this._chars.push({ model, mixer, action, center, size, faceDeg })
+    },
+
+    // Bornes monde des os, échantillonnées sur toute l'anim (sinon tête/bras
+    // sortent du cadre selon la pose).
+    _charBounds (model, mixer, action, clip) {
       const THREE = this._THREE
       const box = new THREE.Box3()
       const v = new THREE.Vector3()
-
-      // Ajoute les positions monde des os du squelette à la pose courante.
-      // (Perso skinné : les vertices suivent les OS ; le scale du nœud mesh,
-      // souvent 0.01 façon Mixamo, est court-circuité par le skinning.)
       const addBones = () => {
+        model.updateWorldMatrix(true, true)
         let used = false
-        this._model.updateWorldMatrix(true, true)
-        this._model.traverse((o) => {
+        model.traverse((o) => {
           if (o.isSkinnedMesh && o.skeleton && o.skeleton.bones.length) {
-            o.skeleton.bones.forEach((b) => { b.getWorldPosition(v); box.expandByPoint(v) })
-            used = true
+            o.skeleton.bones.forEach((b) => { b.getWorldPosition(v); box.expandByPoint(v) }); used = true
           }
         })
         return used
       }
-
-      let usedBones = false
-      if (this._mixer && this._action && clip && clip.duration > 0) {
-        // Échantillonne l'anim → bornes qui contiennent tout le mouvement
-        const N = 14
-        for (let i = 0; i <= N; i++) {
-          this._action.time = (i / N) * clip.duration
-          this._mixer.update(0)
-          if (addBones()) usedBones = true
-        }
-        this._action.time = 0
-        this._mixer.update(0)
-      } else {
-        usedBones = addBones()
-      }
-
-      // Repli pour un mesh non skinné
-      if (!usedBones || box.isEmpty()) {
-        this._model.traverse((o) => {
+      let used = false
+      if (mixer && action && clip && clip.duration > 0) {
+        const N = 12
+        for (let i = 0; i <= N; i++) { action.time = (i / N) * clip.duration; mixer.update(0); if (addBones()) used = true }
+        action.time = 0; mixer.update(0)
+      } else { used = addBones() }
+      if (!used || box.isEmpty()) {
+        model.traverse((o) => {
           if ((!o.isMesh && !o.isSkinnedMesh) || !o.geometry) return
           if (!o.geometry.boundingBox) o.geometry.computeBoundingBox()
           box.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld))
         })
       }
-
-      // Les os sont à l'intérieur du maillage (tête/orteils dépassent) → marge
-      const pad = box.getSize(new THREE.Vector3()).multiplyScalar(0.1)
+      const pad = box.getSize(new THREE.Vector3()).multiplyScalar(0.08)
       box.expandByVector(pad)
-      this._center = box.getCenter(new THREE.Vector3())
-      this._size = box.getSize(new THREE.Vector3())
+      return { center: box.getCenter(new THREE.Vector3()), size: box.getSize(new THREE.Vector3()) }
     },
 
-    // Cadre la caméra pour faire tenir tout le perso (hauteur) avec marge.
+    // Aligne les persos gauche → droite, groupe centré sur x=0, pieds au sol.
+    _layout () {
+      const gap = this._p.spacing
+      let cursor = 0
+      this._chars.forEach((ch) => {
+        const targetX = cursor + ch.size.x / 2
+        ch.model.position.x += targetX - ch.center.x
+        ch.center.x = targetX
+        cursor += ch.size.x + gap
+      })
+      const totalW = Math.max(0.0001, cursor - gap)
+      const half = totalW / 2
+      this._chars.forEach((ch) => { ch.model.position.x -= half; ch.center.x -= half })
+      this._group = { width: totalW, height: Math.max.apply(null, this._chars.map(c => c.size.y)) }
+      // (Re)positionne les ombres
+      this._shadows.forEach((s, i) => {
+        const ch = this._chars[i]
+        if (!ch) return
+        s.position.set(ch.center.x, 0.01, ch.center.z)
+        const d = Math.max(ch.size.x, ch.size.z) * this._p.shadowScale
+        s.scale.set(d, d, d)
+      })
+    },
+
+    _buildShadows () {
+      const THREE = this._THREE
+      const c = document.createElement('canvas'); c.width = c.height = 128
+      const ctx = c.getContext('2d')
+      const g = ctx.createRadialGradient(64, 64, 2, 64, 64, 64)
+      g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.55, 'rgba(0,0,0,0.6)'); g.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128)
+      const tex = new THREE.CanvasTexture(c)
+      this._chars.forEach(() => {
+        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: this._p.shadowStrength, depthWrite: false })
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat)
+        plane.rotation.x = -Math.PI / 2
+        this._scene.add(plane); this._shadows.push(plane)
+      })
+    },
+
+    // Cadre tout le groupe + légère plongée pour révéler le sol/les ombres
     _frameCamera () {
       const cam = this._camera
-      if (!cam || !this._center) return
-      const fov = cam.fov * Math.PI / 180
-      const fitH = Math.max(this._size.y, this._size.x / cam.aspect) * this._p.framing
-      const dist = (fitH / 2) / Math.tan(fov / 2)
-      const cx = this._center.x
-      const cy = this._center.y + this._p.offsetY * this._size.y
-      const cz = this._center.z
-      cam.position.set(cx, cy, cz + dist)
-      cam.lookAt(cx, cy, cz)
+      if (!cam || !this._group) return
+      const fovV = cam.fov * Math.PI / 180
+      const tanV = Math.tan(fovV / 2)
+      const distV = (this._group.height * this._p.framing / 2) / tanV
+      const distH = (this._group.width * this._p.framing / 2) / (tanV * cam.aspect)
+      const dist = Math.max(distV, distH)
+      const p = this._p.cameraPitch * Math.PI / 180
+      const ty = this._group.height * (0.45 + this._p.offsetY)
+      cam.position.set(0, ty + dist * Math.sin(p), dist * Math.cos(p))
+      cam.lookAt(0, ty, 0)
     },
 
     _applyPs1 (mat) {
@@ -221,39 +243,23 @@ export default {
         const uLevels = { value: this._p.colorDepth }
         shader.uniforms.uGrid = uGrid
         shader.uniforms.uLevels = uLevels
-        this._snapUniforms.push(uGrid)
-        this._levelUniforms.push(uLevels)
-        // Vertex snapping (après le skinning, qui est dans project_vertex)
+        this._snapUniforms.push(uGrid); this._levelUniforms.push(uLevels)
         shader.vertexShader = 'uniform vec2 uGrid;\n' + shader.vertexShader.replace(
           '#include <project_vertex>',
-          [
-            '#include <project_vertex>',
-            'vec4 ps1 = gl_Position;',
-            'ps1.xyz /= ps1.w;',
-            'ps1.xy = floor(ps1.xy * uGrid) / uGrid;',
-            'ps1.xyz *= ps1.w;',
-            'gl_Position = ps1;'
-          ].join('\n')
+          ['#include <project_vertex>', 'vec4 ps1 = gl_Position;', 'ps1.xyz /= ps1.w;', 'ps1.xy = floor(ps1.xy * uGrid) / uGrid;', 'ps1.xyz *= ps1.w;', 'gl_Position = ps1;'].join('\n')
         )
-        // Banding couleur (quantification) en fin de fragment
         shader.fragmentShader = 'uniform float uLevels;\n' + shader.fragmentShader.replace(
           '#include <dithering_fragment>',
-          [
-            '#include <dithering_fragment>',
-            'gl_FragColor.rgb = floor(gl_FragColor.rgb * uLevels + 0.5) / uLevels;'
-          ].join('\n')
+          ['#include <dithering_fragment>', 'gl_FragColor.rgb = floor(gl_FragColor.rgb * uLevels + 0.5) / uLevels;'].join('\n')
         )
       }
       mat.needsUpdate = true
     },
 
     _resize () {
-      const root = this.$refs.root
-      const r = this._renderer
-      const cam = this._camera
+      const root = this.$refs.root, r = this._renderer, cam = this._camera
       if (!root || !r || !cam) return
-      const cssW = root.clientWidth
-      const cssH = root.clientHeight
+      const cssW = root.clientWidth, cssH = root.clientHeight
       if (!cssW || !cssH) return
       cam.aspect = cssW / cssH
       cam.updateProjectionMatrix()
@@ -264,25 +270,25 @@ export default {
       r.setSize(iw, ih, false)
     },
 
-    // Ombre "blob" : simple tache CSS (zéro coût GPU, façon PS1)
-    _applyShadowStyle () {
-      const el = this.$refs.shadow
-      if (!el) return
-      el.style.opacity = this._p.shadowStrength
-      el.style.width = (52 * this._p.shadowScale) + '%'
+    _updateShadows () {
+      this._shadows.forEach((s, i) => {
+        const ch = this._chars[i]; if (!ch) return
+        s.material.opacity = this._p.shadowStrength
+        const d = Math.max(ch.size.x, ch.size.z) * this._p.shadowScale
+        s.scale.set(d, d, d)
+      })
     },
 
     _animate () {
       this._raf = requestAnimationFrame(() => this._animate())
       const dt = this._clock ? this._clock.getDelta() : 0.016
-      if (this._mixer) this._mixer.update(dt)
-      if (this._model && this._p.autoRotate) this._model.rotation.y += this._p.autoRotate * dt
-      if (this._renderer && this._scene && this._camera) {
-        this._renderer.render(this._scene, this._camera)
-      }
+      this._chars.forEach((ch) => {
+        if (ch.mixer) ch.mixer.update(dt)
+        if (this._p.autoRotate) ch.model.rotation.y += this._p.autoRotate * dt
+      })
+      if (this._renderer && this._scene && this._camera) this._renderer.render(this._scene, this._camera)
     },
 
-    // ── Panneau de réglages live (local uniquement) ────────────────────────
     async _maybeDebugPanel () {
       const host = (window.location && window.location.hostname) || ''
       const isLocal = this.debug || host === 'localhost' || host === '127.0.0.1' ||
@@ -290,14 +296,8 @@ export default {
       if (!isLocal) return
       let Tweakpane
       try { Tweakpane = (await import('tweakpane')).default } catch (_) { return }
-      // Conteneur dédié, placé sous le header (sinon le lien CONTACT, en
-      // position fixed, recouvre le panneau et intercepte les clics) et
-      // forcé au tout premier plan avec les clics actifs.
       const container = document.createElement('div')
-      Object.assign(container.style, {
-        position: 'fixed', top: '90px', right: '14px', width: '270px',
-        maxHeight: '78vh', overflow: 'auto', zIndex: '2147483647', pointerEvents: 'auto'
-      })
+      Object.assign(container.style, { position: 'fixed', top: '90px', right: '14px', width: '270px', maxHeight: '78vh', overflow: 'auto', zIndex: '2147483647', pointerEvents: 'auto' })
       document.body.appendChild(container)
       this._paneEl = container
       const pane = new Tweakpane({ title: 'PS1 — réglages', container })
@@ -306,18 +306,17 @@ export default {
       pane.addInput(p, 'pixelHeight', { min: 60, max: 400, step: 5 }).on('change', () => this._resize())
       pane.addInput(p, 'wobble', { min: 30, max: 400, step: 2 }).on('change', () => this._snapUniforms.forEach(u => u.value.set(p.wobble, p.wobble)))
       pane.addInput(p, 'colorDepth', { min: 3, max: 64, step: 1 }).on('change', () => this._levelUniforms.forEach(u => { u.value = p.colorDepth }))
-      pane.addInput(p, 'faceDeg', { min: -180, max: 180, step: 5 }).on('change', () => { if (this._model) this._model.rotation.y = p.faceDeg * Math.PI / 180 })
       pane.addInput(p, 'framing', { min: 1, max: 2.4, step: 0.05 }).on('change', () => this._frameCamera())
-      pane.addInput(p, 'offsetY', { min: -0.6, max: 0.6, step: 0.02 }).on('change', () => this._frameCamera())
+      pane.addInput(p, 'offsetY', { min: -0.5, max: 0.5, step: 0.02 }).on('change', () => this._frameCamera())
+      pane.addInput(p, 'cameraPitch', { min: -5, max: 45, step: 1 }).on('change', () => this._frameCamera())
+      pane.addInput(p, 'spacing', { min: -0.5, max: 2, step: 0.05 }).on('change', () => { this._layout(); this._frameCamera() })
+      pane.addInput(p, 'shadowStrength', { min: 0, max: 1, step: 0.02 }).on('change', () => this._updateShadows())
+      pane.addInput(p, 'shadowScale', { min: 0.2, max: 2, step: 0.05 }).on('change', () => this._updateShadows())
       pane.addInput(p, 'autoRotate', { min: 0, max: 1.5, step: 0.05 })
-      pane.addInput(p, 'shadowStrength', { min: 0, max: 0.8, step: 0.02 }).on('change', () => this._applyShadowStyle())
-      pane.addInput(p, 'shadowScale', { min: 0.3, max: 1.8, step: 0.05 }).on('change', () => this._applyShadowStyle())
-      // Bouton pour copier la balise prête à coller
       pane.addButton({ title: 'Copier les props' }).on('click', () => {
-        const tag = `:pixel-height="${p.pixelHeight}" :wobble="${p.wobble}" :color-depth="${p.colorDepth}" :face-deg="${p.faceDeg}" :framing="${p.framing}" :offset-y="${p.offsetY}" :auto-rotate="${p.autoRotate}" :shadow-strength="${p.shadowStrength}" :shadow-scale="${p.shadowScale}"`
+        const tag = `:pixel-height="${p.pixelHeight}" :wobble="${p.wobble}" :color-depth="${p.colorDepth}" :framing="${p.framing}" :offset-y="${p.offsetY}" :camera-pitch="${p.cameraPitch}" :spacing="${p.spacing}" :shadow-strength="${p.shadowStrength}" :shadow-scale="${p.shadowScale}" :auto-rotate="${p.autoRotate}"`
         if (navigator.clipboard) navigator.clipboard.writeText(tag)
-        // eslint-disable-next-line no-console
-        console.log('Ps1Character props →\n', tag)
+        console.log('Ps1Character props →\n', tag) // eslint-disable-line no-console
       })
     },
 
@@ -326,20 +325,10 @@ export default {
       if (this._onResize) window.removeEventListener('resize', this._onResize)
       if (this._pane) { try { this._pane.dispose() } catch (_) {} }
       if (this._paneEl && this._paneEl.parentNode) this._paneEl.parentNode.removeChild(this._paneEl)
-      if (this._mixer) this._mixer.stopAllAction()
-      if (this._model && this._scene) this._scene.remove(this._model)
-      if (this._renderer) {
-        this._renderer.dispose()
-        this._renderer.forceContextLoss && this._renderer.forceContextLoss()
-      }
-      this._mixer = null
-      this._model = null
-      this._scene = null
-      this._camera = null
-      this._renderer = null
-      this._THREE = null
-      this._snapUniforms = []
-      this._levelUniforms = []
+      ;(this._chars || []).forEach((ch) => { if (ch.mixer) ch.mixer.stopAllAction(); if (this._scene) this._scene.remove(ch.model) })
+      if (this._renderer) { this._renderer.dispose(); this._renderer.forceContextLoss && this._renderer.forceContextLoss() }
+      this._chars = []; this._shadows = []; this._snapUniforms = []; this._levelUniforms = []
+      this._scene = null; this._camera = null; this._renderer = null; this._THREE = null
     }
   }
 }
@@ -352,26 +341,9 @@ export default {
   height: 100%
 
   &_canvas
-    position: relative
-    z-index: 1
     width: 100%
     height: 100%
     display: block
     image-rendering: pixelated
     image-rendering: crisp-edges
-
-  // Ombre "blob" douce au bas du perso (CSS pur, aucun coût GPU).
-  // Largeur/opacité pilotées en inline par _applyShadowStyle().
-  &_shadow
-    position: absolute
-    left: 50%
-    bottom: 7%
-    transform: translateX(-50%)
-    width: 52%
-    height: 5%
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 70%)
-    border-radius: 50%
-    filter: blur(7px)
-    pointer-events: none
-    z-index: 0
 </style>
