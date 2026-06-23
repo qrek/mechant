@@ -184,8 +184,10 @@ export default {
           box.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld))
         })
       }
-      const pad = box.getSize(new THREE.Vector3()).multiplyScalar(0.08)
-      box.expandByVector(pad)
+      // Marge en HAUT seulement : le crâne dépasse l'os de tête (sinon tête
+      // coupée). Le BAS reste au vrai niveau des pieds → contact au sol net,
+      // sans écart (une marge symétrique soulèverait le perso au-dessus du sol).
+      box.max.y += (box.max.y - box.min.y) * 0.06
       return { center: box.getCenter(new THREE.Vector3()), size: box.getSize(new THREE.Vector3()) }
     },
 
@@ -227,7 +229,9 @@ export default {
       if (!d || !this._group) return
       const h = this._group.height
       const ext = Math.max(this._group.width, h) * 0.9
-      d.position.set(0, h * 2.4, h * 0.9)
+      // Lumière quasi verticale → l'ombre se forme PILE sous les pieds
+      // (pas projetée en arrière → pas d'écart visible avec la caméra basse).
+      d.position.set(0, h * 3.4, h * 0.18)
       d.target.position.set(0, 0, 0)
       const sc = d.shadow.camera
       sc.left = -ext; sc.right = ext; sc.top = ext * 1.3; sc.bottom = -ext * 1.3

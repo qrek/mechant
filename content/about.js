@@ -38,8 +38,8 @@ export default {
     // Duo fondateurs, côte à côte (gauche → droite). scale par perso si le
     // scan Meshy a normalisé la taille (Ronan est un peu plus grand).
     characters: [
-      { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo.glb' },
-      { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/ronan.glb', scale: 1.08 }
+      { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo2.glb' },
+      { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/ronan.glb', scale: 1.12 }
     ],
     // Réglages PS1 + mise en scène communs
     characterPreset: {
@@ -48,12 +48,12 @@ export default {
       pixelHeight: 335,
       wobble: 160,
       colorDepth: 25,
-      framing: 1.15,
+      framing: 1.10,
       offsetY: 0,
-      cameraPitch: 15,
-      spacing: -0.15,
-      shadowStrength: 0.35,
-      shadowScale: 0.75,
+      cameraPitch: 9,
+      spacing: 0.00,
+      shadowStrength: 0.10,
+      shadowScale: 1,
       autoRotate: 0
     }
   },
