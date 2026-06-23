@@ -29,7 +29,9 @@ export default {
       { text: 'MÉCHANT',   variant: 'bold' },
       { text: 'was born.', variant: 'bold' }
     ],
-    scrollLabel: 'Scroll'
+    scrollLabel: 'Scroll',
+    // Perso 3D animé (Mixamo) rendu façon PS1 à côté du titre, hébergé sur R2
+    characterUrl: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo.glb'
   },
 
   intro: {

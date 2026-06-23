@@ -13,14 +13,21 @@
         </template>
       </div>
 
-      <h1 class="AboutPage_hero_title" ref="heroTitle">
-        <span
-          v-for="(line, i) in content.hero.lines"
-          :key="i"
-          class="line"
-          :class="`line--${line.variant}`"
-        >{{ line.text }}</span>
-      </h1>
+      <div class="AboutPage_hero_main">
+        <h1 class="AboutPage_hero_title" ref="heroTitle">
+          <span
+            v-for="(line, i) in content.hero.lines"
+            :key="i"
+            class="line"
+            :class="`line--${line.variant}`"
+          >{{ line.text }}</span>
+        </h1>
+
+        <!-- Perso 3D façon PS1 (scan Meshy rigué Mixamo, hébergé R2) -->
+        <div class="AboutPage_hero_char">
+          <Ps1Character :url="content.hero.characterUrl" clip="mixamo.com" />
+        </div>
+      </div>
 
       <div class="AboutPage_hero_scroll" ref="scrollHint">
         <span>{{ content.hero.scrollLabel }}</span>
@@ -185,6 +192,7 @@ import { ScrollTrigger } from '@/vendor/gsap/ScrollTrigger'
 import { SplitText } from '@/vendor/gsap/SplitText'
 import SimpleFooter from '@/components/SimpleFooter'
 import StudioSplat from '@/components/StudioSplat'
+import Ps1Character from '@/components/Ps1Character'
 import aboutContent from '@/content/about'
 import smoothScroll from '@/mixins/smoothScroll'
 
@@ -194,7 +202,7 @@ gsap.registerPlugin(SplitText)
 export default {
   name: 'About',
 
-  components: { SimpleFooter, StudioSplat },
+  components: { SimpleFooter, StudioSplat, Ps1Character },
   mixins: [smoothScroll],
 
   head () {
@@ -737,10 +745,40 @@ export default {
         font-size: 0.85rem
         letter-spacing: 0.15em
 
+    // Rangée titre (gauche) + perso PS1 (droite)
+    &_main
+      flex: 1
+      display: flex
+      align-items: center
+      justify-content: space-between
+      gap: 4vw
+      width: 100%
+      min-height: 0
+
+      +breakpoint(tabletDown)
+        flex-direction: column
+        align-items: center
+        justify-content: center
+        gap: 2rem
+
+    // Hauteur DÉFINIE (vh) obligatoire : le canvas est en height:100%, donc
+    // sans hauteur de référence concrète on tombe dans une boucle de layout.
+    &_char
+      flex: 0 0 38%
+      height: 66vh
+      max-height: 640px
+      pointer-events: none
+
+      +breakpoint(tabletDown)
+        flex: none
+        width: 100%
+        height: 42vh
+        max-height: 380px
+
     &_title
       font-family: $apfel
       font-weight: 900
-      font-size: clamp(4rem, 12vw, 17rem)
+      font-size: clamp(2.6rem, 6.5vw, 8rem)
       line-height: 0.9
       letter-spacing: -0.02em
       text-transform: uppercase
@@ -756,7 +794,7 @@ export default {
         &--italic
           font-style: italic
           font-weight: 400
-          font-size: clamp(2.5rem, 7vw, 9rem)
+          font-size: clamp(1.7rem, 4vw, 4.2rem)
           letter-spacing: -0.01em
           color: rgba(0, 0, 0, 0.85)
           text-transform: none
@@ -765,7 +803,7 @@ export default {
           font-weight: 900
 
       +breakpoint(mobile)
-        font-size: clamp(3rem, 14vw, 6rem)
+        font-size: clamp(2.4rem, 11vw, 4.5rem)
 
     &_scroll
       align-self: flex-end
