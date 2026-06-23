@@ -25,7 +25,17 @@
 
         <!-- Perso 3D façon PS1 (scan Meshy rigué Mixamo, hébergé R2) -->
         <div class="AboutPage_hero_char">
-          <Ps1Character :url="content.hero.characterUrl" clip="mixamo.com" />
+          <Ps1Character
+            :url="content.hero.characterUrl"
+            clip="mixamo.com"
+            :pixel-height="275"
+            :wobble="400"
+            :color-depth="30"
+            :face-deg="-5"
+            :framing="1"
+            :offset-y="0.34"
+            :auto-rotate="0.05"
+          />
         </div>
       </div>
 
