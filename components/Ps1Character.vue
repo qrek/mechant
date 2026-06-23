@@ -254,7 +254,17 @@ export default {
       if (!isLocal) return
       let Tweakpane
       try { Tweakpane = (await import('tweakpane')).default } catch (_) { return }
-      const pane = new Tweakpane({ title: 'PS1 — réglages' })
+      // Conteneur dédié, placé sous le header (sinon le lien CONTACT, en
+      // position fixed, recouvre le panneau et intercepte les clics) et
+      // forcé au tout premier plan avec les clics actifs.
+      const container = document.createElement('div')
+      Object.assign(container.style, {
+        position: 'fixed', top: '90px', right: '14px', width: '270px',
+        maxHeight: '78vh', overflow: 'auto', zIndex: '2147483647', pointerEvents: 'auto'
+      })
+      document.body.appendChild(container)
+      this._paneEl = container
+      const pane = new Tweakpane({ title: 'PS1 — réglages', container })
       this._pane = pane
       const p = this._p
       pane.addInput(p, 'pixelHeight', { min: 60, max: 400, step: 5 }).on('change', () => this._resize())
@@ -277,6 +287,7 @@ export default {
       if (this._raf) cancelAnimationFrame(this._raf)
       if (this._onResize) window.removeEventListener('resize', this._onResize)
       if (this._pane) { try { this._pane.dispose() } catch (_) {} }
+      if (this._paneEl && this._paneEl.parentNode) this._paneEl.parentNode.removeChild(this._paneEl)
       if (this._mixer) this._mixer.stopAllAction()
       if (this._model && this._scene) this._scene.remove(this._model)
       if (this._renderer) {
