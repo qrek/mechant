@@ -42,13 +42,15 @@ export default {
     // Réglages PS1 communs (surchageables par perso ci-dessus)
     characterPreset: {
       clip: 'mixamo.com',
-      pixelHeight: 275,
-      wobble: 400,
+      pixelHeight: 305,
+      wobble: 160,
       colorDepth: 30,
       faceDeg: -5,
-      framing: 1,
-      offsetY: 0.34,
-      autoRotate: 0.00
+      framing: 1.05,
+      offsetY: 0,
+      autoRotate: 0,
+      shadowStrength: 0.8,
+      shadowScale: 0.75
     }
   },
 
