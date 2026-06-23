@@ -146,21 +146,30 @@ export default {
 
         // order_index : le haut de la liste = plus grand index (affiché en 1er)
         const total = rows.length
-        const payload = rows.map((a, i) => {
-          const base = {
-            year: (a.year || '').trim(),
-            name: (a.name || '').trim(),
-            project: (a.project || '').trim(),
-            tag: (a.tag || '').trim(),
-            order_index: total - i,
-            published: true
-          }
-          if (a.id) base.id = a.id
-          return base
-        })
+        const payload = rows.map((a, i) => ({
+          id: a.id || undefined,
+          year: (a.year || '').trim(),
+          name: (a.name || '').trim(),
+          project: (a.project || '').trim(),
+          tag: (a.tag || '').trim(),
+          order_index: total - i,
+          published: true
+        }))
 
-        const { error: upErr } = await supabase.from('awards').upsert(payload)
-        if (upErr) throw upErr
+        // PostgREST exige que tous les objets d'un même lot aient les mêmes
+        // clés. On sépare donc les nouvelles lignes (insert, sans id) des
+        // existantes (upsert, avec id) au lieu d'un seul lot mixte.
+        const toInsert = payload.filter(p => !p.id).map(({ id, ...rest }) => rest)
+        const toUpdate = payload.filter(p => p.id)
+
+        if (toInsert.length) {
+          const { error: insErr } = await supabase.from('awards').insert(toInsert)
+          if (insErr) throw insErr
+        }
+        if (toUpdate.length) {
+          const { error: upErr } = await supabase.from('awards').upsert(toUpdate)
+          if (upErr) throw upErr
+        }
 
         await this.fetchAwards()
         this.savedMsg = 'Enregistré ✓'
