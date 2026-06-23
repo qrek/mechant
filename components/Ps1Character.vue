@@ -121,17 +121,20 @@ export default {
 
         scene.add(model)
 
-        // Bornes fiables : union des boundingBox de géométrie (les SkinnedMesh
-        // piègent Box3.setFromObject -> on calcule à la main en pose de repos).
-        this._computeBounds()
-        this._frameCamera()
-
+        // Animation d'abord, pour pouvoir échantillonner ses bornes
+        let clip = null
         if (gltf.animations && gltf.animations.length) {
           this._mixer = new THREE.AnimationMixer(model)
-          let clip = this.clip ? gltf.animations.find(a => a.name === this.clip) : null
+          clip = this.clip ? gltf.animations.find(a => a.name === this.clip) : null
           if (!clip) clip = gltf.animations[0]
-          this._mixer.clipAction(clip).play()
+          this._action = this._mixer.clipAction(clip)
+          this._action.play()
         }
+
+        // Bornes calculées sur TOUTE l'anim (sinon la tête/les bras sortent
+        // du cadre sur certaines poses). On échantillonne le clip.
+        this._computeBounds(clip)
+        this._frameCamera()
 
         this._resize()
         this._maybeDebugPanel()
@@ -146,25 +149,43 @@ export default {
       this._animate()
     },
 
-    _computeBounds () {
+    _computeBounds (clip) {
       const THREE = this._THREE
       const box = new THREE.Box3()
-      this._model.updateWorldMatrix(true, true)
-
-      // Perso skinné : les vertices sont positionnés par les OS (le scale du
-      // nœud mesh, souvent 0.01 façon Mixamo, est court-circuité par le
-      // skinning). On mesure donc les positions monde des os du squelette.
-      let usedBones = false
       const v = new THREE.Vector3()
-      this._model.traverse((o) => {
-        if (o.isSkinnedMesh && o.skeleton && o.skeleton.bones.length) {
-          o.skeleton.bones.forEach((b) => { b.getWorldPosition(v); box.expandByPoint(v) })
-          usedBones = true
+
+      // Ajoute les positions monde des os du squelette à la pose courante.
+      // (Perso skinné : les vertices suivent les OS ; le scale du nœud mesh,
+      // souvent 0.01 façon Mixamo, est court-circuité par le skinning.)
+      const addBones = () => {
+        let used = false
+        this._model.updateWorldMatrix(true, true)
+        this._model.traverse((o) => {
+          if (o.isSkinnedMesh && o.skeleton && o.skeleton.bones.length) {
+            o.skeleton.bones.forEach((b) => { b.getWorldPosition(v); box.expandByPoint(v) })
+            used = true
+          }
+        })
+        return used
+      }
+
+      let usedBones = false
+      if (this._mixer && this._action && clip && clip.duration > 0) {
+        // Échantillonne l'anim → bornes qui contiennent tout le mouvement
+        const N = 14
+        for (let i = 0; i <= N; i++) {
+          this._action.time = (i / N) * clip.duration
+          this._mixer.update(0)
+          if (addBones()) usedBones = true
         }
-      })
+        this._action.time = 0
+        this._mixer.update(0)
+      } else {
+        usedBones = addBones()
+      }
 
       // Repli pour un mesh non skinné
-      if (!usedBones) {
+      if (!usedBones || box.isEmpty()) {
         this._model.traverse((o) => {
           if ((!o.isMesh && !o.isSkinnedMesh) || !o.geometry) return
           if (!o.geometry.boundingBox) o.geometry.computeBoundingBox()
