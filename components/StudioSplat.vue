@@ -227,14 +227,20 @@ export default {
       const cam = this._cam
       if (!pc || !cam) return
 
-      // Framing initial dès que les bornes du splat sont connues
-      if (!this._framed && this._splat) {
-        const mi = this._splat.gsplat && this._splat.gsplat.instance && this._splat.gsplat.instance.meshInstance
-        const aabb = mi && mi.aabb
+      // Framing initial dès que les bornes du splat sont connues.
+      // En rendu "unified" gsplat.instance reste null : les bornes sont sur
+      // la RESSOURCE (gsplat.resource.aabb), pas sur une meshInstance.
+      if (!this._framed && this._splat && this._splat.gsplat) {
+        const res = this._splat.gsplat.resource
+        const aabb = res && res.aabb
         if (aabb && aabb.halfExtents.length() > 0.0001) {
           this._center = aabb.center.clone()
           this._radius = aabb.halfExtents.length()
           this._framed = true
+          // Le studio est à grande échelle (rayon ~400) et loin de l'origine :
+          // on adapte le far clip pour ne pas clipper le fond.
+          if (cam.camera) cam.camera.farClip = Math.max(1000, this._radius * 12)
+          this._orbitA = 0
         }
       }
       if (!this._framed) return
@@ -244,7 +250,7 @@ export default {
       } else {
         // Orbite douce autour du centre
         this._orbitA += dt * 0.12
-        const r = this._radius * 1.9
+        const r = this._radius * 1.4
         const px = this._center.x + Math.sin(this._orbitA) * r
         const pz = this._center.z + Math.cos(this._orbitA) * r
         const py = this._center.y + this._radius * 0.15
@@ -260,7 +266,7 @@ export default {
       cam.setEulerAngles(this._pitch, this._yaw, 0)
 
       // Déplacement
-      const speed = this._radius * (this._input.fast ? 2.4 : 0.9) * dt
+      const speed = this._radius * (this._input.fast ? 1.8 : 0.6) * dt
       const move = new pc.Vec3()
       const fwd = cam.forward
       const right = cam.right
