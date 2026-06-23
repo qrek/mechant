@@ -100,7 +100,7 @@ export default {
     this._center = null
     this._radius = 1
     this._stickVec = { x: 0, y: 0 }
-    this._init()
+    this._boot()
   },
 
   beforeDestroy () {
@@ -127,7 +127,7 @@ export default {
       return this.__pcPromise
     },
 
-    async _init () {
+    async _boot () {
       let pc
       try {
         pc = await this._loadPlayCanvas()
@@ -175,7 +175,7 @@ export default {
         this.status = 'ready'
       })
 
-      app.on('update', this._update, this)
+      app.on('update', this._tick, this)
       app.start()
 
       // Resize
@@ -222,7 +222,7 @@ export default {
     },
 
     // ── Boucle : framing initial, orbite idle ou vol libre ─────────────────
-    _update (dt) {
+    _tick (dt) {
       const pc = this._pc
       const cam = this._cam
       if (!pc || !cam) return
