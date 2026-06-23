@@ -1,5 +1,5 @@
 <template>
-  <section class="AboutPage" ref="root">
+  <section class="AboutPage" :class="{ 'is-night': nightMode }" ref="root">
 
     <!-- Fond animé via ScrollTrigger (couleur change au scroll) -->
     <div class="AboutPage_bg" ref="bg" />
@@ -26,7 +26,7 @@
         <!-- Duo fondateurs façon PS1 (scans Meshy rigués Mixamo, hébergés R2),
              posés au sol côte à côte avec ombres de contact. -->
         <div class="AboutPage_hero_char">
-          <Ps1Character :characters="content.hero.characters" v-bind="content.hero.characterPreset" />
+          <Ps1Character :characters="content.hero.characters" v-bind="content.hero.characterPreset" :disco="nightMode" />
         </div>
       </div>
 
@@ -37,6 +37,12 @@
           <polyline points="5,12 12,19 19,12"/>
         </svg>
       </div>
+
+      <!-- Bouton discret : bascule le hero en mode "boîte de nuit" -->
+      <button class="AboutPage_night" type="button" :aria-pressed="nightMode" @click="nightMode = !nightMode">
+        <span class="dot" />
+        {{ nightMode ? 'Lights on' : 'Night mode' }}
+      </button>
     </section>
 
     <!-- ── INTRO : "We are creative" + sub ─────────────────────────────── -->
@@ -227,7 +233,9 @@ export default {
     return {
       content: aboutContent,
       // Récompenses : défaut = statique, écrasé par Supabase si dispo
-      awardsList: aboutContent.awards.list
+      awardsList: aboutContent.awards.list,
+      // Mode "boîte de nuit" sur le hero (fond noir, texte orange, persos disco)
+      nightMode: false
     }
   },
 
@@ -710,6 +718,57 @@ export default {
   > section
     position: relative
     z-index: 1
+
+  // ── Bouton discret "mode nuit" ───────────────────────────────────────
+  &_night
+    position: absolute
+    left: 5vw
+    bottom: 2.2rem
+    z-index: 5
+    display: inline-flex
+    align-items: center
+    gap: 0.55rem
+    appearance: none
+    border: 1px solid rgba(0, 0, 0, 0.25)
+    background: transparent
+    color: rgba(0, 0, 0, 0.6)
+    border-radius: 999px
+    padding: 0.45rem 0.9rem
+    font-family: $apfel
+    font-size: 0.68rem
+    letter-spacing: 0.14em
+    text-transform: uppercase
+    cursor: pointer
+    transition: opacity 0.3s ease, color 0.3s ease, border-color 0.3s ease
+    opacity: 0.55
+
+    .dot
+      width: 0.5rem
+      height: 0.5rem
+      border-radius: 50%
+      background: currentColor
+
+    &:hover
+      opacity: 1
+
+  // ── Mode nuit : hero en noir, texte orange, persos en disco ──────────
+  &.is-night
+    .AboutPage_hero
+      background: #0a0a0a
+
+    .AboutPage_hero_title,
+    .AboutPage_hero_title .line--italic
+      color: #ff4500
+
+    .AboutPage_hero_eyebrow,
+    .AboutPage_hero_eyebrow .dot,
+    .AboutPage_hero_scroll
+      color: rgba(255, 69, 0, 0.7)
+
+    .AboutPage_night
+      border-color: rgba(255, 69, 0, 0.4)
+      color: #ff4500
+      opacity: 0.8
 
   // ── HERO ─────────────────────────────────────────────────────────────
   &_hero

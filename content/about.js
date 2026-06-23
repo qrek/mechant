@@ -39,7 +39,7 @@ export default {
     // scan Meshy a normalisé la taille (Ronan est un peu plus grand).
     characters: [
       { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo2.glb' },
-      { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/ronan.glb', scale: 1.12 }
+      { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/ronan.glb', scale: 1.07 }
     ],
     // Réglages PS1 + mise en scène communs
     characterPreset: {

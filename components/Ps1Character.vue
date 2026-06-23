@@ -44,6 +44,8 @@ export default {
     shadow: { type: Boolean, default: true },
     shadowStrength: { type: Number, default: 0.8 },
     shadowScale: { type: Number, default: 0.75 },
+    // Mode "boîte de nuit" : les lumières cyclent en couleurs saturées
+    disco: { type: Boolean, default: false },
     debug: { type: Boolean, default: false }
   },
 
@@ -87,15 +89,18 @@ export default {
       // key chaude de face-gauche, rim froide de dos pour détacher du fond
       // orange. La lumière d'OMBRE est séparée (verticale) pour garder le
       // contact aux pieds sans influencer la direction de l'éclairage.
-      scene.add(new THREE.HemisphereLight(0xfff5e8, 0x4a2a18, 0.85))
-      const key = new THREE.DirectionalLight(0xfff1dd, 1.15)
+      const hemi = new THREE.HemisphereLight(0xfff4e6, 0x402518, 0.68)
+      scene.add(hemi)
+      const key = new THREE.DirectionalLight(0xfff1dd, 1.0)
       key.position.set(-1.8, 2.2, 2.6)
       scene.add(key)
-      const rim = new THREE.DirectionalLight(0xb3d2ff, 0.7)
+      const rim = new THREE.DirectionalLight(0xa8ccff, 0.65)
       rim.position.set(2.0, 1.5, -2.4)
       scene.add(rim)
+      this._hemi = hemi; this._key = key; this._rim = rim
+      this._baseKey = key.color.clone(); this._baseRim = rim.color.clone()
 
-      const dir = new THREE.DirectionalLight(0xffffff, 0.35)
+      const dir = new THREE.DirectionalLight(0xffffff, 0.31)
       dir.position.set(0, 3, 0.18)
       dir.castShadow = true
       dir.shadow.mapSize.set(1024, 1024)
@@ -312,7 +317,27 @@ export default {
         if (ch.mixer) ch.mixer.update(dt)
         if (this._p.autoRotate) ch.model.rotation.y += this._p.autoRotate * dt
       })
+      this._discoTick(dt)
       if (this._renderer && this._scene && this._camera) this._renderer.render(this._scene, this._camera)
+    },
+
+    // Lumières "boîte de nuit" : key + rim cyclent en teintes complémentaires,
+    // l'ambiance pulse. Hors disco, on restaure les couleurs de base une fois.
+    _discoTick (dt) {
+      if (!this._key) return
+      if (this.disco) {
+        this._discoT = (this._discoT || 0) + dt
+        const h = (this._discoT * 0.16) % 1
+        this._key.color.setHSL(h, 0.95, 0.55); this._key.intensity = 1.25
+        this._rim.color.setHSL((h + 0.42) % 1, 0.95, 0.55); this._rim.intensity = 1.1
+        this._hemi.color.setHSL((h + 0.72) % 1, 0.8, 0.5); this._hemi.intensity = 0.45
+        this._wasDisco = true
+      } else if (this._wasDisco) {
+        this._key.color.copy(this._baseKey); this._key.intensity = 1.0
+        this._rim.color.copy(this._baseRim); this._rim.intensity = 0.65
+        this._hemi.color.setHex(0xfff4e6); this._hemi.intensity = 0.68
+        this._wasDisco = false
+      }
     },
 
     async _maybeDebugPanel () {
