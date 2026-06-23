@@ -108,11 +108,31 @@ export default {
   },
 
   methods: {
+    // PlayCanvas est chargé depuis un CDN au runtime (pas bundlé) : son build
+    // UMD fait 3.7 Mo d'optional-chaining/class-fields que le webpack 4 de
+    // Nuxt 2 devrait transpiler via Babel -> build Vercel très lent. Le script
+    // n'est chargé que quand ce composant monte (scan studio, sous la ligne
+    // de flottaison), donc aucun impact sur le reste du site.
+    _loadPlayCanvas () {
+      if (window.pc) return Promise.resolve(window.pc)
+      if (this.__pcPromise) return this.__pcPromise
+      this.__pcPromise = new Promise((resolve, reject) => {
+        const s = document.createElement('script')
+        s.src = 'https://cdn.jsdelivr.net/npm/playcanvas@2.19.7/build/playcanvas.min.js'
+        s.async = true
+        s.onload = () => resolve(window.pc)
+        s.onerror = reject
+        document.head.appendChild(s)
+      })
+      return this.__pcPromise
+    },
+
     async _init () {
-      // Build UMD minifié explicite : la source ESM par défaut de PlayCanvas
-      // contient `import.meta`, que le webpack 4 de Nuxt 2 ne sait pas parser.
-      const mod = await import('playcanvas/build/playcanvas.js')
-      const pc = mod.default || mod
+      let pc
+      try {
+        pc = await this._loadPlayCanvas()
+      } catch (_) { this.status = 'error'; return }
+      if (!pc) { this.status = 'error'; return }
       this._pc = pc
       const canvas = this.$refs.canvas
       if (!canvas) return
