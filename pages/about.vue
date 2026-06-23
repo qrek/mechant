@@ -779,7 +779,7 @@ export default {
     &_title
       font-family: $apfel
       font-weight: 900
-      font-size: clamp(3.4rem, 9vw, 12rem)
+      font-size: clamp(3.7rem, 9.8vw, 13rem)
       line-height: 0.9
       letter-spacing: -0.02em
       text-transform: uppercase
@@ -795,7 +795,7 @@ export default {
         &--italic
           font-style: italic
           font-weight: 400
-          font-size: clamp(2.2rem, 5.5vw, 6.2rem)
+          font-size: clamp(2.4rem, 6vw, 6.8rem)
           letter-spacing: -0.01em
           color: rgba(0, 0, 0, 0.85)
           text-transform: none

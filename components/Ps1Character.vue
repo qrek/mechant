@@ -83,9 +83,20 @@ export default {
       renderer.shadowMap.type = THREE.PCFSoftShadowMap
       this._renderer = renderer
 
-      scene.add(new THREE.AmbientLight(0xffffff, 0.95))
-      const dir = new THREE.DirectionalLight(0xffffff, 0.6)
-      dir.position.set(0.6, 3, 1.2)
+      // Setup 3 points + ambiance : hémisphère doux (ciel chaud / sol sombre),
+      // key chaude de face-gauche, rim froide de dos pour détacher du fond
+      // orange. La lumière d'OMBRE est séparée (verticale) pour garder le
+      // contact aux pieds sans influencer la direction de l'éclairage.
+      scene.add(new THREE.HemisphereLight(0xfff3e2, 0x331a0d, 0.55))
+      const key = new THREE.DirectionalLight(0xfff1dd, 0.85)
+      key.position.set(-1.8, 2.2, 2.6)
+      scene.add(key)
+      const rim = new THREE.DirectionalLight(0x9bc2ff, 0.6)
+      rim.position.set(2.0, 1.5, -2.4)
+      scene.add(rim)
+
+      const dir = new THREE.DirectionalLight(0xffffff, 0.28)
+      dir.position.set(0, 3, 0.18)
       dir.castShadow = true
       dir.shadow.mapSize.set(1024, 1024)
       dir.shadow.bias = -0.0006
