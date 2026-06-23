@@ -48,7 +48,7 @@ export default {
       faceDeg: -5,
       framing: 1,
       offsetY: 0.34,
-      autoRotate: 0.05
+      autoRotate: 0.00
     }
   },
 

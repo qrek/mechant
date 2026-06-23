@@ -1,5 +1,6 @@
 <template>
   <div ref="root" class="Ps1Character">
+    <div v-if="shadow" ref="shadow" class="Ps1Character_shadow" />
     <canvas ref="canvas" class="Ps1Character_canvas" />
   </div>
 </template>
@@ -37,6 +38,9 @@ export default {
     framing: { type: Number, default: 1.55 },
     offsetY: { type: Number, default: 0 },
     autoRotate: { type: Number, default: 0 },
+    shadow: { type: Boolean, default: true },
+    shadowStrength: { type: Number, default: 0.35 },
+    shadowScale: { type: Number, default: 1 },
     debug: { type: Boolean, default: false }
   },
 
@@ -53,8 +57,11 @@ export default {
       faceDeg: this.faceDeg,
       framing: this.framing,
       offsetY: this.offsetY,
-      autoRotate: this.autoRotate
+      autoRotate: this.autoRotate,
+      shadowStrength: this.shadowStrength,
+      shadowScale: this.shadowScale
     }
+    this._applyShadowStyle()
     this._boot()
   },
 
@@ -236,6 +243,14 @@ export default {
       r.setSize(iw, ih, false)
     },
 
+    // Ombre "blob" : simple tache CSS (zéro coût GPU, façon PS1)
+    _applyShadowStyle () {
+      const el = this.$refs.shadow
+      if (!el) return
+      el.style.opacity = this._p.shadowStrength
+      el.style.width = (52 * this._p.shadowScale) + '%'
+    },
+
     _animate () {
       this._raf = requestAnimationFrame(() => this._animate())
       const dt = this._clock ? this._clock.getDelta() : 0.016
@@ -274,9 +289,11 @@ export default {
       pane.addInput(p, 'framing', { min: 1, max: 2.4, step: 0.05 }).on('change', () => this._frameCamera())
       pane.addInput(p, 'offsetY', { min: -0.6, max: 0.6, step: 0.02 }).on('change', () => this._frameCamera())
       pane.addInput(p, 'autoRotate', { min: 0, max: 1.5, step: 0.05 })
+      pane.addInput(p, 'shadowStrength', { min: 0, max: 0.8, step: 0.02 }).on('change', () => this._applyShadowStyle())
+      pane.addInput(p, 'shadowScale', { min: 0.3, max: 1.8, step: 0.05 }).on('change', () => this._applyShadowStyle())
       // Bouton pour copier la balise prête à coller
       pane.addButton({ title: 'Copier les props' }).on('click', () => {
-        const tag = `:pixel-height="${p.pixelHeight}" :wobble="${p.wobble}" :color-depth="${p.colorDepth}" :face-deg="${p.faceDeg}" :framing="${p.framing}" :offset-y="${p.offsetY}" :auto-rotate="${p.autoRotate}"`
+        const tag = `:pixel-height="${p.pixelHeight}" :wobble="${p.wobble}" :color-depth="${p.colorDepth}" :face-deg="${p.faceDeg}" :framing="${p.framing}" :offset-y="${p.offsetY}" :auto-rotate="${p.autoRotate}" :shadow-strength="${p.shadowStrength}" :shadow-scale="${p.shadowScale}"`
         if (navigator.clipboard) navigator.clipboard.writeText(tag)
         // eslint-disable-next-line no-console
         console.log('Ps1Character props →\n', tag)
@@ -314,9 +331,26 @@ export default {
   height: 100%
 
   &_canvas
+    position: relative
+    z-index: 1
     width: 100%
     height: 100%
     display: block
     image-rendering: pixelated
     image-rendering: crisp-edges
+
+  // Ombre "blob" douce au bas du perso (CSS pur, aucun coût GPU).
+  // Largeur/opacité pilotées en inline par _applyShadowStyle().
+  &_shadow
+    position: absolute
+    left: 50%
+    bottom: 7%
+    transform: translateX(-50%)
+    width: 52%
+    height: 5%
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 70%)
+    border-radius: 50%
+    filter: blur(7px)
+    pointer-events: none
+    z-index: 0
 </style>
