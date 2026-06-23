@@ -45,14 +45,14 @@ export default {
     characterPreset: {
       clip: 'mixamo.com',
       faceDeg: -5,
-      pixelHeight: 305,
+      pixelHeight: 335,
       wobble: 160,
-      colorDepth: 30,
+      colorDepth: 25,
       framing: 1.15,
       offsetY: 0,
-      cameraPitch: 10,
-      spacing: 0.35,
-      shadowStrength: 0.8,
+      cameraPitch: 15,
+      spacing: -0.15,
+      shadowStrength: 0.35,
       shadowScale: 0.75,
       autoRotate: 0
     }

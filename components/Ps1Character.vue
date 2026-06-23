@@ -79,12 +79,19 @@ export default {
       this._camera = camera
       const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false })
       renderer.setClearColor(0x000000, 0)
+      renderer.shadowMap.enabled = true
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap
       this._renderer = renderer
 
-      scene.add(new THREE.AmbientLight(0xffffff, 0.9))
-      const dir = new THREE.DirectionalLight(0xffffff, 0.65)
-      dir.position.set(1, 2, 2)
+      scene.add(new THREE.AmbientLight(0xffffff, 0.95))
+      const dir = new THREE.DirectionalLight(0xffffff, 0.6)
+      dir.position.set(0.6, 3, 1.2)
+      dir.castShadow = true
+      dir.shadow.mapSize.set(1024, 1024)
+      dir.shadow.bias = -0.0006
       scene.add(dir)
+      scene.add(dir.target)
+      this._dir = dir
 
       const list = (this.characters && this.characters.length)
         ? this.characters
@@ -96,8 +103,8 @@ export default {
         gltfs.forEach((gltf, i) => this._setupChar(gltf, list[i]))
       } catch (e) { this.$emit('error'); return }
 
-      if (this.shadow) this._buildShadows()
       this._layout()
+      if (this.shadow) this._buildShadowCatcher()
       this._resize()
       this._maybeDebugPanel()
       this.$emit('ready')
@@ -125,6 +132,7 @@ export default {
         const mat = new THREE.MeshLambertMaterial({ map, color: src && src.color ? src.color : 0xffffff, skinning: !!o.isSkinnedMesh })
         this._applyPs1(mat)
         o.material = mat
+        o.castShadow = true
       })
 
       this._scene.add(model)
@@ -195,30 +203,37 @@ export default {
       const half = totalW / 2
       this._chars.forEach((ch) => { ch.model.position.x -= half; ch.center.x -= half })
       this._group = { width: totalW, height: Math.max.apply(null, this._chars.map(c => c.size.y)) }
-      // (Re)positionne les ombres
-      this._shadows.forEach((s, i) => {
-        const ch = this._chars[i]
-        if (!ch) return
-        s.position.set(ch.center.x, 0.01, ch.center.z)
-        const d = Math.max(ch.size.x, ch.size.z) * this._p.shadowScale
-        s.scale.set(d, d, d)
-      })
+      this._updateShadowFrustum()
     },
 
-    _buildShadows () {
+    // Sol "shadow catcher" : transparent sauf là où l'ombre réelle tombe.
+    _buildShadowCatcher () {
       const THREE = this._THREE
-      const c = document.createElement('canvas'); c.width = c.height = 128
-      const ctx = c.getContext('2d')
-      const g = ctx.createRadialGradient(64, 64, 2, 64, 64, 64)
-      g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.55, 'rgba(0,0,0,0.6)'); g.addColorStop(1, 'rgba(0,0,0,0)')
-      ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128)
-      const tex = new THREE.CanvasTexture(c)
-      this._chars.forEach(() => {
-        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: this._p.shadowStrength, depthWrite: false })
-        const plane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat)
-        plane.rotation.x = -Math.PI / 2
-        this._scene.add(plane); this._shadows.push(plane)
-      })
+      const w = Math.max(this._group.width, 1) * 4
+      const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(w, w),
+        new THREE.ShadowMaterial({ opacity: this._p.shadowStrength })
+      )
+      ground.rotation.x = -Math.PI / 2
+      ground.receiveShadow = true
+      this._scene.add(ground)
+      this._ground = ground
+      this._updateShadowFrustum()
+    },
+
+    // Cadre la lumière d'ombre sur le groupe (frustum ortho + douceur)
+    _updateShadowFrustum () {
+      const d = this._dir
+      if (!d || !this._group) return
+      const h = this._group.height
+      const ext = Math.max(this._group.width, h) * 0.9
+      d.position.set(0, h * 2.4, h * 0.9)
+      d.target.position.set(0, 0, 0)
+      const sc = d.shadow.camera
+      sc.left = -ext; sc.right = ext; sc.top = ext * 1.3; sc.bottom = -ext * 1.3
+      sc.near = 0.1; sc.far = h * 6
+      sc.updateProjectionMatrix()
+      d.shadow.radius = Math.max(1, this._p.shadowScale * 6)
     },
 
     // Cadre tout le groupe + légère plongée pour révéler le sol/les ombres
@@ -271,12 +286,8 @@ export default {
     },
 
     _updateShadows () {
-      this._shadows.forEach((s, i) => {
-        const ch = this._chars[i]; if (!ch) return
-        s.material.opacity = this._p.shadowStrength
-        const d = Math.max(ch.size.x, ch.size.z) * this._p.shadowScale
-        s.scale.set(d, d, d)
-      })
+      if (this._ground) this._ground.material.opacity = this._p.shadowStrength
+      if (this._dir) this._dir.shadow.radius = Math.max(1, this._p.shadowScale * 6)
     },
 
     _animate () {
