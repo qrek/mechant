@@ -774,21 +774,21 @@ export default {
     // Hauteur DÉFINIE (vh) obligatoire : le canvas est en height:100%, donc
     // sans hauteur de référence concrète on tombe dans une boucle de layout.
     &_char
-      flex: 0 0 38%
-      height: 66vh
-      max-height: 640px
+      flex: 0 0 44%
+      height: 76vh
+      max-height: 760px
       pointer-events: none
 
       +breakpoint(tabletDown)
         flex: none
         width: 100%
-        height: 42vh
-        max-height: 380px
+        height: 48vh
+        max-height: 440px
 
     &_title
       font-family: $apfel
       font-weight: 900
-      font-size: clamp(2.6rem, 6.5vw, 8rem)
+      font-size: clamp(3.4rem, 9vw, 12rem)
       line-height: 0.9
       letter-spacing: -0.02em
       text-transform: uppercase
@@ -804,7 +804,7 @@ export default {
         &--italic
           font-style: italic
           font-weight: 400
-          font-size: clamp(1.7rem, 4vw, 4.2rem)
+          font-size: clamp(2.2rem, 5.5vw, 6.2rem)
           letter-spacing: -0.01em
           color: rgba(0, 0, 0, 0.85)
           text-transform: none
