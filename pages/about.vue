@@ -140,15 +140,17 @@
       </h2>
 
       <!--
-        Slot 3D scan : remplacer ce placeholder par un canvas Three.js
-        avec GLTFLoader quand le scan sera prêt (export GLB optimisé).
-        Fond noir → le scan s'intègre directement, sans bord.
+        Scan studio en Gaussian Splatting (PlayCanvas, autonome).
+        Cliquer pour explorer en vol libre, Échap pour ressortir.
+        Le wrapper garde ref="visitCanvas" pour les animations d'entrée.
       -->
       <div class="AboutPage_visit_canvas" ref="visitCanvas">
-        <div class="AboutPage_visit_placeholder">
-          <span class="placeholderLine">{{ content.visit.placeholderLine }}</span>
-          <span class="placeholderSub">{{ content.visit.placeholderSub }}</span>
-        </div>
+        <StudioSplat
+          :desktop-url="content.visit.splatUrl"
+          :mobile-url="content.visit.splatMobileUrl"
+          @enter="onSplatEnter"
+          @exit="onSplatExit"
+        />
       </div>
 
       <!-- Adresse + CTA -->
@@ -182,6 +184,7 @@ import { gsap } from '@/vendor/gsap'
 import { ScrollTrigger } from '@/vendor/gsap/ScrollTrigger'
 import { SplitText } from '@/vendor/gsap/SplitText'
 import SimpleFooter from '@/components/SimpleFooter'
+import StudioSplat from '@/components/StudioSplat'
 import aboutContent from '@/content/about'
 import smoothScroll from '@/mixins/smoothScroll'
 
@@ -191,7 +194,7 @@ gsap.registerPlugin(SplitText)
 export default {
   name: 'About',
 
-  components: { SimpleFooter },
+  components: { SimpleFooter, StudioSplat },
   mixins: [smoothScroll],
 
   head () {
@@ -242,7 +245,6 @@ export default {
 
     this.$nextTick(() => {
       this._initAnimations()
-      this._initStudioScan()
     })
   },
 
@@ -252,7 +254,7 @@ export default {
     this._splits = []
     this._triggers = []
     // Lenis cleanup est géré par le mixin smoothScroll
-    this._destroyStudioScan()
+    // (le scan studio est désormais le composant StudioSplat, auto-nettoyé)
   },
 
   methods: {
@@ -272,6 +274,15 @@ export default {
       } catch (_) {
         // garde le fallback statique
       }
+    },
+
+    // ── Scan splat : gèle le scroll lerpé pendant l'exploration en vol libre
+    //    (sinon la molette/le drag scrollent la page au lieu de piloter).
+    onSplatEnter () {
+      if (this._lenis) this._lenis.stop()
+    },
+    onSplatExit () {
+      if (this._lenis) this._lenis.start()
     },
 
     // ── Scan studio 3D : chargé en avance (dès le montage) pour qu'il soit

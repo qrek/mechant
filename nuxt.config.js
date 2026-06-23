@@ -209,7 +209,7 @@ export default {
       config.resolve.alias.vue = 'vue/dist/vue.common'
     },
 
-    transpile: ['three', 'lenis', '@dimforge/rapier3d-compat', 'posthog-js']
+    transpile: ['three', 'lenis', '@dimforge/rapier3d-compat', 'posthog-js', 'playcanvas']
   },
   pageTransition: {
     name: 'page',

@@ -118,8 +118,11 @@ export default {
     ],
     placeholderLine: 'Studio scan',
     placeholderSub: 'Loading…',
-    // Scan 3D hébergé sur Cloudflare R2 (hors git, egress gratuite)
-    scanUrl: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/scan/18_06_2026.glb',
+    // Scan studio en Gaussian Splatting (.sog) hébergé sur Cloudflare R2.
+    // splatUrl = version desktop (SH complet, reflets) ; splatMobileUrl =
+    // version allégée (sans SH, décimée) servie sur petits écrans.
+    splatUrl: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/scan/studio.sog',
+    splatMobileUrl: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/scan/studio.mobile.sog',
     address: '27 rue des Cascades, 75020 Paris, Ménilmontant',
     mapsUrl: 'https://www.google.fr/maps/place/27+Rue+des+Cascades,+75020+Paris',
     ctaLabel: 'Start a project',
