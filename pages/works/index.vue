@@ -15,7 +15,7 @@
           v-for="project in featuredProjects"
           :key="project.id"
           class="WorksPage_item"
-          @mouseenter="onHover(project)"
+          @mouseenter="onHover(project, $event)"
           @mouseleave="onLeave"
           @click="openProject(project)"
         >
@@ -246,7 +246,7 @@ export default {
       }
     },
 
-    onHover (project) {
+    onHover (project, e) {
       this.setId(project.id)
       trackProjectHover(project, 'works_home')
       const url = project.preview_video || project.video_home
@@ -261,6 +261,16 @@ export default {
       }
       video.currentTime = 0
       video.play().catch(() => {})
+      // À la PREMIÈRE apparition, on place le float pile sous le curseur
+      // (sinon il flashe en haut à gauche à 0,0 puis glisse vers la souris —
+      // visible surtout en arrivant via la transition d'accueil).
+      if (e && !float.classList.contains('is-visible')) {
+        const w = this._floatW || float.offsetWidth
+        const h = this._floatH || float.offsetHeight
+        const x = Math.max(0, Math.min(e.clientX - w / 2, window.innerWidth - w))
+        const y = Math.max(0, Math.min(e.clientY - h / 2, window.innerHeight - h))
+        gsap.set(float, { x, y })
+      }
       float.classList.add('is-visible')
     },
 

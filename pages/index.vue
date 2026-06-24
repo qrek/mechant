@@ -224,11 +224,12 @@ export default {
     _goToWorks() {
       if (this._navigating) return
       this._navigating = true
-      // Laisse l'orange finir de couvrir avant de naviguer (continuité couleur)
-      gsap.to(this._scrollTl, {
-        progress: 1, duration: 0.35, ease: 'power2.inOut',
-        onComplete: () => this.$router.push('/works')
-      })
+      // Snap l'orange à plein (sans tween concurrent qui pouvait avorter la
+      // nav sur un gros saut de scroll), petit délai pour que l'orange couvre,
+      // puis navigation — continuité parfaite avec le fond Works.
+      gsap.killTweensOf(this._scrollTl)
+      this._scrollTl.progress(1)
+      gsap.delayedCall(0.12, () => this.$router.push('/works'))
     },
 
     _destroyScrollToWorks() {

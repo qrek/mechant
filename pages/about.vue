@@ -880,9 +880,9 @@ export default {
           display: block
           white-space: nowrap
         .line--mobile.line--italic
-          font-size: clamp(1.9rem, 8.7vw, 3rem)
+          font-size: clamp(2.1rem, 9.6vw, 3.3rem)
         .line--mobile.line--bold
-          font-size: clamp(1.75rem, 8vw, 2.7rem)
+          font-size: clamp(1.85rem, 8.5vw, 2.9rem)
 
     &_scroll
       align-self: flex-end
