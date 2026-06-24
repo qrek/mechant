@@ -15,12 +15,16 @@
 
       <div class="AboutPage_hero_main">
         <h1 class="AboutPage_hero_title" ref="heroTitle">
+          <!-- Desktop : 4 lignes (titre énorme dans la colonne) -->
           <span
             v-for="(line, i) in content.hero.lines"
             :key="i"
-            class="line"
+            class="line line--desktop"
             :class="`line--${line.variant}`"
           >{{ line.text }}</span>
+          <!-- Mobile : titre entier sur 2 lignes -->
+          <span class="line line--mobile line--italic">Once upon a frame,</span>
+          <span class="line line--mobile line--bold">MÉCHANT was born.</span>
         </h1>
 
         <!-- Duo fondateurs façon PS1 (scans Meshy rigués Mixamo, hébergés R2),
@@ -859,15 +863,26 @@ export default {
           color: rgba(0, 0, 0, 0.85)
           text-transform: none
 
-          // Mobile : "Once upon a frame" plus grand / plus large (proche du bold)
-          +breakpoint(mobile)
-            font-size: clamp(3rem, 10.5vw, 4.4rem)
-
         &--bold
           font-weight: 900
 
+        // Lignes mobile (titre entier sur 2 lignes) cachées par défaut
+        &--mobile
+          display: none
+
       +breakpoint(mobile)
         font-size: clamp(2.4rem, 11vw, 4.5rem)
+
+        // Mobile : on remplace les 4 lignes desktop par 2 lignes complètes
+        .line--desktop
+          display: none
+        .line--mobile
+          display: block
+          white-space: nowrap
+        .line--mobile.line--italic
+          font-size: clamp(1.9rem, 8.7vw, 3rem)
+        .line--mobile.line--bold
+          font-size: clamp(1.75rem, 8vw, 2.7rem)
 
     &_scroll
       align-self: flex-end
