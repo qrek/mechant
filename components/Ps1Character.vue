@@ -116,7 +116,10 @@ export default {
       const loader = new GLTFLoader()
       try {
         const gltfs = await Promise.all(list.map(c => loader.loadAsync(c.url)))
-        gltfs.forEach((gltf, i) => this._setupChar(gltf, list[i]))
+        gltfs.forEach((gltf, i) => {
+          const m = this._setupModel(gltf, list[i])
+          this._chars.push({ entry: list[i], day: m, night: null })
+        })
       } catch (e) { this.$emit('error'); return }
 
       this._layout()
@@ -129,9 +132,14 @@ export default {
       window.addEventListener('resize', this._onResize)
       this._clock = new THREE.Clock()
       this._animate()
+
+      // Modèles NUIT (anim différente) chargés en arrière-plan, masqués,
+      // pour une bascule instantanée au mode boîte de nuit.
+      this._loadNight(list, loader)
     },
 
-    _setupChar (gltf, entry) {
+    // Charge un GLB en perso prêt (matériau PS1, mixer, bornes, posé au sol).
+    _setupModel (gltf, entry) {
       const THREE = this._THREE
       const model = gltf.scene
       const faceDeg = entry.faceDeg != null ? entry.faceDeg : this.faceDeg
@@ -168,7 +176,23 @@ export default {
       model.position.y -= feetY
       center.y = size.y / 2
 
-      this._chars.push({ model, mixer, action, center, size, faceDeg })
+      return { model, mixer, action, center, size }
+    },
+
+    // Charge les modèles NUIT en tâche de fond, alignés sur la version jour.
+    async _loadNight (list, loader) {
+      for (let i = 0; i < list.length; i++) {
+        const c = list[i]
+        if (!c.nightUrl || !this._chars[i]) continue
+        let gltf
+        try { gltf = await loader.loadAsync(c.nightUrl) } catch (e) { continue }
+        if (!this._scene || !this._chars[i]) return
+        const m = this._setupModel(gltf, c)
+        m.model.position.x += this._chars[i].day.center.x - m.center.x
+        m.center.x = this._chars[i].day.center.x
+        m.model.visible = false
+        this._chars[i].night = m
+      }
     },
 
     // Bornes monde des os, échantillonnées sur toute l'anim (sinon tête/bras
@@ -212,15 +236,23 @@ export default {
       const gap = this._p.spacing
       let cursor = 0
       this._chars.forEach((ch) => {
-        const targetX = cursor + ch.size.x / 2
-        ch.model.position.x += targetX - ch.center.x
-        ch.center.x = targetX
-        cursor += ch.size.x + gap
+        const targetX = cursor + ch.day.size.x / 2
+        ch.day.model.position.x += targetX - ch.day.center.x
+        ch.day.center.x = targetX
+        cursor += ch.day.size.x + gap
       })
       const totalW = Math.max(0.0001, cursor - gap)
       const half = totalW / 2
-      this._chars.forEach((ch) => { ch.model.position.x -= half; ch.center.x -= half })
-      this._group = { width: totalW, height: Math.max.apply(null, this._chars.map(c => c.size.y)) }
+      this._chars.forEach((ch) => {
+        ch.day.model.position.x -= half
+        ch.day.center.x -= half
+        // Aligne la version nuit (si chargée) sur la version jour
+        if (ch.night) {
+          ch.night.model.position.x += ch.day.center.x - ch.night.center.x
+          ch.night.center.x = ch.day.center.x
+        }
+      })
+      this._group = { width: totalW, height: Math.max.apply(null, this._chars.map(c => c.day.size.y)) }
       this._updateShadowFrustum()
     },
 
@@ -314,8 +346,13 @@ export default {
       this._raf = requestAnimationFrame(() => this._animate())
       const dt = this._clock ? this._clock.getDelta() : 0.016
       this._chars.forEach((ch) => {
-        if (ch.mixer) ch.mixer.update(dt)
-        if (this._p.autoRotate) ch.model.rotation.y += this._p.autoRotate * dt
+        // Mode nuit = anim "night" si chargée ; sinon on reste sur le jour
+        const useNight = !!(this.disco && ch.night)
+        const active = useNight ? ch.night : ch.day
+        ch.day.model.visible = !useNight
+        if (ch.night) ch.night.model.visible = useNight
+        if (active.mixer) active.mixer.update(dt)
+        if (this._p.autoRotate) active.model.rotation.y += this._p.autoRotate * dt
       })
       this._discoTick(dt)
       if (this._renderer && this._scene && this._camera) this._renderer.render(this._scene, this._camera)
@@ -376,7 +413,13 @@ export default {
       if (this._onResize) window.removeEventListener('resize', this._onResize)
       if (this._pane) { try { this._pane.dispose() } catch (_) {} }
       if (this._paneEl && this._paneEl.parentNode) this._paneEl.parentNode.removeChild(this._paneEl)
-      ;(this._chars || []).forEach((ch) => { if (ch.mixer) ch.mixer.stopAllAction(); if (this._scene) this._scene.remove(ch.model) })
+      ;(this._chars || []).forEach((ch) => {
+        [ch.day, ch.night].forEach((m) => {
+          if (!m) return
+          if (m.mixer) m.mixer.stopAllAction()
+          if (this._scene) this._scene.remove(m.model)
+        })
+      })
       if (this._renderer) { this._renderer.dispose(); this._renderer.forceContextLoss && this._renderer.forceContextLoss() }
       this._chars = []; this._shadows = []; this._snapUniforms = []; this._levelUniforms = []
       this._scene = null; this._camera = null; this._renderer = null; this._THREE = null

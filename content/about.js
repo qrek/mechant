@@ -37,9 +37,18 @@ export default {
     // réglage par perso, ex : { url: '...', faceDeg: 10, offsetY: 0.2 }
     // Duo fondateurs, côte à côte (gauche → droite). scale par perso si le
     // scan Meshy a normalisé la taille (Ronan est un peu plus grand).
+    // url = anim JOUR (dribble / run) ; nightUrl = anim NUIT (jouée en mode
+    // boîte de nuit). Bascule au clic sur le bouton Night mode.
     characters: [
-      { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo2.glb' },
-      { url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/ronan.glb', scale: 1.07 }
+      {
+        url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo_dribble.glb',
+        nightUrl: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo2.glb'
+      },
+      {
+        url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/ronan_run.glb',
+        nightUrl: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/ronan.glb',
+        scale: 1.07
+      }
     ],
     // Réglages PS1 + mise en scène communs
     characterPreset: {
