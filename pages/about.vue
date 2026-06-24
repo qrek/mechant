@@ -859,6 +859,10 @@ export default {
           color: rgba(0, 0, 0, 0.85)
           text-transform: none
 
+          // Mobile : "Once upon a frame" plus grand / plus large (proche du bold)
+          +breakpoint(mobile)
+            font-size: clamp(3rem, 10.5vw, 4.4rem)
+
         &--bold
           font-weight: 900
 
