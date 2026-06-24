@@ -39,17 +39,16 @@ export default {
     // scan Meshy a normalisé la taille (Ronan est un peu plus grand).
     // url = anim JOUR (dribble / run) ; nightUrl = anim NUIT (jouée en mode
     // boîte de nuit). Bascule au clic sur le bouton Night mode.
-    // Anims SPORT (dribble / run) EN STANDBY. Pour les réactiver : remettre
-    // l'url sport en `url` et theo2/ronan en `nightUrl` (voir lignes commentées).
+    // JOUR = sport (dribble / run, le ballon de Théo rebondit) ; NUIT = idle.
     characters: [
       {
-        url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo2.glb'
-        // SPORT : url: '.../characters/theo_dribble3.glb', nightUrl: '.../characters/theo2.glb'
+        url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo_dribble3c.glb',
+        nightUrl: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo2.glb'
       },
       {
-        url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/ronan.glb',
+        url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/ronan_run.glb',
+        nightUrl: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/ronan.glb',
         scale: 1.07
-        // SPORT : url: '.../characters/ronan_run.glb', nightUrl: '.../characters/ronan.glb'
       }
     ],
     // Réglages PS1 + mise en scène communs
