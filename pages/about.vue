@@ -727,33 +727,36 @@ export default {
   &_night
     position: absolute
     right: 5vw
-    top: 6rem
-    z-index: 5
+    top: 5.6rem
+    z-index: 6
     display: inline-flex
     align-items: center
-    gap: 0.55rem
+    gap: 0.6rem
     appearance: none
-    border: 1px solid rgba(0, 0, 0, 0.25)
-    background: transparent
-    color: rgba(0, 0, 0, 0.6)
+    border: none
+    background: #0a0a0a
+    color: #fff
     border-radius: 999px
-    padding: 0.45rem 0.9rem
+    padding: 0.65rem 1.2rem
     font-family: $apfel
-    font-size: 0.68rem
-    letter-spacing: 0.14em
+    font-size: 0.9rem
+    font-weight: 600
+    letter-spacing: 0.16em
     text-transform: uppercase
     cursor: pointer
-    transition: opacity 0.3s ease, color 0.3s ease, border-color 0.3s ease
-    opacity: 0.55
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.28)
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.3s ease, color 0.3s ease
 
     .dot
-      width: 0.5rem
-      height: 0.5rem
+      width: 0.6rem
+      height: 0.6rem
       border-radius: 50%
-      background: currentColor
+      background: #ff4500
+      animation: nightPulse 1.8s ease-out infinite
 
     &:hover
-      opacity: 1
+      transform: translateY(-2px)
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.36)
 
   // ── Mode nuit : hero en noir, texte orange, persos en disco ──────────
   &.is-night
@@ -769,10 +772,14 @@ export default {
     .AboutPage_hero_scroll
       color: rgba(255, 69, 0, 0.7)
 
+    // En mode nuit, le bouton devient orange plein (ressort sur le noir)
     .AboutPage_night
-      border-color: rgba(255, 69, 0, 0.4)
-      color: #ff4500
-      opacity: 0.8
+      background: #ff4500
+      color: #0a0a0a
+      box-shadow: 0 6px 22px rgba(255, 69, 0, 0.3)
+      .dot
+        background: #0a0a0a
+        animation: none
 
   // ── HERO ─────────────────────────────────────────────────────────────
   &_hero
@@ -1564,4 +1571,13 @@ export default {
     transform: translateY(0)
   50%
     transform: translateY(4px)
+
+// Pastille du bouton Night mode : anneau qui se diffuse (attire l'œil)
+@keyframes nightPulse
+  0%
+    box-shadow: 0 0 0 0 rgba(255, 69, 0, 0.55)
+  70%
+    box-shadow: 0 0 0 0.7rem rgba(255, 69, 0, 0)
+  100%
+    box-shadow: 0 0 0 0 rgba(255, 69, 0, 0)
 </style>

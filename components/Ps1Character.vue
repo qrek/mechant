@@ -168,6 +168,16 @@ export default {
         clip = name ? gltf.animations.find(a => a.name === name) : null
         if (!clip) clip = gltf.animations[0]
         action = mixer.clipAction(clip); action.play()
+        // Joue AUSSI les pistes annexes (ex: le rebond du ballon de basket),
+        // SAUF les clips qui transforment la racine de scène (wrappers
+        // Blender/Sketchfab) qui déplaceraient tout le perso. On filtre sur le
+        // NOM DU CLIP (non assaini, contrairement aux noms de nœuds).
+        const ROOT_CLIPS = ['Sketchfab_model', 'Collada visual scene group', 'RootNode']
+        gltf.animations.forEach((c) => {
+          if (c === clip) return
+          if (ROOT_CLIPS.some((r) => c.name && c.name.indexOf(r) === 0)) return
+          mixer.clipAction(c).play()
+        })
       }
 
       const { center, size } = this._charBounds(model, mixer, action, clip)
