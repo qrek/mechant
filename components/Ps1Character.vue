@@ -168,14 +168,22 @@ export default {
         clip = name ? gltf.animations.find(a => a.name === name) : null
         if (!clip) clip = gltf.animations[0]
         action = mixer.clipAction(clip); action.play()
-        // Joue AUSSI les pistes annexes (ex: le rebond du ballon de basket),
-        // SAUF les clips qui transforment la racine de scène (wrappers
-        // Blender/Sketchfab) qui déplaceraient tout le perso. On filtre sur le
-        // NOM DU CLIP (non assaini, contrairement aux noms de nœuds).
-        const ROOT_CLIPS = ['Sketchfab_model', 'Collada visual scene group', 'RootNode']
+        // Joue AUSSI les pistes annexes (ex: le rebond du ballon, animé sur
+        // son wrapper Sketchfab_model). On ne saute QUE les clips qui animent
+        // un ANCÊTRE du perso skinné (les jouer le déplacerait). Les wrappers
+        // qui ne contiennent que le ballon ne sont PAS des ancêtres → joués.
+        const charAncestors = new Set()
+        let skinned = null
+        model.traverse((o) => { if (!skinned && o.isSkinnedMesh) skinned = o })
+        for (let p = skinned; p; p = p.parent) charAncestors.add(p)
         gltf.animations.forEach((c) => {
           if (c === clip) return
-          if (ROOT_CLIPS.some((r) => c.name && c.name.indexOf(r) === 0)) return
+          const movesChar = (c.tracks || []).some((t) => {
+            const nn = THREE.PropertyBinding.parseTrackName(t.name).nodeName
+            const node = THREE.PropertyBinding.findNode(model, nn)
+            return node && charAncestors.has(node)
+          })
+          if (movesChar) return
           mixer.clipAction(c).play()
         })
       }

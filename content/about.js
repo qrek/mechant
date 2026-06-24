@@ -41,7 +41,7 @@ export default {
     // boîte de nuit). Bascule au clic sur le bouton Night mode.
     characters: [
       {
-        url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo_dribble.glb',
+        url: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo_dribble3.glb',
         nightUrl: 'https://pub-fda32ee9610a4a3b845c0bf389926b04.r2.dev/characters/theo2.glb'
       },
       {
