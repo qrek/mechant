@@ -317,7 +317,7 @@ export default {
   &_bg
     position: fixed
     inset: 0
-    background: #f2492c
+    background: #ff4500
     z-index: 0
     will-change: transform
 

@@ -711,7 +711,7 @@ export default {
   &_bg
     position: fixed
     inset: 0
-    background: #ff8600
+    background: #ff4500
     z-index: 0
     pointer-events: none
 
