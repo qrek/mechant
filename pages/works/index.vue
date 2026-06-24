@@ -77,8 +77,8 @@ export default {
     this._floatQuickX = null
     this._floatQuickY = null
 
-    const { bg } = this.$refs
-    if (bg) gsap.set(bg, { xPercent: -100 })
+    // Plus de slide du fond : la transition depuis l'accueil arrive déjà sur
+    // l'orange plein écran → le fond Works est juste là (pas de "volet").
 
     try {
       await this._fetchFeaturedProjects()
@@ -176,8 +176,6 @@ export default {
       })
 
       const tl = gsap.timeline()
-
-      tl.to(bg, { xPercent: 0, duration: 0.55, ease: 'power3.out', clearProps: 'transform' })
 
       splitData.forEach(({ st, titleEl, labelEl }, i) => {
         if (!st) return

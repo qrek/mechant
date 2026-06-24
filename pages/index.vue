@@ -191,7 +191,7 @@ export default {
       const tl = gsap.timeline({ paused: true })
       tl.to(bg, { scale: 1.14, ease: 'none' }, 0)
       tl.to(overlay, { autoAlpha: 1, ease: 'none' }, 0)
-      tl.fromTo(logo, { yPercent: 0, scale: 1 }, { yPercent: -58, scale: 1.06, ease: 'none' }, 0)
+      tl.fromTo(logo, { yPercent: 0, scale: 1 }, { yPercent: -34, scale: 0.5, ease: 'none' }, 0)
       if (tagline) tl.to(tagline, { autoAlpha: 0, y: -24, ease: 'none' }, 0)
       if (hint) tl.to(hint, { autoAlpha: 0, ease: 'none' }, 0)
       this._scrollTl = tl
