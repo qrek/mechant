@@ -377,6 +377,17 @@ export default {
   line-height: 1
   text-decoration: none
 
+  // Mobile : un projet par ligne, le tag empilé SOUS le nom (centré) — sinon
+  // le tag flotte à droite, désaligné, quand le nom passe sur 2 lignes.
+  +breakpoint(mobile)
+    flex-direction: column
+    align-items: center
+    justify-content: center
+    text-align: center
+    gap: 0.25rem
+    width: 100%
+    padding-right: 0
+
   &:hover
     .WorksPage_item_title
       color: $white
