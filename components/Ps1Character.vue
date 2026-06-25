@@ -428,6 +428,9 @@ export default {
 
     _teardown () {
       if (this._raf) cancelAnimationFrame(this._raf)
+      // Masque le canvas AVANT toute libération : sinon le carré WebGL flashe
+      // en blanc au démontage (changement de page) le temps de la transition.
+      if (this.$refs.canvas) this.$refs.canvas.style.visibility = 'hidden'
       if (this._onResize) window.removeEventListener('resize', this._onResize)
       if (this._pane) { try { this._pane.dispose() } catch (_) {} }
       if (this._paneEl && this._paneEl.parentNode) this._paneEl.parentNode.removeChild(this._paneEl)
@@ -438,7 +441,8 @@ export default {
           if (this._scene) this._scene.remove(m.model)
         })
       })
-      if (this._renderer) { this._renderer.dispose(); this._renderer.forceContextLoss && this._renderer.forceContextLoss() }
+      // Pas de forceContextLoss() : il blanchit le canvas. dispose() suffit.
+      if (this._renderer) this._renderer.dispose()
       this._chars = []; this._shadows = []; this._snapUniforms = []; this._levelUniforms = []
       this._scene = null; this._camera = null; this._renderer = null; this._THREE = null
     }
