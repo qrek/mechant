@@ -395,7 +395,7 @@ export default {
 .ProjectPopin
   position: fixed
   inset: 0
-  z-index: 11
+  z-index: 30
   background: $black
   display: flex
   align-items: center

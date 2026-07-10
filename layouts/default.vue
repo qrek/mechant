@@ -23,6 +23,7 @@ import TransitionPage from "@/components/TransitionPage"
 
 import { mapActions, mapGetters } from 'vuex'
 import TransitionManager from "~/utils/TransitionManager";
+import aboutContent from '@/content/about'
 
 export default {
   components: {
@@ -38,6 +39,7 @@ export default {
       this.setCurrent(to)
       this.setPageView()
     },
+    isLoadingCompleted (v) { if (v) this._prefetchAbout3D() },
     transitionStatus (newVal, oldVal) {
       if (newVal !== oldVal) {
         const transitionManager = new TransitionManager()
@@ -55,6 +57,7 @@ export default {
   },
   mounted() {
     this.setCurrent(this.$route)
+    this._prefetchAbout3D()
   },
   computed: {
     ...mapGetters({
@@ -80,7 +83,30 @@ export default {
       setPrevious: 'router/setPrevious',
       setCurrent: 'router/setCurrent',
       setPageView: 'router/setPageView'
-    })
+    }),
+
+    // Précharge (met en cache) les GLB des persos 3D de la page About en
+    // arrière-plan, pour qu'ils soient déjà là quand on arrive sur /about.
+    // Les fichiers R2 ont un Cache-Control immutable -> réutilisés direct.
+    _prefetchAbout3D () {
+      if (this._prefetched3D || typeof window === 'undefined') return
+      if (!this.isLoadingCompleted) return // on attend la fin du préloader
+      if (this.$route && this.$route.path && this.$route.path.indexOf('/about') === 0) return
+      if (navigator.connection && navigator.connection.saveData) return
+      this._prefetched3D = true
+
+      // Uniquement les modèles JOUR (visibles à l'arrivée). Les modèles nuit
+      // ne servent qu'au clic Night mode et se chargent en fond sur About.
+      const chars = (aboutContent.hero && aboutContent.hero.characters) || []
+      const urls = chars.map((c) => c.url).filter(Boolean)
+      if (!urls.length) return
+
+      const run = () => urls.forEach((u) => {
+        try { fetch(u, { mode: 'cors', credentials: 'omit' }).catch(() => {}) } catch (_) {}
+      })
+      if (window.requestIdleCallback) window.requestIdleCallback(run, { timeout: 3000 })
+      else setTimeout(run, 1500)
+    }
   }
 }
 </script>
