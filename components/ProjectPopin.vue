@@ -12,8 +12,8 @@
         </div>
       </transition>
 
-      <!-- Bouton fermer -->
-      <button class="ProjectPopin_close" @click.stop="close" aria-label="Fermer">
+      <!-- Bouton fermer (visible avec les contrôles → accessible au tactile) -->
+      <button class="ProjectPopin_close" :class="{ 'is-visible': controlsVisible }" @click.stop="close" aria-label="Fermer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="20" height="20">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
@@ -56,14 +56,15 @@
         class="ProjectPopin_progress"
         :class="{ 'is-visible': controlsVisible, 'is-scrubbing': isScrubbing }"
         @mousedown.stop.prevent="onScrubStart"
+        @touchstart.stop.prevent="onScrubStart"
       >
         <div class="ProjectPopin_progress_track" ref="progressTrack">
           <div class="ProjectPopin_progress_fill" :style="{ width: progress + '%' }"></div>
         </div>
       </div>
 
-      <!-- Infos projet -->
-      <div class="ProjectPopin_info" @mouseenter="onInfoEnter" @mouseleave="onInfoLeave" @click.stop>
+      <!-- Infos projet (toggle au clic/tap — plus de hover accidentel mobile) -->
+      <div class="ProjectPopin_info" @click.stop>
         <div class="ProjectPopin_info_panel" ref="infoPanel">
           <div class="Info_client">{{ project && project.client }}</div>
           <div class="Info_title">{{ project && project.title }}</div>
@@ -74,7 +75,7 @@
             </li>
           </ul>
         </div>
-        <button class="ProjectPopin_info_btn" :class="{ 'is-active': infoVisible }">
+        <button class="ProjectPopin_info_btn" :class="{ 'is-active': infoVisible }" @click.stop="toggleInfo">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16">
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="8" x2="12" y2="8" stroke-width="3"/>
@@ -302,8 +303,17 @@ export default {
 
     onPlayerClick() {
       if (!this.isDisplayed) return
-      if (this.infoVisible) { this.infoVisible = false; return }
+      if (this.infoVisible) { this.infoVisible = false; if (this._infoTl) this._infoTl.reverse(); return }
+      // Tactile : 1er tap révèle les contrôles, le tap suivant play/pause.
+      if (!this.controlsVisible) { this._showControls(); return }
       this.togglePlay()
+    },
+
+    toggleInfo() {
+      if (!this.isDisplayed) return
+      this.infoVisible = !this.infoVisible
+      if (this._infoTl) this.infoVisible ? this._infoTl.play() : this._infoTl.reverse()
+      if (this.infoVisible) this._showControls()
     },
 
     togglePlay() {
@@ -322,6 +332,13 @@ export default {
       if (this.player) this.player.requestFullscreen().catch(() => {})
     },
 
+    // Souris ET tactile : renvoie le clientX depuis un event mouse ou touch
+    _pointX(ev) {
+      if (ev.touches && ev.touches[0]) return ev.touches[0].clientX
+      if (ev.changedTouches && ev.changedTouches[0]) return ev.changedTouches[0].clientX
+      return ev.clientX
+    },
+
     onScrubStart(e) {
       if (!this.__duration) return
       this.isScrubbing = true
@@ -329,13 +346,13 @@ export default {
       if (this._wasPlaying && this.player) this.player.pause().catch(() => {})
       document.body.style.userSelect = 'none'
 
-      this.__scrubMove = (ev) => this._moveScrub(ev)
+      this.__scrubMove = (ev) => { if (ev.cancelable) ev.preventDefault(); this._moveScrub(ev) }
       this.__scrubEnd  = (ev) => {
         this._cleanupScrub()
         // Seek unique au relâchement
         if (this.$refs.progressTrack && this.__duration && this.player) {
           const rect  = this.$refs.progressTrack.getBoundingClientRect()
-          const ratio = Math.max(0, Math.min((ev.clientX - rect.left) / rect.width, 1))
+          const ratio = Math.max(0, Math.min((this._pointX(ev) - rect.left) / rect.width, 1))
           this.progress = ratio * 100
           this.player.setCurrentTime(this.__duration * ratio).catch(() => {})
         }
@@ -344,21 +361,29 @@ export default {
 
       window.addEventListener('mousemove', this.__scrubMove)
       window.addEventListener('mouseup',   this.__scrubEnd)
+      window.addEventListener('touchmove', this.__scrubMove, { passive: false })
+      window.addEventListener('touchend',  this.__scrubEnd)
       this._moveScrub(e)
     },
 
     _moveScrub(e) {
       if (!this.$refs.progressTrack) return
       const rect  = this.$refs.progressTrack.getBoundingClientRect()
-      const ratio = Math.max(0, Math.min((e.clientX - rect.left) / rect.width, 1))
+      const ratio = Math.max(0, Math.min((this._pointX(e) - rect.left) / rect.width, 1))
       this.progress = ratio * 100
     },
 
     _cleanupScrub() {
       this.isScrubbing = false
       document.body.style.userSelect = ''
-      if (this.__scrubMove) window.removeEventListener('mousemove', this.__scrubMove)
-      if (this.__scrubEnd)  window.removeEventListener('mouseup',   this.__scrubEnd)
+      if (this.__scrubMove) {
+        window.removeEventListener('mousemove', this.__scrubMove)
+        window.removeEventListener('touchmove', this.__scrubMove)
+      }
+      if (this.__scrubEnd) {
+        window.removeEventListener('mouseup', this.__scrubEnd)
+        window.removeEventListener('touchend', this.__scrubEnd)
+      }
       this.__scrubMove = null
       this.__scrubEnd  = null
     }
@@ -445,10 +470,20 @@ export default {
     opacity: 0
     transition: opacity 0.2s ease, background 0.2s ease, transform 0.2s ease
 
+    // Visible dès que les contrôles le sont (indispensable au tactile)
+    &.is-visible
+      opacity: 1
+
     &:hover
       background: $white
       color: $black
       transform: scale(1.08)
+
+    +breakpoint(mobile)
+      top: 1.2rem
+      right: 1.2rem
+      width: 2.8rem
+      height: 2.8rem
 
   // ── Progress ─────────────────────────────────────────────────────────────
   &_progress
@@ -463,6 +498,10 @@ export default {
     opacity: 0
     pointer-events: none
     transition: opacity 0.3s ease
+
+    +breakpoint(mobile)
+      width: 84vw
+      bottom: 6.5rem
 
     &.is-visible
       opacity: 1
@@ -524,6 +563,11 @@ export default {
     flex-direction: column
     gap: 0.75rem
 
+    +breakpoint(mobile)
+      left: 1.2rem
+      right: 1.2rem
+      bottom: 9.5rem
+
     &_panel
       background: rgba(0,0,0,0.85)
       backdrop-filter: blur(12px)
@@ -532,6 +576,10 @@ export default {
       padding: 2rem 2.5rem
       max-width: 520px
       will-change: transform, opacity
+
+      +breakpoint(mobile)
+        max-width: 100%
+        padding: 1.4rem 1.6rem
 
     &_btn
       width: 3rem
