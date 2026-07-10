@@ -28,6 +28,8 @@
         </NuxtLink>
       </div>
     </div>
+
+    <div class="WorksPage_footer"><SimpleFooter /></div>
   </section>
 </template>
 
@@ -37,9 +39,11 @@ import { gsap } from '@/vendor/gsap'
 import { SplitText } from '@/vendor/gsap/SplitText'
 import { supabase } from '@/utils/supabase'
 import { trackProjectHover, trackProjectClick } from '@/utils/track'
+import SimpleFooter from '@/components/SimpleFooter'
 
 export default {
   name: 'Works',
+  components: { SimpleFooter },
 
   head () {
     const title = 'Works — Méchant post-production studio Paris'
@@ -308,6 +312,11 @@ export default {
 .WorksPage
   position: relative
   background: #000
+
+  // Footer au-dessus du fond orange fixe
+  &_footer
+    position: relative
+    z-index: 2
 
   &_main
     min-height: 100vh

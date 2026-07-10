@@ -159,10 +159,9 @@
 
       <!--
         Scan studio en Gaussian Splatting (PlayCanvas, autonome).
-        Cliquer pour explorer en vol libre, Échap pour ressortir.
-        Le wrapper garde ref="visitCanvas" pour les animations d'entrée.
+        Désactivé pour le moment via content.visit.scanEnabled.
       -->
-      <div class="AboutPage_visit_canvas" ref="visitCanvas">
+      <div v-if="content.visit.scanEnabled" class="AboutPage_visit_canvas" ref="visitCanvas">
         <StudioSplat
           :desktop-url="content.visit.splatUrl"
           :mobile-url="content.visit.splatMobileUrl"
@@ -666,7 +665,7 @@ export default {
     _animateVisit () {
       const titleSpans = this.$refs.visit.querySelectorAll('.AboutPage_visit_title span')
       gsap.set(titleSpans, { yPercent: 100, opacity: 0 })
-      gsap.set(this.$refs.visitCanvas, { scale: 0.85, opacity: 0 })
+      if (this.$refs.visitCanvas) gsap.set(this.$refs.visitCanvas, { scale: 0.85, opacity: 0 })
       gsap.set(this.$refs.visit.querySelector('.AboutPage_visit_address'), { opacity: 0, y: 20 })
 
       // Le titre est sous le scan → on déclenche sur le titre lui-même
@@ -680,13 +679,15 @@ export default {
         scrollTrigger: { trigger: titleEl, start: 'top 85%' }
       }))
 
-      this._track(gsap.to(this.$refs.visitCanvas, {
-        scale: 1,
-        opacity: 1,
-        duration: 1,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: this.$refs.visitCanvas, start: 'top 80%' }
-      }))
+      if (this.$refs.visitCanvas) {
+        this._track(gsap.to(this.$refs.visitCanvas, {
+          scale: 1,
+          opacity: 1,
+          duration: 1,
+          ease: 'power3.out',
+          scrollTrigger: { trigger: this.$refs.visitCanvas, start: 'top 80%' }
+        }))
+      }
 
       const addressEl = this.$refs.visit.querySelector('.AboutPage_visit_address')
       const ctaEl = this.$refs.visit.querySelector('.AboutPage_visit_cta')

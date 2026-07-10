@@ -152,6 +152,8 @@ export default {
       { text: 'Pull up a chair,', italic: false },
       { text: 'stay a while.',    italic: true }
     ],
+    // Scan studio 3D désactivé pour le moment (repasser à true pour le rétablir)
+    scanEnabled: false,
     placeholderLine: 'Studio scan',
     placeholderSub: 'Loading…',
     // Scan studio en Gaussian Splatting (.sog) hébergé sur Cloudflare R2.

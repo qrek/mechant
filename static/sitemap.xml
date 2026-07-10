@@ -26,11 +26,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mechant.tv/playground</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://mechant.tv/privacy_policy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
@@ -39,5 +34,25 @@
     <loc>https://mechant.tv/cookies</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://mechant.tv/works/jetmach3</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://mechant.tv/works/pure-strike</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://mechant.tv/works/manganova</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://mechant.tv/works/hors-cadre</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>

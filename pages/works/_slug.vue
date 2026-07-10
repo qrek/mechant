@@ -78,6 +78,8 @@
       </div>
 
     </div>
+
+    <SimpleFooter />
   </section>
 </template>
 
@@ -85,9 +87,11 @@
 import { mapGetters } from 'vuex'
 import { supabase } from '@/utils/supabase'
 import { trackCaseStudyView, trackCaseStudyVideoPlay } from '@/utils/track'
+import SimpleFooter from '@/components/SimpleFooter'
 
 export default {
   name: 'CaseStudy',
+  components: { SimpleFooter },
 
   async asyncData({ params, error }) {
     const { data } = await supabase
